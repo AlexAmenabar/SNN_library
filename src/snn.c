@@ -1,23 +1,16 @@
 #include "../include/snn_library.h"
 #include "load_data.c"
 #include "helpers.c"
+#include "../include/training_rules/stdp.h"
 
 #define REFRAC_TIME
 #define T 100 // tiempo total de la simulación (ms)
 #define DT 1.0 // paso del tiempo (ms)
 #define TC 0.9 // time constant parameter
 
-void compute_STDP(){
 
-}
-
-// STDP
-void STDP(int t_a, int t_b){
-
-}
-
-void step_lif_neuron(spiking_neuron_t *neuron, int t, int neuron_identifier, unsigned char **generated_spikes){
-    lif_neuron_t *lif_neuron = (lif_neuron_t *)neuron;
+void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_identifier, unsigned char **generated_spikes){
+    lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_identifier]);
     
     float input_current = 0;
 
@@ -27,8 +20,14 @@ void step_lif_neuron(spiking_neuron_t *neuron, int t, int neuron_identifier, uns
 
     for(int i=0; i<lif_neuron->input_synapse_amount; i++)
     {
+        if(neuron_identifier == 3 && i==0){
+
+        }
+
         int next_spike_time = lif_neuron->input_synapses[i].l_spike_times[lif_neuron->input_synapses[i].next_spike];
         if(next_spike_time == t){ // check if that must be computed in this timestep
+            // Add spike time to neuron received spikes list
+
             input_current += lif_neuron->input_synapses[i].w;
             lif_neuron->input_synapses[i].next_spike = (lif_neuron->input_synapses[i].next_spike + 1) % lif_neuron->input_synapses[i].max_spikes; // refresh index
 
@@ -53,8 +52,16 @@ void step_lif_neuron(spiking_neuron_t *neuron, int t, int neuron_identifier, uns
             lif_neuron->output_synapses[i].last_spike++;
 
         }
-
         lif_neuron->v = lif_neuron->v_reset;
+
+        // add spike time to synapses to compute STDP
+        for(int i = 0; i<lif_neuron->output_synapse_amount; i++){
+            lif_neuron->output_synapses[i].t_last_pre_spike = t;
+        }
+        for(int i = 0; i<lif_neuron->input_synapse_amount; i++){
+            lif_neuron->input_synapses[i].t_last_post_spike = t;
+        }
+
         generated_spikes[neuron_identifier][t] = '|';
 
         //STDP using
@@ -132,6 +139,8 @@ void initialize_lif_neuron(lif_neuron_t *neuron, int *synapse_matrix, int excita
     neuron->r = 0.9;
     neuron->excitatory = excitatory_neuron;
 
+    neuron->n_spikes = 1; // amount of spikes that can be stored (PROVISIONALLY ONE, DEPENDS ON TYPE OF STDP????)
+
     //printf("Spiking neuron: %d %d\nLif neuron: %d %d\n", &p_neuron, p_neuron, &neuron, neuron);
    
     // Initialize synapses
@@ -173,61 +182,71 @@ void add_output_synapsis_to_lif_neuron(lif_neuron_t *neuron, synapse_t *synapse)
 
 /// @brief Initialize synapse data (wegith...)
 /// @param synap 
-void initialize_synapse_data(synapse_t *synap, float weight, int delay, int max_spikes){
+void initialize_synapse_data(synapse_t **synap, float weight, int delay, int max_spikes, int neuron_excitatory){
     //synapse_t synap;
-    synap->w = weight;
-    synap->delay = delay;
+    (*synap)->w = weight;
+    if(neuron_excitatory == 0) // if neuron is inhibitory synapse weight is negative 
+        (*synap)->w = -weight;
+
+    (*synap)->delay = delay;
     
     // initialize spike list
-    synap->l_spike_times = malloc(max_spikes * sizeof(int)); // 10 spikes can be stored
+    (*synap)->l_spike_times = malloc(max_spikes * sizeof(int)); // 10 spikes can be stored
     for (int l = 0; l < max_spikes; l++)
-        synap->l_spike_times[l] = -1;
+        (*synap)->l_spike_times[l] = -1;
     
     // initialize control indexes
-    synap->next_spike = 0;
-    synap->last_spike = 0;
-    synap->max_spikes = max_spikes;
+    (*synap)->next_spike = 0;
+    (*synap)->last_spike = 0;
+    (*synap)->max_spikes = max_spikes;
+
+    // initialize last pre and post synaptic neurons spike times
+    (*synap)->t_last_pre_spike = -1; // no spike yet
+    (*synap)->t_last_post_spike = -1; // no spike yet
 }
 
 // initialize synapses of a neuron (the row)
 void initialize_synapses(spiking_nn_t *snn, int pre_index, int post_index, 
-                        float weight, int delay){
+                        float weight, int delay, int excitatory, int n_synapse){
     // Initialize all synapses between two neurons 
     //synapse_t synap;
     synapse_t *synap;
     synap = malloc(sizeof(synapse_t));
-    initialize_synapse_data(synap, weight, delay, 100);
+    initialize_synapse_data(&synap, weight, delay, 100, excitatory);
 
     printf("Adding synapse between %d and %d neurons\n", pre_index+1, post_index+1);
-    if(snn->type==0){
+    if(snn->neuron_type==0){
         add_input_synapsis_to_lif_neuron(&(snn->lif_neurons[post_index]), synap); // synapse is input of the post synaptic neuron
         add_output_synapsis_to_lif_neuron(&(snn->lif_neurons[pre_index]), synap); // synapse is the output of the pre synaptic neuron
     }
     /*else{}*/
+
+    // add synapse to snn synapse list
+    snn->synapses[n_synapse] = synap;
 }
 
 // adds NETWORK input synapses
 void add_network_input_synapse(spiking_nn_t *snn, int index, float weight, int delay){
     synapse_t *synap;
     synap = malloc(sizeof(synapse_t));
-    initialize_synapse_data(synap, weight, delay, 100);
+    initialize_synapse_data(&synap, weight, delay, 100, 1);
 
-    if(snn->type==0)
+    if(snn->neuron_type==0)
         add_input_synapsis_to_lif_neuron(&(snn->lif_neurons[index]), synap);
 }
 
 void add_network_output_synapse(spiking_nn_t *snn, int index, float weight, int delay){
     synapse_t *synap;
     synap = malloc(sizeof(synapse_t));
-    initialize_synapse_data(synap, weight, delay, 100);
+    initialize_synapse_data(&synap, weight, delay, 100, 1);
     
-    if(snn->type==0)
+    if(snn->neuron_type==0)
         add_output_synapsis_to_lif_neuron(&(snn->lif_neurons[index]), synap);
 }
 
 void initialize_network(spiking_nn_t *snn, int n_neurons, int n_input, int n_output, 
                             int *synapses, float *weights, int *delays, 
-                            int *neuron_excitatory){ //void *neuron_initializer()){
+                            int n_synapses, int *neuron_excitatory){ //void *neuron_initializer()){
     // initialize neurons
     printf("Initializing network with individual neurons\n");
 
@@ -248,7 +267,8 @@ void initialize_network(spiking_nn_t *snn, int n_neurons, int n_input, int n_out
 
         // initialize neurons
         if(snn->neuron_type==0)
-            initialize_lif_neuron(&snn->lif_neurons[i], synapses, neuron_excitatory[i], n_neurons, neuron_is_input, neuron_is_output, i);
+            initialize_lif_neuron(&(snn->lif_neurons[i]), synapses, 
+                        neuron_excitatory[i], n_neurons, neuron_is_input, neuron_is_output, i);
         /*
         else {
 
@@ -261,6 +281,7 @@ void initialize_network(spiking_nn_t *snn, int n_neurons, int n_input, int n_out
 
     // initialize synapses reading file matrices
     int n_synapse = 0;
+
     for(int i = 0; i<n_neurons; i++){
         //check if neuron is input or output neuron
         int neuron_is_input = 0, neuron_is_output = 0;
@@ -272,7 +293,7 @@ void initialize_network(spiking_nn_t *snn, int n_neurons, int n_input, int n_out
 
         for(int j = 0; j<n_neurons; j++)
             for (int z=0; z<synapses[i*n_neurons+j]; z++){
-                initialize_synapses(snn, i, j, weights[n_synapse], delays[n_synapse]);
+                initialize_synapses(snn, i, j, weights[n_synapse], delays[n_synapse], neuron_excitatory[i], n_synapse);
                 n_synapse++;
             }
 
@@ -414,12 +435,17 @@ int main(int argc, char *argv[]) {
     }
     snn.n_neurons = n_neurons_motifs;
 
+    // reserve memory for synapses
+    snn.n_synapses = n_synapses;
+    snn.synapses = (synapse_t **)malloc(n_synapses * sizeof(synapse_t *));
+
+
     if(motifs==0)
         initialize_network(&snn, n_neurons_motifs, n_input, n_output, 
-            synapse_matrix, weights_matrix, delays_matrix, neuron_excitatory);
+            synapse_matrix, weights_matrix, delays_matrix, n_synapses, neuron_excitatory);
     //else
     //    initialize_network_with_motifs();
-    printf("Network succesfully initialized!\n");
+    printf("Network succesfully initialized!\n================================\n\n\n");
 
     // load time steps for the simulation / training
     int time_steps = strtoul(argv[11], NULL, 10);
@@ -431,6 +457,18 @@ int main(int argc, char *argv[]) {
         check_number_neurons += 1;
 
     printf("Number of neurons: %d\n", check_number_neurons);
+
+    printf("=====================\n\n");
+
+    printf("Checking neurons...\n");
+    for (int i = 0; i<snn.n_neurons; i++){
+        if(snn.neuron_type==0){
+            printf("Neuron n%d membrane potential: %f\n", i+1, snn.lif_neurons[i].v);
+        }
+    }
+    printf("=================\n\n");
+
+    printf("Checking synapses...\n");
 
     for (int i = 0; i<check_number_neurons; i++)
         printf("Neuron %d: input synapses = %d and output synapses = %d\n", 
@@ -444,13 +482,13 @@ int main(int argc, char *argv[]) {
             //snn.lif_neurons[i].input_synapses[j].l_spike_times[10] = -1;
             printf("%f ", snn.lif_neurons[i].input_synapses[j].w);
         }
-        printf("Input synapses checked!\n");
+        printf("Neuron %d input synapses checked!\n", i+1);
         printf("Checking output synapses...\n");
         for(int j = 0; j<snn.lif_neurons[i].output_synapse_amount; j++){
             //snn.lif_neurons[i].output_synapses[j].l_spike_times[10] = -1;
             printf("%f ", snn.lif_neurons[i].output_synapses[j].w);
         }
-        printf("Output synapses checked!\n");
+        printf("Neuron %d output synapses checked!\n", i+1);
     }
 
     // INTRODUCIR SPIKES
@@ -476,20 +514,21 @@ int main(int argc, char *argv[]) {
     printf("\n======================\n");
 
     fclose(f);
+    
+    
     // training 
-
-    /*unsigned char **generated_spikes = malloc(n_neurons_motifs * sizeof(unsigned char *));
+    unsigned char **generated_spikes = malloc(n_neurons_motifs * sizeof(unsigned char *));
     for (int i = 0; i<n_neurons_motifs; i++)
         generated_spikes[i] = malloc(time_steps * sizeof(unsigned char));
-    */
-    /*if(execution_type == 0){ // clock
+    
+    if(execution_type == 0){ // clock
         printf("Initializing training / simulation\n");
         int t = 0;
         while(t < time_steps){
             // procesar todas las neuronas
             #pragma omp parallel for
             for(int i=0; i<snn.n_neurons; i++){
-                step(&snn.neurons[i], t, i, generated_spikes);
+                step(&snn, t, i, generated_spikes);
 
                 //if(i==0 && step % 5 == 0){
                 //    lif_neuron_t *lif_neuron = (lif_neuron_t *)snn.neurons[i];
@@ -497,14 +536,24 @@ int main(int argc, char *argv[]) {
                 //}
             }             
             t++;
+
+            // Compute STDP for all synapses
+            for(int i = 0; i<snn.n_synapses; i++){
+                float initial_w = snn.synapses[i]->w;
+                printf("Synapse %d, pre_t = %d, post_t = %d\n", i, snn.synapses[i]->t_last_pre_spike, snn.synapses[i]->t_last_post_spike);
+                if(snn.synapses[i]->t_last_post_spike != -1 && snn.synapses[i]->t_last_pre_spike != -1)
+                    add_stdp(snn.synapses[i]);
+                printf("Synapse %d weight evolution: %f -> %f\n", i, initial_w, snn.synapses[i]->w);
+                snn.synapses[i]->w = 0;
+            }
         }
-    }*/
+    }
     /*else{
 
     }*/
 
     // print spikes generated by each neuron
-    /*FILE *output_file;
+    FILE *output_file;
     output_file = fopen("output_spikes.txt", "w");
     if(output_file == NULL){
         printf("Error opening the file. \n");
@@ -516,7 +565,9 @@ int main(int argc, char *argv[]) {
             fprintf(output_file, "%c", generated_spikes[i][j]);
         }
         fprintf(output_file, "\n");
-    }*/
+    }
     
+    free(snn.lif_neurons);
+
     return 0;
 }
