@@ -24,7 +24,7 @@
 #endif
 
 #ifndef MAX_SPIKES
-#define MAX_SPIKES 250
+#define MAX_SPIKES 1000
 #endif
 
 

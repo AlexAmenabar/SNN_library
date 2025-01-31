@@ -1,4 +1,4 @@
-/*void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_identifier, unsigned char **generated_spikes){
+void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_identifier, unsigned char **generated_spikes){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_identifier]);
     
     float input_current = 0;
@@ -42,7 +42,7 @@
     else{
         generated_spikes[neuron_identifier][t] = ' ';
     }
-}*/
+}
 
 // LIF neuron functions
 void initialize_lif_neuron(lif_neuron_t *neuron, int *synapse_matrix, int excitatory_neuron, int length, 

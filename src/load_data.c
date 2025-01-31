@@ -93,6 +93,34 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
     close_file(&f);
 }
 
+void load_input_spike_trains_on_snn(const char *file_name, spiking_nn_t *snn){
+    FILE *f = NULL;
+    open_file(&f, file_name);
+
+    int i, j, n_spikes;
+
+    // for each input neuron (SYNAPSE??) there is one input spike train
+    if(snn->neuron_type == 0) { // lif neurons
+        for(i = 0; i<snn->n_input; i++){
+            // read number of spikes for i neuron
+            fscanf(f, "%d", &n_spikes);
+
+            int synapse_index = snn->lif_neurons[i].input_synapse_indexes[0];
+
+            // load spikes for i neuron
+            for(j=0; j<n_spikes; j++){ // CHANGE IF IT WILL BE POSSIBLE TO CONNECT MORE THAN ONE SYNAPSE TO EACH INPUT NEURON
+                fscanf(f, "%d", &(snn->synapses[synapse_index].l_spike_times[j]));
+            }
+            // refresh spikes index for synapse
+            snn->synapses[synapse_index].last_spike += n_spikes-1;
+            //snn->synapses[0].
+        }
+    }
+    // else{}
+
+    close_file(&f);
+}
+
 /*
 // files load functions
 void load_motifs_file(const char *file_name, int *motifs_list, int *number_motifs){
