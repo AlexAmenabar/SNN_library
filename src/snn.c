@@ -52,7 +52,8 @@ void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
             synapse->post_neuron_computed = 0;
             synapse->pre_neuron_computed = 0;
 
-            // compute STDP TODO
+            // compute STDP
+            synapse->learning_rule(synapse); // rarete
         }
 
 #ifdef DEBUG
@@ -105,13 +106,14 @@ void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
                 synapse->post_neuron_computed = 0;
                 synapse->pre_neuron_computed = 0;
 
-                // compute STDP TODO
+                // compute STDP
+                synapse->learning_rule(synapse); // rarete
             }
         }
 
         // register spike time on input synapses (NOT COMPATIBLE WITH GPU IMPLEMENTATION???)
         for(i=0; i<lif_neuron->n_input_synapse; i++){
-            int synapse_index = lif_neuron->output_synapse_indexes[i]; // get synapse index
+            int synapse_index = lif_neuron->input_synapse_indexes[i]; // get synapse index
             synapse_t *synapse = &(snn->synapses[synapse_index]);
 
             synapse->t_last_post_spike = t; // this neuron is postsynaptic neuron for input synapses
@@ -138,7 +140,8 @@ void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
                 synapse->post_neuron_computed = 0;
                 synapse->pre_neuron_computed = 0;
 
-                // compute STDP TODO
+                // compute STDP
+                synapse->learning_rule(synapse); // rarete
             }
         }
 
@@ -524,6 +527,11 @@ int main(int argc, char *argv[]) {
                 step(&snn, time_step, i, generated_spikes);
             }             
             time_step++;
+
+            printf(" - Printing synapses weights: \n");
+            for(i = 0; i<snn.n_synapses; i++){
+                printf(" -- Synapse %d: %f\n", i, snn.synapses[i].w);
+            }
             printf("\n=======================================\n\n");
         }
     }
