@@ -33,3 +33,12 @@ void print_array_f(float *array, int length){
     }
     printf("\n");
 }
+
+void random_input_spike_train_generator(int time_steps, int prob){
+    for(int i = 0; i<time_steps; i++){
+        int p = rand() % 100;
+        if(p > prob){
+            // generate spike on i time step
+        }
+    }
+}

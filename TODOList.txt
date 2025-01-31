@@ -1,0 +1,13 @@
+Compilación
+
+gcc -o snn snn.c load_data.c training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
+
+
+-- Triplet STDP (generalizar a N e incluirlos???)
+
+-- Spikes generator
+
+-- Test STDP
+
+-- Network generator (if parameters are not provided)
+
