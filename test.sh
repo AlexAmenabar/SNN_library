@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COMMANDS=(
-    "./snn 0 0 0 ../data/new_nn_format/nn1.txt 100 ../data/new_nn_format/input_spike_times.txt"
+    "./main 0 0 0 ./data/nn1/nn1.txt 100 ./data/nn1/input_spike_times.txt"
 )
 
 echo "== Ejecutando tests =="

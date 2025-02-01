@@ -2,6 +2,9 @@
 #include "neuron_models/neuron_models.h"
 #include "neuron_models/lif_neuron.h"
 
+#include <stdlib.h>
+#include <stdio.h>
+
 void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i;

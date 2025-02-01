@@ -1,6 +1,11 @@
 #include "snn_library.h"
 #include "training_rules/stdp.h"
+#include "neuron_models/lif_neuron.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include <stdlib.h>
 
 void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, int *synapse_matrix){
     int i;

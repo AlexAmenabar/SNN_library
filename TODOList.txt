@@ -1,6 +1,7 @@
 Compilación
 
 gcc -o snn snn.c load_data.c training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
+gcc -Iinclude -o main src/main.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
 
 
 -- Triplet STDP (generalizar a N e incluirlos???)

@@ -1,2 +1,2 @@
-#include "include/neuron_models/neuron_models.h"
+#include "neuron_models/neuron_models.h"
 

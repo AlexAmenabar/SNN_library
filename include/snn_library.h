@@ -7,11 +7,6 @@
 #define MAX_SPIKES 1000
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-
 /**
  * General structures
  */

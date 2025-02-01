@@ -4,9 +4,6 @@ cmake_minimum_required(VERSION 3.10)
 # Nombre del proyecto
 project(SNN_LIBRARY)
 
-# Carpeta con headers
-include_directories(include)
-
 # Archivos fuente
 #file(GLOB_RECURSE SOURCES "src/*.cpp")
 
@@ -18,6 +15,9 @@ set(MAIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/build)
 #set(TEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/build/tests)
 
 set(CMAKE_C_COMPILER gcc)
+
+# Carpeta con headers
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 # Buscar todos los archivos fuente
 file(GLOB_RECURSE ALL_SOURCES "src/*.c")

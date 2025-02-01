@@ -1,5 +1,7 @@
-#ifndef NEURON_MODELS_H
-#define NEURON_MODELS_H
+#ifndef LOAD_DATA_H
+#define LOAD_DATA_H
+
+#include <stdio.h>
 
 // can be changed as input parameters 
 #ifndef INPUT_SYNAPSES

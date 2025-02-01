@@ -1,6 +1,8 @@
 #include "snn_library.h"
 #include "load_data.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 
 int open_file(FILE **f, const char *file_name){
     *f = fopen(file_name, "r");

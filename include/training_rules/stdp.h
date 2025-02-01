@@ -1,7 +1,7 @@
 #ifndef STDP_H
 #define STDP_H
 
-#include "include/snn_library.h"
+#include "snn_library.h"
 
 /// @brief Additive STDP computation
 /// @param synapse Synapse to be updated

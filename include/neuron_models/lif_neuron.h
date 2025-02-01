@@ -1,7 +1,7 @@
 #ifndef LIF_NEURON_H
 #define LIF_NEURON_H
 
-#include "include/snn_library.h"
+#include "snn_library.h"
 
 #define REFRAC_TIME
 #define T 100 // tiempo total de la simulación (ms)
