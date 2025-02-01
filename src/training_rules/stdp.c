@@ -1,6 +1,5 @@
-#include <math.h>
-#include "../../include/snn_library.h"
-#include "../../include/training_rules/stdp.h"
+#include "snn_library.h"
+#include "training_rules/stdp.h"
 
 #define TAU_PLUS 20 // ms
 #define TAU_MINUS 20 // ms

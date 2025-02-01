@@ -1,40 +1,23 @@
-/* GENERAL INCLUDES */
 #ifndef SNN_LIBRARY_H
 #define SNN_LIBRARY_H
 
-// can be changed as input parameters 
-#ifndef INPUT_SYNAPSES
-#define INPUT_SYNAPSES 0
-#endif
 
-#ifndef INPUT_NEURON_BEHAVIOUR
-#define INPUT_NEURON_BEHAVIOUR 1
-#endif
-
-#ifndef INPUT_WEIGHTS
-#define INPUT_WEIGHTS 0
-#endif
-
-#ifndef INPUT_DELAYS
-#define INPUT_DELAYS 0
-#endif
-
-#ifndef INPUT_TRAINING_ZONES
-#define INPUT_TRAINING_ZONES 0
-#endif
-
+// max spikes to store per synapse
 #ifndef MAX_SPIKES
 #define MAX_SPIKES 1000
 #endif
-
 
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
+/**
+ * General structures
+ */
 
-/* Synapse */
+
+/// @brief Structure to store all the information about the synapses
 typedef struct {
     float w; // if at start it is positive, excitatory, else inhibitory
     int delay; // the delay time of the synapse
@@ -49,8 +32,7 @@ typedef struct {
 } synapse_t;
 
 
-/* Artifical Spiking Neuron models */
-// LIF
+/// @brief LIF neuron model structure to store information about the neuron
 typedef struct {
     //synapse_t **input_synapses; // lists of input and output synapses
     int *input_synapse_indexes; // indexes to get neuron input synapses from snn.synapses
@@ -76,31 +58,14 @@ typedef struct {
 } lif_neuron_t;
 
 
-//void initialize_lif_neuron(lif_neuron_t *neuron, int *synapse_matrix, int excitatory_neuron, int length, 
-//                            int neuron_is_input, int neuron_is_output, int neuron_index);
-//void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_identifier, unsigned char **generated_spikes);
-
-
-// Hodwking-Huxley model
-typedef struct {
-    int a;
-} hh_neuron_t;
-
-void initialize_hh_neuron();
-void step_hh_neuron(hh_neuron_t *neuron, int t, int neuron_identifier, unsigned char **generated_spikes);
-
-
-
-/* Motifs */
+/// @brief Structure to store motif types
 typedef struct {
     int type; 
     void *neurons; // each motif can have a different amount of neurons depending on the type 
 } motif_t;
 
 
-/**
- * Spiking Neural Network 
- */
+/// @brief SNN structure to store all the information about the network
 typedef struct {
     // network general information
     int n_neurons; // n neurons on the network
@@ -113,9 +78,9 @@ typedef struct {
     int n_input_synapses; // number of network input synapses
     int n_output_synapses; // number of network output synapses
 
-    // pointers to different neuron types
+    // pointers to different neuron types (one used on execution)
     lif_neuron_t *lif_neurons; 
-    hh_neuron_t *hh_neurons;
+    //hh_neuron_t *hh_neurons;
 
     // pointer to network synapses
     synapse_t *synapses;
@@ -124,5 +89,75 @@ typedef struct {
 } spiking_nn_t;
 
 
+typedef struct{
+    int *spike_times; // list with times in which a spike has been generated
+    int n_spikes; // number of spikes
+} spike_train_t;
+
+/**
+ * General function definition
+ */
+
+
+/// @brief Initialize network neurons 
+/// @param snn SNN structure with neuron list
+/// @param neuron_behaviour_list List of neuron types (excitatory or inhibitory)
+/// @param synapse_matrix Synapse matrix
+void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, int *synapse_matrix);
+
+
+/// @brief Initialize a synapse data
+/// @param synapse Synapse to be initialized
+/// @param w Weight to set to the synapse
+/// @param delay Delay to set to the synapse
+/// @param training Training type to set to the synapse
+void initialize_synapse(synapse_t *synapse, float w, int delay, int training);
+
+
+/// @brief Initialize network synapses
+/// @param snn SNN structure with synapse list
+/// @param n_synapses Number of synapses
+/// @param weight_list List of synaptic weights
+/// @param delay_list List of synaptic delays
+/// @param training_zones List of training type for each synapse
+void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, float *weight_list, int *delay_list, int *training_zones);
+
+
+/// @brief Add input synapse to a neuron
+/// @param snn SNN structure
+/// @param neuron_index Index of the neuron to add a synapse
+/// @param synapse_index Index of the synapse to be added as input to neuron
+void add_input_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index);
+
+
+/// @brief Add output synapse to a neuron
+/// @param snn SNN structure
+/// @param neuron_index Index of the neuron to add a synapse
+/// @param synapse_index Index of the synapse to be added as output to neuron
+void add_output_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index);
+
+
+/// @brief Connect neuron to input and output synapses
+/// @param snn SNN structure
+/// @param synapse_matrix Synapse matrix 
+void connect_neurons_and_synapses(spiking_nn_t *snn, int *synapse_matrix);
+
+
+/// @brief Initialize spiking neural network structure
+/// @param snn Structure to initialize
+/// @param neuron_type Type of neuron of this simulation
+/// @param n_neurons Number of neurons
+/// @param n_input Number of neurons on the input layer
+/// @param n_output Number of neurons on the output layer
+/// @param n_synapses Number of synapses
+/// @param n_input_synapses Number of network input synapses
+/// @param n_output_synapses Nummber of network output synapses
+/// @param neuron_behaviour_list List with neuron types (excitatory or inhibitory)
+/// @param synapse_matrix Matrix of synaptic connections
+/// @param weight_list List of synaptic weights
+/// @param delay_list List of synaptic delays
+/// @param training_zones List of training types for each synapse
+void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n_input, int n_output, int n_synapses, int n_input_synapses, int n_output_synapses, 
+                    int *neuron_behaviour_list, int *synapse_matrix, float *weight_list, int *delay_list, int *training_zones);
 
 #endif

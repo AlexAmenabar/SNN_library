@@ -11,3 +11,5 @@ gcc -o snn snn.c load_data.c training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=
 
 -- Network generator (if parameters are not provided)
 
+-- Makefile
+

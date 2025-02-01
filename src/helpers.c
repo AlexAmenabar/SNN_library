@@ -1,6 +1,6 @@
-//#include "../include/snn_library.h"
+#include "helpers.h"
 
-void print_matrix(int rows, int columns, int *matrix){
+void print_matrix( int *matrix, int rows, int columns){
     for(int i = 0; i<rows; i++){
         for(int j = 0; j<columns; j++){
             printf("%d ", matrix[i*columns + j]);
@@ -17,7 +17,7 @@ void print_array(int *array, int length){
     printf("\n");
 }
 
-void print_matrix_f(int rows, int columns, float *matrix){
+void print_matrix_f(float *matrix, int rows, int columns){
     for(int i = 0; i<rows; i++){
         for(int j = 0; j<columns; j++){
             printf("%f ", matrix[i*columns + j]);
@@ -34,7 +34,7 @@ void print_array_f(float *array, int length){
     printf("\n");
 }
 
-void random_input_spike_train_generator(int time_steps, int prob){
+void random_input_spike_train_generator(const char *output_file_name, int time_steps, int prob){
     for(int i = 0; i<time_steps; i++){
         int p = rand() % 100;
         if(p > prob){
