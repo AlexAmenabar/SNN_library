@@ -1,8 +1,10 @@
 #include "snn_library.h"
 #include "network_generator.h"
 
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
 
 int main(int argc, char *argv[]) {
     int n, n_input, n_output, n_synapses, n_input_synapses, n_output_synapses;
@@ -12,6 +14,8 @@ int main(int argc, char *argv[]) {
     n = strtoul(argv[1], NULL, 10);
     n_input = strtoul(argv[2], NULL, 10);
     n_output = strtoul(argv[3], NULL, 10);
+
+    srand(time(NULL));
 
     printf("Input parameters: %d, %d, %d\n", n, n_input, n_output);
 
@@ -44,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     // store generated network information on a file
     FILE *f;
-    f = fopen("new_snn", "w");
+    f = fopen("new_snn.txt", "w");
  
     fprintf(f, "%d", n);
     fprintf(f, "\n");
@@ -63,7 +67,7 @@ int main(int argc, char *argv[]) {
     // store neurons behaviour
     for(int i = 0; i<n; i++)
         fprintf(f, "%d ", neuron_behaviour[i]);
-    fprintf(f, "\n");
+    fprintf(f, "\n\n");
 
     // write synaptic connections
     for(int i=0; i<(n+1); i++){
@@ -71,22 +75,23 @@ int main(int argc, char *argv[]) {
             fprintf(f, "%d ", synapse_matrix[i*(n+1)+j]);
         fprintf(f, "\n");
     }
+    fprintf(f, "\n");
 
     // write weights
     for(int i = 0; i<n_synapses; i++)
         fprintf(f, "%f ", synaptic_weights[i]);
-    fprintf(f, "\n");
+    fprintf(f, "\n\n");
 
 
     // write weights
     for(int i = 0; i<n_synapses; i++)
         fprintf(f, "%d ", synaptic_delays[i]);
-    fprintf(f, "\n");
+    fprintf(f, "\n\n");
 
     // write weights
     for(int i = 0; i<n_synapses; i++)
         fprintf(f, "%d ", synaptic_learning_rules[i]);
-    fprintf(f, "\n");
+    fprintf(f, "\n\n");
 
 
     fclose(f);

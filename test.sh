@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COMMANDS=(
-    "./main 0 0 0 ./data/nn1/nn1.txt 100 ./data/nn1/input_spike_times.txt"
+    "./main 0 0 0 ./data/nn250/snn250.txt 5000 ./data/nn250/input_spike_times.txt"
 )
 
 echo "== Ejecutando tests =="

@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define TAU_PLUS 20 // ms
-#define TAU_MINUS 20 // ms
-#define A_PLUS 0.005 // ms
-#define A_MINUS 0.005 // ms
+#define TAU_PLUS 5 // ms
+#define TAU_MINUS 5 // ms
+#define A_PLUS 0.01 // ms
+#define A_MINUS 0.01 // ms
 #define A 0.25 // modulation magnitude for STDP
 
 void add_stdp(synapse_t *synapse){

@@ -2,6 +2,14 @@ Compilación
 
 gcc -o snn snn.c load_data.c training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
 gcc -Iinclude -o main src/main.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
+    "./main 0 0 0 ./data/nn1/snn1.txt 100 ./data/nn1/input_spike_times.txt"
+
+
+gcc -Iinclude -o build/network_generator src/network_generator_main.c src/network_generator.c -lm
+./build/network_generator 10000 500 100
+
+gcc -Iinclude -o build/input_spike_generator src/spike_train_generator_main.c src/helpers.c -lm
+./build/input_spike_generator 20 100000
 
 
 -- Triplet STDP (generalizar a N e incluirlos???)

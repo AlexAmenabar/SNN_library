@@ -27,10 +27,6 @@ void print_matrix_f(float *matrix, int rows, int columns);
 void print_array_f(float *array, int length);
 
 
-/// @brief Generate a random spike pattern
-/// @param output_file_name File to store the generated spike train
-/// @param time_steps Time steps of the input spike 
-/// @param prob Probability to generate a spike on an step
-void random_input_spike_train_generator(const char *output_file_name, int time_steps, int prob);
+void random_input_spike_train_generator(int **spike_trains, int *n_spikes, int n_input_spike_trains, int time_steps, int prob);
 
 #endif

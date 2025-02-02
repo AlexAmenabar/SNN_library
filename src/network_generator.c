@@ -11,24 +11,27 @@ void generate_random_synapse_matrix(int *synapse_matrix, int n_neurons, int n_in
     double u, lambda = 0.5;
 
     // initialize synapse amount data
-    (*n_synapse) = 0; (*n_input_synapse) = 0; (*n_output_synapse) = 0;
+    *n_synapse = 0; *n_input_synapse = 0; *n_output_synapse = 0;
 
     // generate synapse matrix
     for(i=0; i<(n_neurons+1); i++){
         for(j=0; j<(n_neurons+1); j++){
-            printf("i = %d, j = %d, %d\n", i, j, i*(n_neurons+1)+j);
+            //printf("i = %d, j = %d, %d\n", i, j, i*(n_neurons+1)+j);
             if(i==0 && j!=(n_neurons) || i!=0 && j==(n_neurons) || i>0 && j<=n_neurons){
                 u = (double)rand() / RAND_MAX;
                 synapse_matrix[i * (n_neurons + 1) + j] = (int)(-log(1-u) / lambda);
                 
                 // add synapse amount
-                (*n_synapse) += synapse_matrix[i * (n_neurons + 1) + j];
+                *n_synapse += synapse_matrix[i * (n_neurons + 1) + j];
                 
                 if(i==0)
-                    (*n_input_synapse) += n_input_synapse[i * (n_neurons + 1) + j];
+                    *n_input_synapse += synapse_matrix[i * (n_neurons + 1) + j];
                 
                 if(j==n_neurons)
-                    (*n_input_synapse) += n_output_synapse[i * (n_neurons + 1) + j];
+                    *n_output_synapse += synapse_matrix[i * (n_neurons + 1) + j];
+            }
+            else{
+                synapse_matrix[i * (n_neurons+1) + j] = 0;
             }
         }
     }
@@ -36,14 +39,22 @@ void generate_random_synapse_matrix(int *synapse_matrix, int n_neurons, int n_in
 
 
 void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, int *synapse_matrix, int *neuron_behaviour_list){
-    int i,j;
+    int i,j, l;
 
     int next_synapse = 0;
 
     // all network input synapses have positive weights
     for(i=0; i<n_neurons; i++){
-        if(synapse_matrix[i]>0){
-            synaptic_weights[next_synapse] = ((float)rand() / (float)(1.0)) * 3; 
+        for(j = 0; j<synapse_matrix[i]; j++){
+            int valid = 0;
+            float w = 0;
+            while(valid == 0){
+                w = ((float)rand() / (float)(RAND_MAX)) * 5;
+                if(w>0.005) valid = 1;
+            }
+            //printf("generated w %f\n", w);
+
+            synaptic_weights[next_synapse] = (float)w; 
             next_synapse ++;
         }
     }
@@ -51,15 +62,25 @@ void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, in
     // rest of synapses
     for(i = 1; i<(n_neurons+1); i++){
         for(j = 0; j<(n_neurons+1); j++){ // last column synapses are network output synapses
-            if(synapse_matrix[i * (n_neurons + 1)]>0){
+            for(l=0; l<synapse_matrix[i * (n_neurons + 1) + j]; l++){
+                // generate random value
+                int valid = 0;
+                float w = 0;
+                while(valid == 0){
+                    w = ((float)rand() / (float)(RAND_MAX)) * 5;
+                    if(w>0.005) valid = 1;
+                }
+                //printf("generated w %f\n", w);
                 if(j == n_neurons){ // network output synapse: always positive
-                    synaptic_weights[next_synapse] = ((float)rand() / (float)(1.0)) * 3; 
+                    synaptic_weights[next_synapse] = (float)w; 
                 }
                 else{ // other synapses can be positive or negative depending on neuron
-                    if(neuron_behaviour_list[i] == 1) // excitatory neuron
-                        synaptic_weights[next_synapse] = ((float)rand() / (float)(1.0)) * 3; 
-                    else // inhibitory neuron
-                        synaptic_weights[next_synapse] = -((float)rand() / (float)(1.0)) * 3;
+                    if(neuron_behaviour_list[i-1] == 1){ // excitatory neuron
+                        synaptic_weights[next_synapse] = (float)w; 
+                    }
+                    else{ // inhibitory neuron
+                        synaptic_weights[next_synapse] = (float)-w;
+                    }
                 }
                 next_synapse ++;
             }
@@ -68,17 +89,17 @@ void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, in
 }
 
 void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int *synapse_matrix){
-    int i,j;
+    int i,j, l;
 
     int next_synapse = 0;
 
-    double u, lambda = 0.2;
+    double u, lambda = 0.6;
 
     int max_delay = 20; // PROVISIONAL
 
     // input neurons delays are irrelevant
     for(i=0; i<n_neurons; i++){
-        if(synapse_matrix[i]>0){
+        for(j = 0; j<synapse_matrix[i]; j++){
             synaptic_delays[next_synapse] = 1; 
             next_synapse ++;
         }
@@ -87,12 +108,13 @@ void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int *s
     // rest of synapses
     for(i = 1; i<(n_neurons+1); i++){
         for(j = 0; j<(n_neurons+1); j++){ // last column synapses are network output synapses
-            if(synapse_matrix[i * (n_neurons + 1)]>0){
+            for(l=0; l<synapse_matrix[i * (n_neurons + 1) + j]; l++){
                 if(j == n_neurons) // network output synapse: delays are irrelevant
                     synaptic_delays[next_synapse] = 1; 
                 else{// other synapses delays can be different
-                    u = (double)rand() / max_delay;
-                    synaptic_delays[next_synapse] = (int)log(1-u) / lambda;
+                    u = (double)rand() / RAND_MAX;
+                    synaptic_delays[next_synapse] = (int)(-log(1-u) / lambda) % max_delay;
+                    if(synaptic_delays[next_synapse] == 0) synaptic_delays[next_synapse] = 1;
                 }
                 next_synapse ++;
             }
