@@ -2,7 +2,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
+#include <math.h>
+#include <time.h>
 void print_matrix( int *matrix, int rows, int columns){
     for(int i = 0; i<rows; i++){
         for(int j = 0; j<columns; j++){
@@ -19,6 +20,24 @@ void print_array(int *array, int length){
     }
     printf("\n");
 }
+
+void print_matrix_uint8(__uint8_t *matrix, int rows, int columns){
+    for(int i = 0; i<rows; i++){
+        for(int j = 0; j<columns; j++){
+            printf("%d ", matrix[i*columns + j]);
+        }
+        printf("\n");
+    }
+}
+
+void print_array_uint8(__uint8_t *array, int length){
+    int i;
+    for(i=0; i<length; i++){
+        printf("%d ", array[i]);
+    }
+    printf("\n");
+}
+
 
 void print_matrix_f(float *matrix, int rows, int columns){
     for(int i = 0; i<rows; i++){

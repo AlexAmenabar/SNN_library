@@ -18,13 +18,14 @@ int main(int argc, char *argv[]) {
     int simulation_type, time_steps, time_step=0;
 
     //__int8_t *synapse_matrix;
-    int *synapse_matrix, *delay_list, *neuron_excitatory, *training_zones;
+    int **synaptic_connections, *neuron_excitatory, *training_zones; // change to uint in the future
+    int *delay_list;
     float *weight_list;
 
     void *neuron_initializer; // function to initialize neurons
     void (*step)(); // functions to run a step on the simulation
 
-    int i;
+    int i, j;
 
     // Load information from input parameters
     execution_type = strtoul(argv[1], NULL, 10);
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
 
     // load information about the snn from file
     load_network_information(argv[4], &n_neurons, &n_input, &n_output, &n_synapses, &n_input_synapses, &n_output_synapses,
-                            &synapse_matrix, &neuron_excitatory, &weight_list, &delay_list, &training_zones);
+                            &synaptic_connections, &neuron_excitatory, &weight_list, &delay_list, &training_zones);
 
 
     time_steps = strtoul(argv[5], NULL, 10);
@@ -56,8 +57,18 @@ int main(int argc, char *argv[]) {
     printf(" - Number output synapses = %d\n", n_output_synapses);
     printf(" - Neurons behaviour: ");
     print_array(neuron_excitatory, n_neurons);
-    printf(" - Synapse matrix:\n");
-    print_matrix(synapse_matrix, n_neurons, n_neurons);
+    printf(" - Synapses:\n");
+    for(i = 0; i<(n_neurons + 1); i++){
+        printf("Printing neuron %d connections %d: ", i-1, synaptic_connections[i][0]); // -1 input synapses
+        for(j = 1; j<(synaptic_connections[i][0])+1; j+=2){
+            printf("j: %d\n");
+            printf("%d ", synaptic_connections[i][j]);
+            printf("%d ", synaptic_connections[i][j+1]);
+
+        }
+        printf("\n");
+    }
+    //print_matrix(synapse_matrix, n_neurons, n_neurons);
     printf(" - Weights list: ");
     print_array_f(weight_list, n_synapses);
     printf(" - Delays list: ");
@@ -68,7 +79,7 @@ int main(int argc, char *argv[]) {
 
 #endif
 
-
+/*
     // initialize snn structure
     spiking_nn_t snn;
     initialize_network(&snn, neuron_type, n_neurons, n_input, n_output, n_synapses, n_input_synapses, n_output_synapses, 
@@ -250,6 +261,6 @@ int main(int argc, char *argv[]) {
     // free memory
     free(snn.lif_neurons);
     free(snn.synapses);
-
+*/
     return 0;
 }

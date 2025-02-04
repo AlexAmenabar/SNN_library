@@ -19,11 +19,13 @@ void close_file(FILE **f){
 }
 
 void load_network_information(const char *file_name, int *n_neurons, int *n_input, int *n_output, int *n_synapses, int *n_input_synapses, int *n_output_synapses, 
-                int **synapse_matrix, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones) {
+                int ***synaptic_connections, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones) {
     FILE *f = NULL;
     open_file(&f, file_name);
 
-    int i;
+    int i, j;
+    int t_n_synapses;
+    int connections = 0;
 
     // read number of neurons from file
     fscanf(f, "%d", n_neurons);
@@ -41,7 +43,11 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
 
     // reserve memory
     (*neuron_excitatory) = (int *)malloc(*(n_neurons) * sizeof(int));
-    *synapse_matrix = (int *)malloc(((*n_neurons) + 1) * ((*n_neurons)+1) * sizeof(int));
+
+    // alloc memory for synapses
+    *synaptic_connections = (int **)malloc(((*n_neurons) + 1) * sizeof(int *)); // + 1 as input layer must be taken into account
+
+
     *weight_list = (float *)malloc(*n_synapses * sizeof(float));
     *delay_list = (int *)malloc(*n_synapses * sizeof(int));
     *training_zones = (int *)malloc(*n_synapses * sizeof(int));
@@ -63,8 +69,18 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
 
     // load synapses if in file
     if(INPUT_SYNAPSES == 1)
-        for(i=0; i<((*n_neurons) + 1) * ((*n_neurons) + 1); i++)
-            fscanf(f, "%d", &((*synapse_matrix)[i]));
+        for(i=0; i<(*n_neurons + 1); i++){
+            fscanf(f, "%d", &connections);
+
+            // alloc memory
+            (*synaptic_connections)[i] = malloc((connections * 2 + 1) * sizeof(int)); // for each connection the neuron id and the number of synapses must be stored
+            (*synaptic_connections)[i][0] = connections;
+
+            for(j = 1; j<connections+1; j+=2)
+                fscanf(f, "%d", &((*synaptic_connections)[i][j])); // number of synapses connected to that neuron
+                fscanf(f, "%d", &((*synaptic_connections)[i][j+1])); // number of synapses connected to that neuron
+        }
+            //fscanf(f, "%d", &((*synapse_matrix)[i]));
 
 #ifdef DEBUG
     printf("Synapse matrix loaded\n");

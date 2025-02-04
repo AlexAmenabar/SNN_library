@@ -1,5 +1,9 @@
 #ifndef HELPERS_H
 #define HELPERS_H
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
 
 /// @brief Print matrix
 /// @param matrix Matrix to be printed
@@ -12,6 +16,10 @@ void print_matrix( int *matrix, int rows, int columns);
 /// @param array Array to be printed
 /// @param length Number of elements of the array
 void print_array(int *array, int length);
+
+void print_matrix_uint8(__uint8_t *matrix, int rows, int columns);
+
+void print_array_uint8(__uint8_t *array, int length);
 
 
 /// @brief Print matrix (of real numbers)

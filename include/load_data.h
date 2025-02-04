@@ -54,7 +54,7 @@ void close_file(FILE **f);
 /// @param delay_list List of synaptic delays
 /// @param training_zones List of training type for each synapse
 void load_network_information(const char *file_name, int *n_neurons, int *n_input, int *n_output, int *n_synapses, int *n_input_synapses, int *n_output_synapses, 
-                int **synapse_matrix, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones);
+                int ***synaptic_connections, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones);
 
 
 /// @brief Load input spike trains
