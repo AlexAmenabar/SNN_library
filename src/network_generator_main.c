@@ -1,4 +1,3 @@
-#include "snn_library.h"
 #include "network_generator.h"
 
 #include <stdlib.h>

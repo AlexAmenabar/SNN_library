@@ -56,10 +56,6 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training){
     default:
         break;
     }
-    if(training == 0){
-
-    }
-    
 }
 
 void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, float *weight_list, int *delay_list, int *training_zones){
@@ -73,14 +69,14 @@ void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, float *weigh
 
 void add_input_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index){
     if(snn->neuron_type == 0)
-        add_input_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], synapse_index);
+        add_input_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], &(snn->synapses[synapse_index]), synapse_index);
     // else{}
 }
 
 
 void add_output_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index){
     if(snn->neuron_type == 0)
-        add_output_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], synapse_index);
+        add_output_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], &(snn->synapses[synapse_index]), synapse_index);
     // else{}
 }
 

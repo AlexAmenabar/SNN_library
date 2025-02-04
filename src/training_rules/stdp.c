@@ -12,9 +12,11 @@
 #define A 0.25 // modulation magnitude for STDP
 
 void add_stdp(synapse_t *synapse){
-    if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
-        int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
+    //if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
+    //    int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
 
+    if(synapse->pre_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron->t_last_spike != -1 && synapse->pre_synaptic_lif_neuron->t_last_spike != -1 && synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
+        int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
         int excitatory; // Set this as synapse parameter to avoid this if
         if(synapse->w>0) excitatory = 1;
         else excitatory = 0;
@@ -35,9 +37,10 @@ void add_stdp(synapse_t *synapse){
 }
 
 void mult_stdp(synapse_t *synapse){
-    if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
-        int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
-
+    //if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
+    //    int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
+    if(synapse->pre_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron->t_last_spike != -1 && synapse->pre_synaptic_lif_neuron->t_last_spike != -1 && synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
+        int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
         int excitatory;
         if(synapse->w>0) excitatory = 1;
         else excitatory = 0;
@@ -58,9 +61,10 @@ void mult_stdp(synapse_t *synapse){
 }
 
 void anti_stdp(synapse_t *synapse){
-    if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
-        int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
-
+    //if(synapse->t_last_pre_spike != -1 && synapse->t_last_post_spike != -1 && synapse->t_last_post_spike != synapse->t_last_pre_spike){
+    //    int time_diff = synapse->t_last_post_spike - synapse->t_last_pre_spike;
+    if(synapse->pre_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron!=NULL && synapse->post_synaptic_lif_neuron->t_last_spike != -1 && synapse->pre_synaptic_lif_neuron->t_last_spike != -1 && synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
+        int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
         int excitatory; // Set this as synapse parameter to avoid this if
         if(synapse->w>0) excitatory = 1;
         else excitatory = 0;

@@ -31,14 +31,14 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, 
 
 /// @brief Add an input synapse to the neuron
 /// @param neuron Neuron to add the synapse
+/// @param synapse Synapse to be added
 /// @param synapse_index Synapse to be added to the neuron
-void add_input_synapse_to_lif_neuron(lif_neuron_t *neuron, int synapse_index);
-
+void add_input_synapse_to_lif_neuron(lif_neuron_t *neuron, synapse_t* synapse, int synapse_index);
 
 /// @brief Add an output synapse to the neuron
 /// @param neuron Neuron to add the synapse
+/// @param synapse synapse to be added
 /// @param synapse_index Synapse to be added to the neuron
-void add_output_synapse_to_lif_neuron(lif_neuron_t *neuron, int synapse_index);
-
+void add_output_synapse_to_lif_neuron(lif_neuron_t *neuron, synapse_t *synapse, int synapse_index);
 
 #endif
