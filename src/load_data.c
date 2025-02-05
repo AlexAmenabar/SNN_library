@@ -76,9 +76,10 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
             (*synaptic_connections)[i] = malloc((connections * 2 + 1) * sizeof(int)); // for each connection the neuron id and the number of synapses must be stored
             (*synaptic_connections)[i][0] = connections;
 
-            for(j = 1; j<connections+1; j+=2)
+            for(j = 1; j<(connections*2+1); j+=2){
                 fscanf(f, "%d", &((*synaptic_connections)[i][j])); // number of synapses connected to that neuron
                 fscanf(f, "%d", &((*synaptic_connections)[i][j+1])); // number of synapses connected to that neuron
+            }
         }
             //fscanf(f, "%d", &((*synapse_matrix)[i]));
 

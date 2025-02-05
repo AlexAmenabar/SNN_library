@@ -298,7 +298,7 @@ void step_lif_neuron2(spiking_nn_t *snn, int t, int neuron_id, unsigned char **g
 }
 
 
-void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int *synapse_matrix){
+void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int **synaptic_connections, int n_input_synapse, int n_output_synapse){
     // Initialize lif neuron parameters
     int i;
 
@@ -322,15 +322,15 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, 
         neuron->is_output_neuron = 0;
 
     // Initialize synapse data
-    int n_input_synapse = 0, n_output_synapse = 0;
+    //int n_input_synapse = 0, n_output_synapse = 0;
     
     // count input synapses
-    for(i=0; i<snn->n_neurons; i++)
-        n_input_synapse += synapse_matrix[i * (snn->n_neurons+1) + neuron_index]; // input synapses are found on the column
+    //for(i=0; i<snn->n_neurons; i++)
+    //    n_input_synapse += synapse_matrix[i * (snn->n_neurons+1) + neuron_index]; // input synapses are found on the column
    
     // count output synapses
-    for(i=1; i<snn->n_neurons+1;i++)
-        n_output_synapse += synapse_matrix[(neuron_index + 1) * (snn->n_neurons + 1) + i]; // input synapses are found on the row
+    //for(i=1; i<snn->n_neurons+1;i++)
+    //    n_output_synapse += synapse_matrix[(neuron_index + 1) * (snn->n_neurons + 1) + i]; // input synapses are found on the row
 
     // reserve memory to store synapses indexes
     neuron->input_synapse_indexes = malloc(n_input_synapse * sizeof(int));

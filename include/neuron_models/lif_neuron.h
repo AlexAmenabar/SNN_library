@@ -26,7 +26,7 @@ void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
 /// @param neuron_index Index to get the neuron to be initialized from snn
 /// @param excitatory If the neuron is excitatory or not
 /// @param synapse_matrix Synapse matrix to count the number of input and output synapses and reserve memory
-void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int *synapse_matrix);
+void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int **synaptic_connections, int n_input_synapse, int n_output_synapse);
 
 
 /// @brief Add an input synapse to the neuron

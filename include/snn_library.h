@@ -102,7 +102,7 @@ typedef struct{
 /// @param snn SNN structure with neuron list
 /// @param neuron_behaviour_list List of neuron types (excitatory or inhibitory)
 /// @param synapse_matrix Synapse matrix
-void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, int *synapse_matrix);
+void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, int **synaptic_connections);
 
 
 /// @brief Initialize a synapse data
@@ -139,7 +139,7 @@ void add_output_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synap
 /// @brief Connect neuron to input and output synapses
 /// @param snn SNN structure
 /// @param synapse_matrix Synapse matrix 
-void connect_neurons_and_synapses(spiking_nn_t *snn, int *synapse_matrix);
+void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections);
 
 
 /// @brief Initialize spiking neural network structure
@@ -157,6 +157,6 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int *synapse_matrix);
 /// @param delay_list List of synaptic delays
 /// @param training_zones List of training types for each synapse
 void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n_input, int n_output, int n_synapses, int n_input_synapses, int n_output_synapses, 
-                    int *neuron_behaviour_list, int *synapse_matrix, float *weight_list, int *delay_list, int *training_zones);
+                    int *neuron_behaviour_list, int **synaptic_connections, float *weight_list, int *delay_list, int *training_zones);
 
 #endif

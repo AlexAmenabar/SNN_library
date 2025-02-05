@@ -3,17 +3,21 @@
 #include <stdlib.h>
 #include <math.h>
 
-void generate_random_synapse_matrix(int *synapse_matrix, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
+void generate_random_synapse_matrix(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
     // bigger the number of synapses lower the probability: exponential distribution or pareto distribution
     int i, j;
     int max_synapses_between_neurons = 10;
     
-    double u, lambda = 0.5;
+    double u, lambda = 0.8;
 
     // initialize synapse amount data
     *n_synapse = 0; *n_input_synapse = 0; *n_output_synapse = 0;
 
     // generate synapse matrix
+    for(i=0; i<(n_neurons+1); i++){
+        for(j=0; j<n_)
+    }
+
     for(i=0; i<(n_neurons+1); i++){
         for(j=0; j<(n_neurons+1); j++){
             //printf("i = %d, j = %d, %d\n", i, j, i*(n_neurons+1)+j);
@@ -38,7 +42,7 @@ void generate_random_synapse_matrix(int *synapse_matrix, int n_neurons, int n_in
 }
 
 
-void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, int *synapse_matrix, int *neuron_behaviour_list){
+void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, **synaptic_connections, int *neuron_behaviour_list){
     int i,j, l;
 
     int next_synapse = 0;
@@ -88,7 +92,7 @@ void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, in
     }
 }
 
-void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int *synapse_matrix){
+void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int **synaptic_connections){
     int i,j, l;
 
     int next_synapse = 0;
