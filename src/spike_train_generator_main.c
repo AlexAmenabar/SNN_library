@@ -10,12 +10,13 @@ int main(int argc, char *argv[]) {
     
     srand(time(NULL)); // compilar
 
-    int n_input_spike_trains, time_steps;
+    int n_input_spike_trains, time_steps, prob;
 
     int **spike_trains, *n_spikes;
 
     n_input_spike_trains = strtoul(argv[1], NULL, 10);
     time_steps = strtoul(argv[2], NULL, 10);
+    prob = strtoul(argv[3],NULL, 10);
 
     // reserve memory
     n_spikes = (int *)malloc(n_input_spike_trains * sizeof(int));
@@ -26,7 +27,7 @@ int main(int argc, char *argv[]) {
     }
 
     // generate spike train
-    random_input_spike_train_generator(spike_trains, n_spikes, n_input_spike_trains, time_steps, 70);
+    random_input_spike_train_generator(spike_trains, n_spikes, n_input_spike_trains, time_steps, prob);
 
     // store generated spike trains on a file
     FILE *f;

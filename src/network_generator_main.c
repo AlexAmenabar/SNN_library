@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[]) {
     int n, n_input, n_output, n_synapses, n_input_synapses, n_output_synapses;
-    int *synapse_matrix, *synaptic_delays, *neuron_behaviour, *synaptic_learning_rules;
+    int **synaptic_connections, *synaptic_delays, *neuron_behaviour, *synaptic_learning_rules;
     float *synaptic_weights;
 
     n = strtoul(argv[1], NULL, 10);
@@ -21,9 +21,11 @@ int main(int argc, char *argv[]) {
 
     printf("INPUT PARAMETERS READED\n");
 
-    synapse_matrix = (int *)malloc((n+1) * (n+1) * sizeof(int));
+    // reserve memory
+    synaptic_connections = (int **)malloc((n+1) * sizeof(int *)); // n + 1 as there are n neurons and 1 network input "layer"
     neuron_behaviour = (int *)malloc(n * sizeof(int));
-    generate_random_synapse_matrix(synapse_matrix, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses);
+
+    generate_random_synaptic_connections(synaptic_connections, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses);
     printf("SYNAPSE MATRIX GENERATED\n");
     
     generate_random_neuron_behaviour(neuron_behaviour, n);
@@ -35,10 +37,10 @@ int main(int argc, char *argv[]) {
     printf("MEMORY RESERVED FOR SYNAPTIC PPROPERTIES\n");
    
    
-    generate_random_synaptic_weights(synaptic_weights, n, synapse_matrix, neuron_behaviour);
+    generate_random_synaptic_weights(synaptic_weights, n, synaptic_connections, neuron_behaviour);
     printf("SYNAPTIC WEIGHTS GENERATED\n");
 
-    generate_random_synaptic_delays(synaptic_delays, n, synapse_matrix);
+    generate_random_synaptic_delays(synaptic_delays, n_synapses, n_input_synapses, n_output_synapses);
     printf("SYNAPTIC DELAYS GENERATED\n");
 
     generate_random_training_type(synaptic_learning_rules, n_synapses);
@@ -69,9 +71,14 @@ int main(int argc, char *argv[]) {
     fprintf(f, "\n\n");
 
     // write synaptic connections
-    for(int i=0; i<(n+1); i++){
-        for(int j=0; j<(n+1); j++)
-            fprintf(f, "%d ", synapse_matrix[i*(n+1)+j]);
+    for(int i = 0; i<(synaptic_connections[0][0] * 2 +1); i++){
+        fprintf(f, "%d ", synaptic_connections[0][i]);
+    }
+    fprintf(f, "\n");
+
+    for(int i=1; i<(n+1); i++){
+        for(int j=0; j<(synaptic_connections[i][0] * 2 +1); j++)
+            fprintf(f, "%d ", synaptic_connections[i][j]);
         fprintf(f, "\n");
     }
     fprintf(f, "\n");

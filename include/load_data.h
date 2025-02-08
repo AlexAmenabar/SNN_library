@@ -2,6 +2,7 @@
 #define LOAD_DATA_H
 
 #include <stdio.h>
+#include "snn_library.h"
 
 // can be changed as input parameters 
 #ifndef INPUT_SYNAPSES
@@ -36,6 +37,13 @@
 /// @return Code
 int open_file(FILE **f, const char *file_name);
 
+/// @brief Function to open a file and write on it without overwriting current contents
+/// @param f File to write in
+/// @param file_name Name of the file to be opened
+/// @return Code
+int open_file_w(FILE **f, const char *file_name);
+
+
 /// @brief Function to close a file
 /// @param f File to close
 void close_file(FILE **f);
@@ -61,6 +69,12 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
 /// @param file_name File to load spike trains from
 /// @param snn Spiking Neural Network structure to store input spike trains on input synapses
 void load_input_spike_trains_on_snn(const char *file_name, spiking_nn_t *snn);
+
+
+/*/// @brief Insert new content on file init
+/// @param file_name Original name
+/// @param temp_file_name Temporal file name
+void insert_at_file_init(const char *file_name, const char *temp_file_name);*/
 
 
 #endif

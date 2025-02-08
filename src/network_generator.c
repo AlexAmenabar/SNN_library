@@ -2,56 +2,99 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "load_data.h"
 
-void generate_random_synapse_matrix(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
+void generate_random_synaptic_connections(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
     // bigger the number of synapses lower the probability: exponential distribution or pareto distribution
     int i, j;
     int max_synapses_between_neurons = 10;
     
-    double u, lambda = 0.8;
+    double u, lambda = 1.5;
 
     // initialize synapse amount data
     *n_synapse = 0; *n_input_synapse = 0; *n_output_synapse = 0;
 
-    // generate synapse matrix
-    for(i=0; i<(n_neurons+1); i++){
-        for(j=0; j<n_)
-    }
+    // pointer to store synaptic connections
+    int *temp_synaptic_connections = (int *)malloc((1 + 2 * n_neurons + 2) * sizeof(int)); // 1 is the number of synaptic connections, for each neuron 2 numbers (worst case) and another two if neuron is network output
+    int number_neuron_connections=0; // variable to store to how much neurons is conected a neurons (not synaptic connections)
+    int synapses; // generated synapse amount from neuron i to j
+    int next_pos = 1; 
 
-    for(i=0; i<(n_neurons+1); i++){
-        for(j=0; j<(n_neurons+1); j++){
-            //printf("i = %d, j = %d, %d\n", i, j, i*(n_neurons+1)+j);
-            if(i==0 && j!=(n_neurons) || i!=0 && j==(n_neurons) || i>0 && j<=n_neurons){
-                u = (double)rand() / RAND_MAX;
-                synapse_matrix[i * (n_neurons + 1) + j] = (int)(-log(1-u) / lambda);
-                
-                // add synapse amount
-                *n_synapse += synapse_matrix[i * (n_neurons + 1) + j];
-                
-                if(i==0)
-                    *n_input_synapse += synapse_matrix[i * (n_neurons + 1) + j];
-                
-                if(j==n_neurons)
-                    *n_output_synapse += synapse_matrix[i * (n_neurons + 1) + j];
-            }
-            else{
-                synapse_matrix[i * (n_neurons+1) + j] = 0;
+    // generate network input synaptic connections
+    for(i = 0; i<n_neurons; i++){ 
+        u = (double)rand() / RAND_MAX;
+        synapses = (int)(-log(1-u) / lambda) / 2;
+
+        // add
+        if(synapses > 0){
+            temp_synaptic_connections[next_pos] = i; // network input synapse to neuron i
+            temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
+            next_pos += 2;
+            number_neuron_connections +=1; // neuron is connected to one more neuron
+            *n_input_synapse += synapses;
+        }
+        *n_synapse += synapses;
+    }
+    temp_synaptic_connections[0] = number_neuron_connections;
+
+    // allocate memory for complete synaptic connections variable
+    synaptic_connections[0] = (int *)malloc((temp_synaptic_connections[0] * 2 + 1) * sizeof(int));
+
+    // write on file (less memory) and copy to general
+    for(i = 0; i<(temp_synaptic_connections[0] * 2 + 1); i++)
+        synaptic_connections[0][i] = temp_synaptic_connections[i];
+
+    // generate synaptic connections
+    for(i=1; i<(n_neurons+1); i++){ // network input synapses not taken into account
+        next_pos = 1;
+        number_neuron_connections = 0;
+
+        // for each neuron, generate synapses
+        for(j=0; j<(n_neurons+1); j++){ // j == n_neurons --> network output synapses
+            u = (double)rand() / RAND_MAX;
+            synapses = (int)(-log(1-u) / lambda) / 2;
+
+            if(synapses>0){
+                if(j==n_neurons){ // network output synapses
+                    temp_synaptic_connections[next_pos] = -1; // network input synapse to neuron i
+                    temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
+                    next_pos += 2;
+                    number_neuron_connections +=1; // neuron is connected to one more neuron
+                    *n_output_synapse += synapses; 
+                }
+                else{
+                    temp_synaptic_connections[next_pos] = j; // network input synapse to neuron j
+                    temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
+                    next_pos += 2;
+                    number_neuron_connections +=1; // neuron is connected to one more neuron
+                }
+                *n_synapse += synapses;
             }
         }
+
+        temp_synaptic_connections[0] = number_neuron_connections;
+
+        // allocate memory for complete synaptic connections variable
+        synaptic_connections[i] = (int *)malloc((temp_synaptic_connections[0] * 2 + 1) * sizeof(int));
+
+        // write on file (less memory) and copy to general
+        for(j = 0; j<(temp_synaptic_connections[0] * 2 + 1); j++)
+            synaptic_connections[i][j] = temp_synaptic_connections[j];
     }
 }
 
 
-void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, **synaptic_connections, int *neuron_behaviour_list){
+void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, int **synaptic_connections, int *neuron_behaviour_list){
     int i,j, l;
 
-    int next_synapse = 0;
+    int next_synapse = 0, valid;
+    float w;
 
     // all network input synapses have positive weights
-    for(i=0; i<n_neurons; i++){
-        for(j = 0; j<synapse_matrix[i]; j++){
-            int valid = 0;
-            float w = 0;
+    for(i=1; i<(synaptic_connections[0][0] * 2 + 1); i+=2){
+        for(j = 0; j<(synaptic_connections[0][i+1]); j++){
+            valid = 0;
+            w = 0;
             while(valid == 0){
                 w = ((float)rand() / (float)(RAND_MAX)) * 5;
                 if(w>0.005) valid = 1;
@@ -64,9 +107,9 @@ void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, **
     }
 
     // rest of synapses
-    for(i = 1; i<(n_neurons+1); i++){
-        for(j = 0; j<(n_neurons+1); j++){ // last column synapses are network output synapses
-            for(l=0; l<synapse_matrix[i * (n_neurons + 1) + j]; l++){
+    for(i=1; i<(n_neurons + 1); i++){
+        for(j=1; j<(synaptic_connections[i][0] * 2 +1); j+=2){
+            for(l = 0; l<synaptic_connections[i][j+1]; l++){
                 // generate random value
                 int valid = 0;
                 float w = 0;
@@ -92,7 +135,7 @@ void generate_random_synaptic_weights(float *synaptic_weights, int n_neurons, **
     }
 }
 
-void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int **synaptic_connections){
+void generate_random_synaptic_delays(int *synaptic_delays, int n_synapses, int n_input_synapses, int n_output_synapses){//int n_neurons, int **synaptic_connections){
     int i,j, l;
 
     int next_synapse = 0;
@@ -101,8 +144,19 @@ void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int **
 
     int max_delay = 20; // PROVISIONAL
 
+    for(next_synapse = 0; next_synapse<n_input_synapses; next_synapse++)
+        synaptic_delays[next_synapse] = 1;
+
+    
+    for(next_synapse = n_input_synapses; next_synapse<n_synapses; next_synapse++){
+        synaptic_delays[next_synapse] = 1;
+        u = (double)rand() / RAND_MAX;
+        synaptic_delays[next_synapse] = (int)(-log(1-u) / lambda) % max_delay;
+        if(synaptic_delays[next_synapse] == 0) synaptic_delays[next_synapse]++; // delay can not be 0
+    }
+
     // input neurons delays are irrelevant
-    for(i=0; i<n_neurons; i++){
+    /*for(i=0; i<n_neurons; i++){
         for(j = 0; j<synapse_matrix[i]; j++){
             synaptic_delays[next_synapse] = 1; 
             next_synapse ++;
@@ -123,7 +177,7 @@ void generate_random_synaptic_delays(int *synaptic_delays, int n_neurons, int **
                 next_synapse ++;
             }
         }
-    }
+    }*/
 }
 
 void generate_random_training_type(int *synaptic_learning_rule, int n_synapses){
