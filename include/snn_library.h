@@ -4,11 +4,11 @@
 
 // max spikes to store per synapse
 #ifndef MAX_SPIKES
-#define MAX_SPIKES 50
+#define MAX_SPIKES 20
 #endif
 
 #ifndef INPUT_MAX_SPIKES
-#define INPUT_MAX_SPIKES 1700
+#define INPUT_MAX_SPIKES 5500
 #endif
 
 /**

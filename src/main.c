@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
     float *weight_list;
 
     void *neuron_initializer; // function to initialize neurons
-    void (*step)(); // functions to run a step on the simulation
+    void (*input_step)(), (*output_step)(); // functions to run a step on the simulation
 
     int i, j;
 
@@ -172,8 +172,10 @@ int main(int argc, char *argv[]) {
     switch (neuron_type)
     {
         case 0: // LIF
-            step = &step_lif_neuron;
-            break;
+            //step = &step_lif_neuron;
+            input_step = &lif_neuron_compute_input_synapses;
+	    output_step = &lif_neuron_compute_output_synapses;
+	    break;
         case 1: // HH
             break;
         default:
@@ -191,6 +193,7 @@ int main(int argc, char *argv[]) {
     double elapsed_time_neurons= 0;
     double elapsed_time_synapses = 0;
 
+   int n_process = strtoul(argv[10], NULL, 10);
 
     // simulation / training
     if(execution_type == 0){ // clock
@@ -203,13 +206,18 @@ int main(int argc, char *argv[]) {
             // process all neurons
             clock_gettime(CLOCK_MONOTONIC, &start_neurons);
 
-            #pragma omp parallel
+            #pragma omp parallel num_threads(n_process)
             {
             #pragma omp for schedule(dynamic, 10) private(i) 
             for(int i=0; i<snn.n_neurons; i++){
-                step(&snn, time_step, i, generated_spikes);
+                input_step(&snn, time_step, i, generated_spikes);
             } 
-            #pragma omp barrier
+
+	    #pragma omp for schedule(dynamic, 10) private(i)
+	    for(int i=0; i<snn.n_neurons; i++){
+	        output_step(&snn, time_step, i, generated_spikes);
+	    }
+
             #pragma omp single
             {
             clock_gettime(CLOCK_MONOTONIC, &end_neurons);
@@ -269,7 +277,7 @@ int main(int argc, char *argv[]) {
         }
         fprintf(output_file, "\n");
     }
-    
+
     // print weight values at last
     FILE *output_file2;
     output_file2 = fopen(argv[8], "w");
@@ -283,11 +291,19 @@ int main(int argc, char *argv[]) {
         fprintf(output_file2, "%f ", snn.synapses[i].w);
         fprintf(output_file2, "\n");
     }
-        
-    
+
+    FILE *output_file3 = fopen(argv[9], "w");
+    if(output_file3 == NULL) printf("Error opening the file\n");
+    fprintf(output_file3, "%f ", elapsed_time);
+    fprintf(output_file3, "%f ", elapsed_time_neurons);
+    fprintf(output_file3, "%f \n", elapsed_time_synapses);
+
+    fclose(output_file);
+    fclose(output_file2);
+    fclose(output_file3);
     // free memory
-    free(snn.lif_neurons);
-    free(snn.synapses);
+//    free(snn.lif_neurons);
+//    free(snn.synapses);
 
     return 0;
 }
