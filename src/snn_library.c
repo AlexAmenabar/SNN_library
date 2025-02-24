@@ -70,16 +70,16 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
     switch (training)
     {
     case 0:
-        synapse->learning_rule = &add_stdp;
+        synapse->learning_rule = &add_stdp;//(void (*)())&add_stdp;
         break;
     case 1:
-        synapse->learning_rule = &mult_stdp;
+        synapse->learning_rule = &mult_stdp;//(void (*)())&mult_stdp;
         break;
     case 2:
-        synapse->learning_rule = &anti_stdp;
+        synapse->learning_rule = &anti_stdp;//(void (*)())&anti_stdp;
         break;
     case 3:
-        synapse->learning_rule = &triplet_stdp;
+        synapse->learning_rule = &triplet_stdp;//(void (*)())&triplet_stdp;
         break;
     default:
         break;
