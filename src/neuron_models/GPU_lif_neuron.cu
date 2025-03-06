@@ -2,7 +2,7 @@
 #include <cuda_runtime.h>
 #include <stdio.h>
 #include "snn_library.h"
-//#include "include/lif_neuron.cuh"
+#include "neuron_models/GPU_lif_neuron.cuh"
 
 #define THR_PER_BLOCK 1024 
 
@@ -30,10 +30,35 @@ __global__ void cuda_add_dot_matrix(int rowsAC, int colsBC, int colsArowsB, floa
     }
 }
 
+
+__global__ void cuda_simulation_step_lif_neuron(int rowsAC, int colsBC, int colsArowsB, float *A, float *B, float *C, float *D)
+{
+    //lortu hariaren identifikadorea
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int j;
+
+    //hariak kalkulatu behar duen Dko elementuaren errenkada eta zutabea
+    int zutab = i%colsBC;
+    int errenk = i/colsBC;
+
+    //egiaztatu hariak kalkulua egin behar duela
+    if(i<(rowsAC * colsBC))
+    {
+        //D kalkulatzeko Ako errenkada eta Bko zutabea prozesatu
+        for(j=0; j<colsArowsB; j++)  
+            D[i]+=A[errenk * colsArowsB + j]*B[j * colsBC + zutab];
+
+        D[i] += C[i];
+    }
+}
+
+
 /**
 GPUko memoriara mugitu matrizeak eta jaurti kernela
 */
-double process_time_step(spiking_nn_t *snn, int n, int m){
+double process_simulation_lif_neuron(spiking_nn_t *snn, int n, int m, int time_steps){
+    printf("Running CUDA code, YUJUUUU\n");
+    
     cudaEvent_t start, stop;
     
     // list of neurons and synapses
@@ -90,6 +115,8 @@ double process_time_step(spiking_nn_t *snn, int n, int m){
         cudaMemcpy(&d_synapses[i].pre_synaptic_lif_neuron, snn->synapses[i].pre_synaptic_lif_neuron, sizeof(lif_neuron_t), cudaMemcpyHostToDevice);
         cudaMemcpy(&d_synapses[i].post_synaptic_lif_neuron, snn->synapses[i].post_synaptic_lif_neuron, sizeof(lif_neuron_t), cudaMemcpyHostToDevice);
     }
+
+    return 0.0;
 
     // grid for neurons kernel launching
     //thr_per_blk_neurons = colsBC; //hari bakoitzean emaitzeko matrizearen osagai bat kalkulatzen da (errenkada x zutabea)

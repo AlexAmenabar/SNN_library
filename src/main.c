@@ -4,6 +4,7 @@
 #include "training_rules/stdp.h"
 
 #include "neuron_models/lif_neuron.h"
+//#include "neuron_models/GPU_lif_neuron.cuh"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -88,6 +89,9 @@ int main(int argc, char *argv[]) {
 #endif
 
     // free memory
+    for(i=0; i<(n_neurons+1); i++){
+        free(synaptic_connections[i]);
+    }
     free(synaptic_connections);
     free(weight_list);
     free(delay_list);
@@ -197,6 +201,9 @@ int main(int argc, char *argv[]) {
 
     // simulation / training
     if(execution_type == 0){ // clock
+        #ifdef CUDA
+        double v = process_simulation_lif_neuron(&snn, snn.n_neurons, snn.n_synapses, time_steps);
+        #else
         clock_gettime(CLOCK_MONOTONIC, &start);
         while(time_step < time_steps){
             //printf("Time: %d/%d\n", time_step, time_steps);
@@ -251,9 +258,9 @@ int main(int argc, char *argv[]) {
             }
             printf("\n=======================================\n\n");
 #endif        
-        
         }
         clock_gettime(CLOCK_MONOTONIC, &end);
+        #endif
     }
 
     double elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;

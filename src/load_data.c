@@ -51,21 +51,36 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
 #endif
 
 
+    /*printf("Memory needs:\n");
+    printf(" - Neurons informations: %d\n", *(n_neurons) * sizeof(int));
+    printf(" - Synaptic connections: %d\n", ((*n_neurons) + 1) * sizeof(int *));
+    printf(" - Weights: %d\n", *(n_neurons) * sizeof(int));
+    printf(" - Neurons informations: %d\n", *(n_neurons)*sizeof(int));
+    printf(" - Neurons informations: %d\n", *(n_neurons)*sizeof(int));*/
+
     // reserve memory
     (*neuron_excitatory) = (int *)malloc(*(n_neurons) * sizeof(int));
+    printf("Memory reserved\n");
 
     // alloc memory for synapses
     *synaptic_connections = (int **)malloc(((*n_neurons) + 1) * sizeof(int *)); // + 2, one row input layer and the other the output layet
+    printf("Memory reserved\n");
 
 
     *weight_list = (float *)malloc(*n_synapses * sizeof(float));
-    *delay_list = (int *)malloc(*n_synapses * sizeof(int));
-    *training_zones = (int *)malloc(*n_synapses * sizeof(int));
+    printf("Memory reserved\n");
 
-#ifdef DEBUG
+    *delay_list = (int *)malloc(*n_synapses * sizeof(int));
+    printf("Memory reserved\n");
+
+    *training_zones = (int *)malloc(*n_synapses * sizeof(int));
+    printf("Memory reserved\n");
+
+
+//#ifdef DEBUG
     printf("Memory reserved\n");
     printf("n = %d, n_i = %d, n_o = %d, n_synap = %d\n", *n_neurons, *n_input, *n_output, *n_synapses);
-#endif
+//#endif
 
 
     // load available information from file
@@ -73,9 +88,9 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
         for(i=0; i<*n_neurons; i++)
             fscanf(f, "%d", &((*neuron_excitatory)[i]));
 
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("Input behaviour loaded\n");
-#endif
+//#endif
 
     // load synapses if in file
     if(INPUT_SYNAPSES == 1)
@@ -93,36 +108,36 @@ void load_network_information(const char *file_name, int *n_neurons, int *n_inpu
         }
             //fscanf(f, "%d", &((*synapse_matrix)[i]));
 
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("Synapse matrix loaded\n");
-#endif
+//#endif
 
     // load weights if in file
     if(INPUT_WEIGHTS == 1)
         for(i=0; i<*n_synapses; i++)
             fscanf(f, "%f", &((*weight_list)[i]));
 
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("Synapse weights loaded\n");
-#endif
+//#endif
 
     // load delays if in file
     if(INPUT_DELAYS == 2)
         for(i=0; i<*n_synapses; i++)
             fscanf(f, "%d", &((*delay_list)[i]));
 
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("Synapse delays loaded\n");
-#endif
+//#endif
 
     // load training zones if in file
     if(INPUT_TRAINING_ZONES == 1)
         for(i=0; i<*n_synapses; i++)
             fscanf(f, "%d", &((*training_zones)[i]));
 
-#ifdef DEBUG
+//#ifdef DEBUG
     printf("Training zones loaded\n\n");
-#endif
+//#endif
 
     close_file(&f);
 }

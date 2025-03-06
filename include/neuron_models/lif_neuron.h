@@ -3,10 +3,10 @@
 
 #include "snn_library.h"
 
-#define REFRAC_TIME
-#define T 100 // tiempo total de la simulación (ms)
-#define DT 1.0 // paso del tiempo (ms)
-#define TC 0.9 // time constant parameter
+#define REFRAC_TIME 5
+#define T 100 // tiempo total de la simulación (ms) # this should be constants defined on snn_library.h
+#define DT 1.0 // paso del tiempo (ms) # this too
+#define TC 0.9 // time constant parameter # this too
 
 
 /**

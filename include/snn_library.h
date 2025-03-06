@@ -8,7 +8,7 @@
 #endif
 
 #ifndef INPUT_MAX_SPIKES
-#define INPUT_MAX_SPIKES 5500
+#define INPUT_MAX_SPIKES 1000
 #endif
 
 /**

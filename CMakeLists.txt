@@ -1,70 +1,54 @@
-# Mínimo requerido
-cmake_minimum_required(VERSION 3.10)
+# CUDA directory:
+CUDA_ROOT_DIR=/usr/local/cuda
+# CC compiler options:
+CC=gcc
+CC_FLAGS=
+CC_LIBS=
+# NVCC compiler options:
+NVCC=nvcc
+NVCC_FLAGS=
+NVCC_LIBS=
 
-# Nombre del proyecto
-project(SNN_LIBRARY)
+# CUDA library directory:
+CUDA_LIB_DIR= -L$(CUDA_ROOT_DIR)/lib64
+# CUDA include directory:
+CUDA_INC_DIR= -I$(CUDA_ROOT_DIR)/include
+# CUDA linking libraries:
+CUDA_LINK_LIBS= -lcudart
 
-# Archivos fuente
-#file(GLOB_RECURSE SOURCES "src/*.cpp")
+## Project file structure ##
+# Source file directory:
+SRC_DIR = src
+# Object file directory:
+OBJ_DIR = bin
+# Include header file diretory:
+INC_DIR = include
 
-# Crear ejecutable
-#add_executable(programa ${SOURCES})
+## Make variables ##
 
-# Configuración de carpetas de salida
-set(MAIN_OUTPUT_DIR ${CMAKE_BINARY_DIR}/build)
-#set(TEST_OUTPUT_DIR ${CMAKE_BINARY_DIR}/build/tests)
+# Target executable name:
+BIN = ehp
 
-set(CMAKE_C_COMPILER gcc)
+# Object files:
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/codeGPU.o $(OBJ_DIR)/codeCPU.o
 
-# Carpeta con headers
-include_directories(${CMAKE_SOURCE_DIR}/include)
+## Compile ##
+# Link c and CUDA compiled object files to target executable:
+$(BIN) : $(OBJS)
+	$(CC) $(CC_FLAGS) $(OBJS) -o $@ $(CUDA_INC_DIR) $(CUDA_LIB_DIR) $(CUDA_LINK_LIBS)
 
-# Buscar todos los archivos fuente
-file(GLOB_RECURSE ALL_SOURCES "src/*.c")
+# Compile main.c file to object files:
+$(OBJ_DIR)/%.o : %.c
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
-# Separar archivos main/test y comunes
-set(COMMON_SOURCES "")
-set(MAIN_FILES "")
-#set(TEST_FILES "")
+# Compile C source files to object files:
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c $(INC_DIR)/%.h
+	$(CC) $(CC_FLAGS) -c $< -o $@
 
-foreach(FILE ${ALL_SOURCES})
-    if (FILE MATCHES ".(main).")
-        list(APPEND MAIN_FILES ${FILE})  # Archivos main
-    #elseif (FILE MATCHES ".(test).")
-    #    list(APPEND TEST_FILES ${FILE}) # Archivos test
-    else()
-        list(APPEND COMMON_SOURCES ${FILE})  # Archivos comunes
-    endif()
-endforeach()
+# Compile CUDA source files to object files:
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.cu $(INC_DIR)/%.cuh
+	$(NVCC) $(NVCC_FLAGS) -c $< -o $@ $(NVCC_LIBS)
 
-# Crear un ejecutable para cada archivo main/test
-foreach(MAIN_FILE ${MAIN_FILES})
-    # Obtener el nombre base del archivo main/test (sin extensión)
-    get_filename_component(EXECUTABLE_NAME ${MAIN_FILE} NAME_WE)
-
-    # Crear ejecutable
-    add_executable(${EXECUTABLE_NAME}
-        ${MAIN_FILE}
-        ${COMMON_SOURCES}
-    )
-    # Especificar la carpeta de destino
-    set_target_properties(${EXECUTABLE_NAME} PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${MAIN_OUTPUT_DIR}
-    )
-endforeach()
-
-# Crear un ejecutable para cada archivo main/test
-#foreach(TEST_FILE ${TEST_FILES})
-    # Obtener el nombre base del archivo main/test (sin extensión)
-#    get_filename_component(EXECUTABLE_NAME ${TEST_FILE} NAME_WE)
-
-    # Crear ejecutable
-#    add_executable(${EXECUTABLE_NAME}
-#        ${TEST_FILE}
-#        ${COMMON_SOURCES}
-#    )
-    # Especificar la carpeta de destino
-#    set_target_properties(${EXECUTABLE_NAME} PROPERTIES
-#        RUNTIME_OUTPUT_DIRECTORY ${TEST_OUTPUT_DIR}
-#    )
-#endforeach()
+# Clean objects in object directory.
+clean:
+	$(RM) bin/* *.o $(BIN)
