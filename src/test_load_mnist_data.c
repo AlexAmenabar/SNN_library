@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     void *neuron_initializer; // function to initialize neurons
     void (*input_step)(), (*output_step)(); // functions to run a step on the simulation
 
-    int i, j;
+    int i, j, l;
 
     // Load information from input parameters
     execution_type = strtoul(argv[1], NULL, 10);
@@ -68,7 +68,6 @@ int main(int argc, char *argv[]) {
     load_mnist(); // load information from mnist dataset
 
     spike_images_t spike_images;
-    spike_images.spike_images = malloc(60000 * sizeof(spike_image_t)); // alloc memory for images
     
     int pT = 100;
     int pDT = 1;
@@ -76,15 +75,39 @@ int main(int argc, char *argv[]) {
 
     spike_images.bins = bins;
     spike_images.image_size = 784;
-    spike_images.n_images = 60000;
+    spike_images.n_images = 5000;
 
-    printf("Converting images to spike trains...\n");
 
-    for(int i=0; i<spike_images.n_images; i++){
+    spike_images.spike_images = malloc(spike_images.n_images * sizeof(spike_image_t)); // alloc memory for images
+    for(i = 0; i<spike_images.n_images; i++){
+        spike_images.spike_images[i].spike_image = malloc(spike_images.image_size * sizeof(int *));
+        for(j=0; j<spike_images.image_size; j++)
+            spike_images.spike_images[i].spike_image[j] = malloc(spike_images.bins * sizeof(int));
+    }
+
+    // load spike trains
+    FILE *f = fopen(argv[6], "r");
+    if(f == NULL) printf("Error opening the file\n");
+
+    printf("Reading input spike train...\n");
+    for(i=0; i<spike_images.n_images; i++){
+        for(j=0; j<spike_images.image_size; j++){
+            fscanf(f, "%d", &(spike_images.spike_images[i].spike_image[j][0]));
+            for(l = 1; l<spike_images.spike_images[i].spike_image[j][0]; l++){
+                fscanf(f, "%d", &(spike_images.spike_images[i].spike_image[j][l]));
+            }
+        }
+    }
+
+    printf("Input spike trains readed!\n");
+
+    /*printf("Converting images to spike trains...\n");
+
+    for(i=0; i<spike_images.n_images; i++){
         // alloc memory for image pixels
         spike_images.spike_images[i].spike_image = malloc(spike_images.image_size * sizeof(int *)); // each image has 728 pixels (this must be generalized)
 
-        for(int j=0; j<spike_images.image_size; j++){ // alloc bins integers for each pixel spike train --> this must be corrected, as bins is used for 0,1 spike trains, but I use spike times, so less positions are needed
+        for(j=0; j<spike_images.image_size; j++){ // alloc bins integers for each pixel spike train --> this must be corrected, as bins is used for 0,1 spike trains, but I use spike times, so less positions are needed
             spike_images.spike_images[i].spike_image[j] = malloc(bins * sizeof(int));
         }
     }
@@ -94,33 +117,16 @@ int main(int argc, char *argv[]) {
     // convert images into spike images
     convert_images_to_spikes_by_poisson_distribution(&spike_images, train_image, spike_images.n_images, spike_images.image_size, spike_images.bins);
 
-    //int *training_set_spikes = (int *)malloc(6000 * sizeof(int));
-    //int *test_set_spikes = (int * )malloc(1000 * sizeof(int));
-    // convert mnist information into spikes
+    printf("Conversion correctly completed!\n");*/
 
-    printf("Conversion correctly completed!\n");
 
-    // print spike trains
-/*
-    printf("Printing spike trains...\n");
-    for(int i = 0; i<spike_images.n_images; i++){
-        printf("Image %d\n", i);
-        for(int j = 0; j<spike_images.image_size; j++){
-            printf("Pixel %d, value %f, Spike train: ", j, train_image[i][j]);
-            for(int l=0; l<spike_images.spike_images[i].spike_image[j][0]+1; l++){
-                printf("%d ", spike_images.spike_images[i].spike_image[j][l]);
-            }
-            printf("\n");
-        }
-        printf("\n");
+/*    for(i = 0; i<bins; i++){
+        printf("%d ",spike_images.spike_images[5].spike_image[70][i]);
     }
-    printf("\n");
 */
-
-
     // variable to store generated spikes
     unsigned char **generated_spikes = malloc(n_neurons * sizeof(unsigned char *));
-    for (int i = 0; i<n_neurons; i++)
+    for (i = 0; i<n_neurons; i++)
         generated_spikes[i] = malloc(time_steps * sizeof(unsigned char));
 
 
@@ -140,6 +146,14 @@ int main(int argc, char *argv[]) {
 
     // load amount of threads 
     int n_process = strtoul(argv[10], NULL, 10);
+
+
+    struct timespec start, end;
+    struct timespec start_neurons, end_neurons;
+    struct timespec start_synapses, end_synapses;
+
+    double elapsed_time_neurons= 0;
+    double elapsed_time_synapses = 0;
 
     // simulation / training
     if(execution_type == 0){ // clock
@@ -172,25 +186,99 @@ int main(int argc, char *argv[]) {
     } // model training
     else{
         // for each sample on the dataset
-        for(int i = 0; i<5000; i++){
-            // initialize network
-            
+        for(i = 0; i<20; i++){
+            printf("Starting processing sample %d...\n", i);
+            // initialize network (THIS MUST BE MOVED TO A FUNCTION AND GENERALIZED FOR DIFFERENT NEURON TYPES
+            clock_gettime(CLOCK_MONOTONIC, &start);
 
-            // introduce spikes into neurons spikes
+            #pragma omp parallel for schedule(dynamic, 10) private(j)  // this and the next loops: 4.5 seconds
+            for(j = 0; j<snn.n_neurons; j++){
+                re_initialize_lif_neuron(&snn, j);
+            }
+            printf("Neuron reinitialized\n");
+            // reinitialize synapses
+
+            #pragma omp parallel for schedule(dynamic, 10) private(j) 
+            for(j=0; j<snn.n_synapses; j++){
+                re_initialize_synapse(&(snn.synapses[j]));
+            }
+            printf("Synapses reinitialized\n");
+
+            // introduce spikes into input neurons input synapses (I think that this is not paralelizable)
+            // try using pointers directly
+            for(j=0; j<snn.n_input; j++){ // 3 seconds??
+                for(int s = 0; s<snn.lif_neurons[j].n_input_synapse; s++){
+                    synapse_t *synap = &(snn.synapses[snn.lif_neurons[j].input_synapse_indexes[s]]);
+                    
+                    /*
+                    synap->l_spike_times = spike_images.spike_images[i].spike_image[j];
+                    synap->last_spike += spike_images.spike_images[i].spike_image[j][0];
+                    if(synap->last_spike>0)
+                        synap->next_spike = 1; // when copying the pointer the first position is the number of spikes
+                    synap->max_spikes = synap->last_spike;
+                    */
+                    ///*
+                    for(l = 0; l<spike_images.spike_images[i].spike_image[j][0]; l++){
+                        synap->l_spike_times[synap->last_spike] = spike_images.spike_images[i].spike_image[j][l];
+                        synap->last_spike +=1;
+                    }
+                    //synap->max_spikes = synap->last_spike;
+                    //*/
+                }
+            }
+            printf("Spikes introduced on input neurons\n");
+
+            // check that the image has been correctly loaded into the neuron synapse
+            /*for(l = 0; l<784; l++){
+                if(spike_images.spike_images[i].spike_image[l][0]>0){
+                    for(j=0; j<spike_images.spike_images[i].spike_image[l][0]; j++){
+                        printf("(%d, %d) ", spike_images.spike_images[i].spike_image[l][j], snn.synapses[snn.lif_neurons[l].input_synapse_indexes[0]].l_spike_times[j]);
+                    }
+                    printf("\n");
+                }
+            }*/
+
+           
+            for(j=0; j<bins; j++){ // this loop more or less 6 
+                // process training sample
+                //printf("processing bin %d\n", j);
+                #pragma omp parallel num_threads(n_process)
+                {
+                    #pragma omp for schedule(dynamic, 10) private(l) 
+                    for(l=0; l<snn.n_neurons; l++){
+                        input_step(&snn, j, l, generated_spikes);
+                    } 
+
+                    //printf("Input synapses processed\n");
+
+                    #pragma omp for schedule(dynamic, 10) private(l)
+                    for(l=0; l<snn.n_neurons; l++){
+                        output_step(&snn, j, l, generated_spikes);
+                    }
+
+                    //printf("Output synapses processed\n");
+                    // stdp
+                    #pragma omp for schedule(dynamic, 50) private(l)
+                    for(l  = 0; l<snn.n_synapses; l++){
+                        snn.synapses[i].learning_rule(&(snn.synapses[l])); 
+                    }
+
+                    //printf("Training rules processed\n");
+                    // store generated output into another variable
 
 
-            // process training sample
+                    // train?
+                }
+            }
+            clock_gettime(CLOCK_MONOTONIC, &end);
 
-
-            // store generated output into another variable
-
-
-            // train?
+            double elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("Execution time: %f seconds\n", elapsed_time);
         }
     }
 
     // print spikes generated by each neuron
-    FILE *output_file;
+   /* FILE *output_file;
     output_file = fopen(argv[7], "w");
     if(output_file == NULL){
         printf("Error opening the file. \n");
@@ -206,7 +294,7 @@ int main(int argc, char *argv[]) {
     }
 
     // print weight values at last
-    FILE *output_file2;
+    /*FILE *output_file2;
     output_file2 = fopen(argv[8], "w");
     if(output_file2 == NULL){
         printf("Error opening the file. \n");
@@ -221,16 +309,16 @@ int main(int argc, char *argv[]) {
 
     FILE *output_file3 = fopen(argv[9], "w");
     if(output_file3 == NULL) printf("Error opening the file\n");
-    fprintf(output_file3, "%f ", elapsed_time);
+    /*fprintf(output_file3, "%f ", elapsed_time);
     fprintf(output_file3, "%f ", elapsed_time_neurons);
     fprintf(output_file3, "%f \n", elapsed_time_synapses);
-
-    fclose(output_file);
+*/
+    /*fclose(output_file);
     fclose(output_file2);
     fclose(output_file3);
     // free memory
 //    free(snn.lif_neurons);
-//    free(snn.synapses);
-*/
+//    free(snn.synapses);*/
+
     return 0;
 }

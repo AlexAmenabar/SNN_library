@@ -4,6 +4,58 @@
 #include <math.h>
 #include "load_data.h"
 
+
+void generate_semi_random_synaptic_connections(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){ // por ahora n_input_synapse y n_output_synapse no se utilizan, ya que por neurona de entrada/salida hay una unica sinapsis de entrada/salida
+    // bigger the number of synapses lower the probability: exponential distribution or pareto distribution
+    int i, j;
+
+    // amount of connection per neuron are computed
+    int connections_per_neuron = ((*n_synapse) - (*n_input_synapse) - (*n_output_synapse)) / n_neurons; // neuronas que hay entre medias en la red
+    int generated_connections = 0; 
+
+    // alocate memory
+    synaptic_connections[0] = (int *)malloc((n_input * 2 +1 ) * sizeof(int));
+    for(i=0; i<n_neurons+1; i++){
+        if(i>n_neurons-n_output)
+            synaptic_connections[i] = (int *)malloc(((connections_per_neuron * 2 + 2) + 1) * sizeof(int));
+        else
+            synaptic_connections[i] = (int *)malloc(((connections_per_neuron * 2) + 1) * sizeof(int));
+    }
+
+
+    // generate network input synaptic connections
+    int next_pos = 1; 
+    synaptic_connections[0][0] = n_input;
+    for(i = 0; i<n_input; i++){
+        int neuron_id = i;
+        synaptic_connections[0][next_pos] = neuron_id;
+        synaptic_connections[0][next_pos + 1] = 1;
+        next_pos += 2;
+    }
+
+    // generate network synapses
+    for(i = 1; i<n_neurons+1; i++){ 
+        next_pos = 1; 
+        for(j = 0; j<connections_per_neuron; j++){
+            int neuron_id = rand() % n_neurons; // neuron to be connected to
+            //if(neuron_id > n_neurons - connections_per_neuron + j)
+            //    neuron_id = n_neurons - connections_per_neuron + j;
+            synaptic_connections[i][next_pos] = neuron_id;
+            synaptic_connections[i][next_pos + 1] = 1;
+            next_pos += 2;
+        }
+        synaptic_connections[i][0] = connections_per_neuron;
+        // add output connection if neuron is output
+        if(i > n_neurons - n_output){
+            synaptic_connections[i][next_pos] = -1;
+            synaptic_connections[i][next_pos + 1] = 1;
+            next_pos += 2;
+            
+            synaptic_connections[i][0] += 1;
+        }
+    }
+}
+
 void generate_random_synaptic_connections(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
     // bigger the number of synapses lower the probability: exponential distribution or pareto distribution
     int i, j;
@@ -21,18 +73,21 @@ void generate_random_synaptic_connections(int **synaptic_connections, int n_neur
     int next_pos = 1; 
 
     // generate network input synaptic connections
-    for(i = 0; i<n_neurons; i++){ 
+    for(i = 0; i<n_input; i++){ 
         u = (double)rand() / RAND_MAX;
         synapses = (int)(-log(1-u) / lambda) / 2;
 
         // add
-        if(synapses > 0){
-            temp_synaptic_connections[next_pos] = i; // network input synapse to neuron i
-            temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
-            next_pos += 2;
-            number_neuron_connections +=1; // neuron is connected to one more neuron
-            *n_input_synapse += synapses;
+        if(synapses == 0){
+            synapses = 1; // input neurons must have at least one input synapse
         }
+        temp_synaptic_connections[next_pos] = i; // network input synapse to neuron i
+        temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
+        next_pos += 2;
+        number_neuron_connections +=1; // total input synapses
+        
+        // add synapse amount to total synapse number and to input synapse number
+        *n_input_synapse += synapses;
         *n_synapse += synapses;
     }
     temp_synaptic_connections[0] = number_neuron_connections;
@@ -44,32 +99,45 @@ void generate_random_synaptic_connections(int **synaptic_connections, int n_neur
     for(i = 0; i<(temp_synaptic_connections[0] * 2 + 1); i++)
         synaptic_connections[0][i] = temp_synaptic_connections[i];
 
+
     // generate synaptic connections
     for(i=1; i<(n_neurons+1); i++){ // network input synapses not taken into account
         next_pos = 1;
         number_neuron_connections = 0;
 
         // for each neuron, generate synapses
-        for(j=0; j<(n_neurons+1); j++){ // j == n_neurons --> network output synapses
+        for(j=0; j<(n_neurons); j++){ // j == n_neurons --> network output synapses
             u = (double)rand() / RAND_MAX;
             synapses = (int)(-log(1-u) / lambda) / 2;
 
             if(synapses>0){
-                if(j==n_neurons){ // network output synapses
+                /*if(j==n_neurons){ // network output synapses
                     temp_synaptic_connections[next_pos] = -1; // network input synapse to neuron i
                     temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
                     next_pos += 2;
                     number_neuron_connections +=1; // neuron is connected to one more neuron
                     *n_output_synapse += synapses; 
                 }
-                else{
-                    temp_synaptic_connections[next_pos] = j; // network input synapse to neuron j
-                    temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
-                    next_pos += 2;
-                    number_neuron_connections +=1; // neuron is connected to one more neuron
-                }
+                else{*/
+                temp_synaptic_connections[next_pos] = j; // network input synapse to neuron j
+                temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
+                next_pos += 2;
+                number_neuron_connections +=1; // neuron is connected to one more neuron
+                //}
                 *n_synapse += synapses;
-            }
+            }            
+        }
+
+        // if neuron is output neuron
+        if(i > n_neurons - n_output){
+            temp_synaptic_connections[next_pos] = -1; // network input synapse to neuron i
+            temp_synaptic_connections[next_pos+1] = 1; // for now only one synapse as output
+            next_pos += 2;
+            number_neuron_connections += 1; // neuron is connected to one more neuron
+            
+            // add synpase amount to output synapses and total synapses
+            *n_output_synapse += 1; 
+            *n_synapse += 1;
         }
 
         temp_synaptic_connections[0] = number_neuron_connections;

@@ -18,6 +18,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 
 
     #ifdef DEBUG
+    if(t==61)
         printf(" - Processing neuron %d \n", neuron_id);
     #endif
 
@@ -42,9 +43,18 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 
             next_spike_time = synapse->l_spike_times[synapse->next_spike];
             // neuron was on refractory state, so ignore all not processed spikes
+            
+            int atascau = 0; 
             while (next_spike_time < t && synapse->next_spike != synapse->last_spike){ //refesh index util is the same as actual spike or list is finished  // && next_spike_time != -1){
                 synapse->next_spike = (synapse->next_spike + 1) % synapse->max_spikes;
                 next_spike_time = synapse->l_spike_times[synapse->next_spike];
+                
+                //if(t == 61)
+                //    printf("Time step: %d, next_spike = %d, last_spike = %d, next_spike_time = %d, neuron index: %d, synapse index: %d\n", t, synapse->next_spike, synapse->last_spike, next_spike_time, neuron_id, synapse_index);
+                atascau ++;
+                if(atascau >= 1000){ 
+                    printf("Atascau, neuron = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d\n", neuron_id, t, next_spike_time, synapse->next_spike, synapse->last_spike);
+                }
             }
 
             // if next spike time is equals to actual time step, process
@@ -483,6 +493,22 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, 
     neuron->r_t = 0;
 }
 
+void re_initialize_lif_neuron(spiking_nn_t *snn, int neuron_index){
+    // Initialize lif neuron parameters
+    lif_neuron_t *neuron = &(snn->lif_neurons[neuron_index]);
+    neuron->v_tresh = -50;//0.25;
+    neuron->v_rest = -65;// -70 to -50 mV --> random value on that range?
+    neuron->v_reset = -70;
+    neuron->v= neuron->v_rest; //0.1;
+    neuron->r = 10;
+    
+    neuron->next_input_synapse = 0; 
+    neuron->next_output_synapse = 0;
+
+    neuron->t_last_spike = -1;
+
+    neuron->r_t = 0;
+}
 
 void add_input_synapse_to_lif_neuron(lif_neuron_t *neuron, synapse_t* synapse, int synapse_index){
     neuron->input_synapse_indexes[neuron->next_input_synapse] = synapse_index;

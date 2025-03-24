@@ -8,12 +8,18 @@
 #endif
 
 #ifndef INPUT_MAX_SPIKES
-#define INPUT_MAX_SPIKES 1000
+#define INPUT_MAX_SPIKES 4000
 #endif
 
 /**
  * General structures
  */
+
+ /// Dynamic list to store generated spikes
+typedef struct spike{
+    int t;
+    struct spike *next; 
+} spike_t;
 
 
 /// @brief LIF neuron model structure to store information about the neuron
@@ -117,6 +123,9 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
 /// @param delay Delay to set to the synapse
 /// @param training Training type to set to the synapse
 void initialize_synapse(synapse_t *synapse, float w, int delay, int training, spiking_nn_t *snn, int synapse_id);
+
+void re_initialize_synapse(synapse_t *synapse);
+
 
 
 /// @brief Initialize network synapses

@@ -89,9 +89,9 @@ int main(int argc, char *argv[]) {
 #endif
 
     // free memory
-    for(i=0; i<(n_neurons+1); i++){
-        free(synaptic_connections[i]);
-    }
+    //for(i=0; i<(n_neurons+1); i++){
+    //    free(synaptic_connections[i]);
+    //}
     free(synaptic_connections);
     free(weight_list);
     free(delay_list);

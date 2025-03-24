@@ -48,7 +48,7 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
     synapse->w = w;
     synapse->delay = delay;
 
-    if(synapse_id < snn->n_input_synapses || synapse_id > snn->n_output_synapses)
+    if(synapse_id < snn->n_input_synapses || synapse_id > snn->n_synapses - snn->n_input_synapses)//synapse_id > snn->n_output_synapses)
         synapse->max_spikes = INPUT_MAX_SPIKES;
     else    
         synapse->max_spikes = MAX_SPIKES;
@@ -85,6 +85,22 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
         break;
     }
 }
+
+void re_initialize_synapse(synapse_t *synapse){
+    synapse->t_last_post_spike = -1;
+    synapse->t_last_pre_spike = -1;
+    
+    synapse->post_neuron_computed = -1;
+    synapse->pre_neuron_computed = -1;
+    
+    synapse->last_spike = 0; 
+    synapse->next_spike = 0;
+
+    // not necessary
+    //for(int i = 0; i<synapse->max_spikes; i++)
+    //    synapse->l_spike_times[i] = -1; // no spikes yet
+}
+
 
 void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, float *weight_list, int *delay_list, int *training_zones){
     // reserve memory for synapses

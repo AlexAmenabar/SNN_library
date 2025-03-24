@@ -14,6 +14,12 @@ int main(int argc, char *argv[]) {
     n_input = strtoul(argv[2], NULL, 10);
     n_output = strtoul(argv[3], NULL, 10);
 
+    // ADD THIS AS COMPILE PARAMETER
+    n_synapses = strtoul(argv[4], NULL, 10);
+    n_input_synapses = strtoul(argv[5], NULL, 10);
+    n_output_synapses = strtoul(argv[6], NULL, 10);
+
+
     srand(time(NULL));
 
     printf("Input parameters: %d, %d, %d\n", n, n_input, n_output);
@@ -25,11 +31,19 @@ int main(int argc, char *argv[]) {
     synaptic_connections = (int **)malloc((n+1) * sizeof(int *)); // n + 1 as there are n neurons and 1 network input "layer"
     neuron_behaviour = (int *)malloc(n * sizeof(int));
 
+    // CHOOSE ONE DEPENDING ON COMPILE PARAMETER
+    //generate_semi_random_synaptic_connections(synaptic_connections, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses);
+
+    n_synapses = 0;
+    n_input_synapses = 0;
+    n_output_synapses = 0;
     generate_random_synaptic_connections(synaptic_connections, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses);
     printf("SYNAPSE MATRIX GENERATED\n");
     
     generate_random_neuron_behaviour(neuron_behaviour, n);
     printf("NEURON BEHAVIOUR LIST GENERATED\n");
+
+    printf("n_synapses = %d\n", n_synapses);
 
     synaptic_delays = (int *)malloc(n_synapses * sizeof(int));
     synaptic_weights = (float *)malloc(n_synapses * sizeof(float));
@@ -49,7 +63,7 @@ int main(int argc, char *argv[]) {
 
     // store generated network information on a file
     FILE *f;
-    f = fopen("new_snn.txt", "w");
+    f = fopen(argv[7], "w");
  
     fprintf(f, "%d", n);
     fprintf(f, "\n");
