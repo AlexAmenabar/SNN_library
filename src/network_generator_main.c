@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
     n_input_synapses = strtoul(argv[5], NULL, 10);
     n_output_synapses = strtoul(argv[6], NULL, 10);
 
+    double lambda = atof(argv[8]);
 
     srand(time(NULL));
 
@@ -37,7 +38,7 @@ int main(int argc, char *argv[]) {
     n_synapses = 0;
     n_input_synapses = 0;
     n_output_synapses = 0;
-    generate_random_synaptic_connections(synaptic_connections, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses);
+    generate_random_synaptic_connections(synaptic_connections, n, n_input, n_output, &n_synapses, &n_input_synapses, &n_output_synapses, lambda);
     printf("SYNAPSE MATRIX GENERATED\n");
     
     generate_random_neuron_behaviour(neuron_behaviour, n);

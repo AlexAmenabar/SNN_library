@@ -56,13 +56,14 @@ void generate_semi_random_synaptic_connections(int **synaptic_connections, int n
     }
 }
 
-void generate_random_synaptic_connections(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse){
+void generate_random_synaptic_connections(int **synaptic_connections, int n_neurons, int n_input, int n_output, int *n_synapse, int *n_input_synapse, int *n_output_synapse, double lambda){
     // bigger the number of synapses lower the probability: exponential distribution or pareto distribution
     int i, j;
     int max_synapses_between_neurons = 10;
     
-    double u, lambda = 1.5;
+    double u;//1.5;
 
+    printf("lambda: %f\n", lambda);
     // initialize synapse amount data
     *n_synapse = 0; *n_input_synapse = 0; *n_output_synapse = 0;
 
@@ -81,6 +82,7 @@ void generate_random_synaptic_connections(int **synaptic_connections, int n_neur
         if(synapses == 0){
             synapses = 1; // input neurons must have at least one input synapse
         }
+        synapses = 1;
         temp_synaptic_connections[next_pos] = i; // network input synapse to neuron i
         temp_synaptic_connections[next_pos+1] = synapses; // amount of synapses 
         next_pos += 2;
@@ -139,7 +141,6 @@ void generate_random_synaptic_connections(int **synaptic_connections, int n_neur
             *n_output_synapse += 1; 
             *n_synapse += 1;
         }
-
         temp_synaptic_connections[0] = number_neuron_connections;
 
         // allocate memory for complete synaptic connections variable

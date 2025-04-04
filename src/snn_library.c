@@ -15,6 +15,7 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
     }
     // else {}
 
+    // alloc memory to store input and output synapse amount for each neuron
     int *neurons_input_synapses = malloc(snn->n_neurons * sizeof(int)); // list to count input synapses for each neuron
     int *neurons_output_synapses = malloc(snn->n_neurons * sizeof(int));
     
@@ -25,8 +26,21 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
     }
 
     // count neuron input synapses
+    
+    // input layer
+    for(i=0; i<synaptic_connections[0][0]; i++){
+        neurons_input_synapses[synaptic_connections[0][i*2+1]] += synaptic_connections[0][i*2+2];
+    }
+
+    for(i=1; i<snn->n_neurons+1; i++){
+        for(j=0; j<synaptic_connections[i][0]; j++){
+            neurons_input_synapses[synaptic_connections[i][j*2+1]] += synaptic_connections[i][j*2+2];
+            neurons_output_synapses[i-1] += synaptic_connections[i][j*2+2];
+        }
+    }
+    /*
     for(i = 0; i<(snn->n_neurons); i++){ // analyze each row of synaptic connections
-        for(j=0; j<(synaptic_connections[i][0]); j++){
+        for(j=0; j<(synaptic_connections[i][0]); j++){ // input synapses are included too
             neurons_input_synapses[synaptic_connections[i][j*2+1]] += synaptic_connections[i][j*2+2];
         }
     }
@@ -36,7 +50,7 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
         for(j=0; j<(synaptic_connections[i+1][0]); j++){ // i+1 as i=0 row values are the network input synapses
             neurons_output_synapses[i] += synaptic_connections[i+1][j*2+2];
         }
-    }
+    }*/
 
     // initialize lif neurons
     for(i=0; i<snn->n_neurons; i++)
@@ -48,7 +62,7 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
     synapse->w = w;
     synapse->delay = delay;
 
-    if(synapse_id < snn->n_input_synapses || synapse_id > snn->n_synapses - snn->n_input_synapses)//synapse_id > snn->n_output_synapses)
+    if(synapse_id < snn->n_input_synapses || synapse_id >= snn->n_synapses - snn->n_output_synapses)//synapse_id > snn->n_output_synapses)
         synapse->max_spikes = INPUT_MAX_SPIKES;
     else    
         synapse->max_spikes = MAX_SPIKES;

@@ -18,7 +18,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 
 
     #ifdef DEBUG
-    if(t==61)
+    //if(t==61)
         printf(" - Processing neuron %d \n", neuron_id);
     #endif
 
@@ -43,7 +43,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 
             next_spike_time = synapse->l_spike_times[synapse->next_spike];
             // neuron was on refractory state, so ignore all not processed spikes
-            
+
             int atascau = 0; 
             while (next_spike_time < t && synapse->next_spike != synapse->last_spike){ //refesh index util is the same as actual spike or list is finished  // && next_spike_time != -1){
                 synapse->next_spike = (synapse->next_spike + 1) % synapse->max_spikes;
@@ -53,7 +53,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
                 //    printf("Time step: %d, next_spike = %d, last_spike = %d, next_spike_time = %d, neuron index: %d, synapse index: %d\n", t, synapse->next_spike, synapse->last_spike, next_spike_time, neuron_id, synapse_index);
                 atascau ++;
                 if(atascau >= 1000){ 
-                    printf("Atascau, neuron = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d\n", neuron_id, t, next_spike_time, synapse->next_spike, synapse->last_spike);
+                    printf("Atascau, neuron = %d, synapse = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d, max_spikes = %d\n", neuron_id, synapse_index, t, next_spike_time, synapse->next_spike, synapse->last_spike, synapse->max_spikes);
                 }
             }
 
@@ -77,11 +77,11 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 
         float temp_v = lif_neuron->v;
         // compute membrane potential
-        lif_neuron->v +=  (0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
+        lif_neuron->v =  lif_neuron->v * (1 - 1 / 20) + input_current;  //(0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
     }
 }
 
-void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes){
+void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes, int *spike_amount){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -120,6 +120,8 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
                 // refresh last spike index
                 synapse->last_spike = (synapse->last_spike + 1) % synapse->max_spikes;//synapse->max_spikes;
 
+                if(synapse->max_spikes == 20 && synapse->last_spike == 20)
+                    printf("Raro raro\n");
                 // register spike time on output synapses
                 //synapse->t_last_pre_spike = t; // neuron is pre synaptic neuron for output synapses
             }
@@ -130,6 +132,8 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
 
             // for output
             generated_spikes[neuron_id][t] = '|';
+
+            //*spike_amount += 1;
         }
         else{
             // no spike generated
@@ -463,7 +467,7 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, 
     else
         neuron->is_input_neuron = 0;
 
-    if((snn->n_neurons - snn->n_output) <= neuron_index)
+    if(neuron_index >= (snn->n_neurons - snn->n_output))
         neuron->is_output_neuron = 1;
     else
         neuron->is_output_neuron = 0;
