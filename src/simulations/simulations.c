@@ -17,7 +17,7 @@ void sample_simulation(){
 }
 
 
-void simulate(spiking_nn_t *snn, void (*input_step)(), void (*output_step)(), simulation_configuration_t *conf, simulation_results_t *results){
+void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_results_t *results){
     // Network simulation
     
     int time_step = 0, i; 
@@ -26,10 +26,6 @@ void simulate(spiking_nn_t *snn, void (*input_step)(), void (*output_step)(), si
     struct timespec start_neurons, end_neurons; // to measure neurons imulation time
     struct timespec start_synapses, end_synapses; // to measure synapses simulation time
 
-    results->elapsed_time = 0;
-    results->elapsed_time_neurons = 0;
-    results->elapsed_time_synapses = 0;
-    // alloc memory for generated spikes
 
     if(conf->simulation_type == 0) // clock-based
     { 
@@ -45,13 +41,20 @@ void simulate(spiking_nn_t *snn, void (*input_step)(), void (*output_step)(), si
             clock_gettime(CLOCK_MONOTONIC, &start_neurons);
             #pragma omp parallel num_threads(n_process)
             {
+
+
+#ifdef OPENMP
                 #pragma omp for schedule(static, 10) private(i) 
                 for(i=0; i<snn->n_neurons; i++)
-                    input_step(snn, time_step, i, results->generated_spikes);
+                    snn->input_step(snn, time_step, i, results->generated_spikes);
 
                 #pragma omp for schedule(static, 10) private(i)
                 for(i=0; i<snn->n_neurons; i++)
-                    output_step(snn, time_step, i, results->generated_spikes);
+                    snn->output_step(snn, time_step, i, results->generated_spikes);
+#else // if is serial compute input and neuron synapses at the same iteration 
+                for(i = 0; i<snn->n_neurons; i++)
+                    snn->complete_step(snn, time_step, i, results->generated_spikes);
+#endif
 
                 #pragma omp single
                 {
@@ -65,12 +68,12 @@ void simulate(spiking_nn_t *snn, void (*input_step)(), void (*output_step)(), si
                 // process STDP
                 clock_gettime(CLOCK_MONOTONIC, &start_synapses);
 
-                if(conf->learn != 0) // if learn == 0, the execution is only simulating withouth changing the weights
+                /*if(conf->learn != 0) // if learn == 0, the execution is only simulating withouth changing the weights
                 {
                     #pragma omp for schedule(static, 50) private(i)
                     for(i = 0; i<snn->n_synapses; i++)
                         snn->synapses[i].learning_rule(&(snn->synapses[i])); 
-                }
+                }*/
             }
             
             clock_gettime(CLOCK_MONOTONIC, &end_synapses);

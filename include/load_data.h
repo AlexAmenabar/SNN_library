@@ -26,6 +26,25 @@
 #endif
 
 
+// configuration parameters NOT USED
+#ifndef EXECUTION_TYPE // clock or event driven
+#define EXECUTION_TYPE 0
+#endif
+
+#ifndef NEURON_TYPE // LIF, HH, ... NOT USED
+#define NEURON_TYPE 0
+#endif
+
+#ifndef EXECUTION_OBJ // simulation or ml
+#define EXECUTION_OBJ 0
+#endif
+
+#ifndef N_PROCESS // simulation or ml
+#define N_PROCESS 1
+#endif
+
+
+
 /**
 * Functions to load data from files (input spike trains, network information...)
 */
@@ -61,8 +80,9 @@ void close_file(FILE **f);
 /// @param weight_list List of synaptic weights
 /// @param delay_list List of synaptic delays
 /// @param training_zones List of training type for each synapse
-void load_network_information(const char *file_name, int *n_neurons, int *n_input, int *n_output, int *n_synapses, int *n_input_synapses, int *n_output_synapses, 
-                int ***synaptic_connections, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones);
+//void load_network_information(const char *file_name, int *n_neurons, int *n_input, int *n_output, int *n_synapses, int *n_input_synapses, int *n_output_synapses, 
+//                int ***synaptic_connections, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones);
+void load_network_information(const char *file_name, spiking_nn_t *snn, network_construction_lists_t *lists);
 
 
 /// @brief Load input spike trains
@@ -75,6 +95,15 @@ void load_input_spike_trains_on_snn(const char *file_name, spiking_nn_t *snn);
 /// @param file_name Original name
 /// @param temp_file_name Temporal file name
 void insert_at_file_init(const char *file_name, const char *temp_file_name);*/
+
+
+
+/// @brief Read configuration parameters from configuration file
+/// @param file_name Configuration file name
+/// @param conf struct to store configuration parameters
+int load_configuration_params(const char *file_name, simulation_configuration_t *conf);
+
+void store_results(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn);
 
 
 #endif

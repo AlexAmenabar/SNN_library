@@ -7,7 +7,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, int **synaptic_connections){
+void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t *lists){
     int i, j;
 
     if(snn->neuron_type == 0){ // lif neurons
@@ -28,14 +28,14 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
     // count neuron input synapses
     
     // input layer
-    for(i=0; i<synaptic_connections[0][0]; i++){
-        neurons_input_synapses[synaptic_connections[0][i*2+1]] += synaptic_connections[0][i*2+2];
+    for(i=0; i<lists->synaptic_connections[0][0]; i++){
+        neurons_input_synapses[lists->synaptic_connections[0][i*2+1]] += lists->synaptic_connections[0][i*2+2];
     }
 
     for(i=1; i<snn->n_neurons+1; i++){
-        for(j=0; j<synaptic_connections[i][0]; j++){
-            neurons_input_synapses[synaptic_connections[i][j*2+1]] += synaptic_connections[i][j*2+2];
-            neurons_output_synapses[i-1] += synaptic_connections[i][j*2+2];
+        for(j=0; j<lists->synaptic_connections[i][0]; j++){
+            neurons_input_synapses[lists->synaptic_connections[i][j*2+1]] += lists->synaptic_connections[i][j*2+2];
+            neurons_output_synapses[i-1] += lists->synaptic_connections[i][j*2+2];
         }
     }
     /*
@@ -55,7 +55,11 @@ void initialize_network_neurons(spiking_nn_t *snn, int *neuron_behaviour_list, i
     // initialize lif neurons
     for(i=0; i<snn->n_neurons; i++)
         if(snn->neuron_type == 0) // lif neuron
-            initialize_lif_neuron(snn, i, neuron_behaviour_list[i], synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
+            initialize_lif_neuron(snn, i, lists->neuron_excitatory[i], lists->synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
+
+    // free memory
+    free(neurons_input_synapses);
+    free(neurons_output_synapses);
 }
 
 void initialize_synapse(synapse_t *synapse, float w, int delay, int training, spiking_nn_t *snn, int synapse_id){
@@ -116,12 +120,12 @@ void re_initialize_synapse(synapse_t *synapse){
 }
 
 
-void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, float *weight_list, int *delay_list, int *training_zones){
+void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, network_construction_lists_t *lists){
     // reserve memory for synapses
     snn->synapses = (synapse_t *)malloc(n_synapses * sizeof(synapse_t));
 
     for(int i = 0; i<n_synapses; i++)
-        initialize_synapse(&(snn->synapses[i]), weight_list[i], delay_list[i], training_zones[i], snn, i);
+        initialize_synapse(&(snn->synapses[i]), lists->weight_list[i], lists->delay_list[i], lists->training_zones[i], snn, i);
 }
 
 
@@ -182,7 +186,7 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
 }
 
 
-void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n_input, int n_output, int n_synapses, int n_input_synapses, int n_output_synapses, 
+/*void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n_input, int n_output, int n_synapses, int n_input_synapses, int n_output_synapses, 
                     int *neuron_behaviour_list, int **synaptic_connections, float *weight_list, int *delay_list, int *training_zones){ //void *neuron_initializer()){
 #ifdef DEBUF
     printf("Initializing network...\n");
@@ -218,4 +222,72 @@ void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n
 #ifdef DEBUF
     printf("Network correctly initialized!\n");
 #endif
+}*/
+
+void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, network_construction_lists_t *lists){ //void *neuron_initializer()){
+#ifdef DEBUG
+    printf("Initializing network...\n");
+#endif
+
+    // initialize general information
+    snn->neuron_type = conf->neuron_type;
+
+    // initialize step function depending on neuron type
+    switch (snn->neuron_type)
+    {
+        case 0: // LIF
+            snn->complete_step = &lif_neuron_step;
+            snn->neuron_initializer = &initialize_lif_neuron;
+            snn->neuron_re_initializer = &re_initialize_lif_neuron;
+            snn->input_step = &lif_neuron_compute_input_synapses;
+	        snn->output_step = &lif_neuron_compute_output_synapses;
+	    break;
+        case 1: // HH
+            break;
+        default:
+            break;
+    }
+
+    // initialize neurons of the network
+    initialize_network_neurons(snn, lists);
+
+#ifdef DEBUG
+    printf("Neurons initialized\n");
+#endif
+
+    // initialize synapses
+    initialize_network_synapses(snn, snn->n_synapses, lists);
+
+#ifdef DEBUG
+    printf("synapses initilized\n");
+#endif
+
+    // connect neurons and synapses
+    connect_neurons_and_synapses(snn, lists->synaptic_connections);
+
+#ifdef DEBUF
+    printf("Network correctly initialized!\n");
+#endif
+}
+
+void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn){
+    // initialize struct to store simulation configuration and outputs
+    results->elapsed_time = 0;
+    results->elapsed_time_neurons = 0;
+    results->elapsed_time_synapses = 0;
+
+    results->generated_spikes = malloc(snn->n_neurons * sizeof(unsigned char *));
+    for (int i = 0; i<snn->n_neurons; i++)
+        results->generated_spikes[i] = malloc(conf->time_steps * sizeof(unsigned char));
+}
+
+void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
+    for(int i=0; i<(snn->n_neurons+1); i++){
+        free(lists->synaptic_connections[i]);
+    }
+    free(lists->synaptic_connections);
+    free(lists->weight_list);
+    free(lists->delay_list);
+    free(lists->training_zones);
+    free(lists);
 }
