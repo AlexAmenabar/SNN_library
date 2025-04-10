@@ -82,7 +82,7 @@ void close_file(FILE **f);
 /// @param training_zones List of training type for each synapse
 //void load_network_information(const char *file_name, int *n_neurons, int *n_input, int *n_output, int *n_synapses, int *n_input_synapses, int *n_output_synapses, 
 //                int ***synaptic_connections, int **neuron_excitatory, float **weight_list, int **delay_list, int **training_zones);
-void load_network_information(const char *file_name, spiking_nn_t *snn, network_construction_lists_t *lists);
+void load_network_information(const char *file_name, spiking_nn_t *snn, network_construction_lists_t *lists, simulation_configuration_t *conf);
 
 
 /// @brief Load input spike trains

@@ -25,6 +25,9 @@
 
 [network]
     network_file = "networks/toml_format/network0.toml"
+    behaviours = 1
     delays = 1
     weights = 1
     training_zones = 1
+    thresh = 1
+    t_refract = 1

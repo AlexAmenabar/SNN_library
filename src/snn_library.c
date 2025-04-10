@@ -32,13 +32,16 @@ void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t 
         neurons_input_synapses[lists->synaptic_connections[0][i*2+1]] += lists->synaptic_connections[0][i*2+2];
     }
 
+    // rest of layers
     for(i=1; i<snn->n_neurons+1; i++){
         for(j=0; j<lists->synaptic_connections[i][0]; j++){
             neurons_input_synapses[lists->synaptic_connections[i][j*2+1]] += lists->synaptic_connections[i][j*2+2];
             neurons_output_synapses[i-1] += lists->synaptic_connections[i][j*2+2];
         }
     }
-    /*
+
+
+    /* OLD VERSION, REMOVE IN THE FUTURE
     for(i = 0; i<(snn->n_neurons); i++){ // analyze each row of synaptic connections
         for(j=0; j<(synaptic_connections[i][0]); j++){ // input synapses are included too
             neurons_input_synapses[synaptic_connections[i][j*2+1]] += synaptic_connections[i][j*2+2];
@@ -53,24 +56,28 @@ void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t 
     }*/
 
     // initialize lif neurons
-    for(i=0; i<snn->n_neurons; i++)
+    for(i=0; i<snn->n_neurons; i++){
         if(snn->neuron_type == 0) // lif neuron
-            initialize_lif_neuron(snn, i, lists->neuron_excitatory[i], lists->synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
+            initialize_lif_neuron(snn, i, lists, lists->synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
+    }
 
-    // free memory
+    // free memory TODO, THIS GENERATES AN ERROR
     //free(neurons_input_synapses);
     //free(neurons_output_synapses);
 }
 
-void initialize_synapse(synapse_t *synapse, float w, int delay, int training, spiking_nn_t *snn, int synapse_id){
-    synapse->w = w;
-    synapse->delay = delay;
+void initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists, spiking_nn_t *snn, int synapse_id){
+    // read synapse parameters from lists
+    synapse->w = lists->weight_list[synapse_id];//w;
+    synapse->delay = lists->delay_list[synapse_id];//delay;
 
+    // TODO: THIS MUST BE REVISED, IN GENERAL THE WAY I MANAGE THE INPUT
     if(synapse_id < snn->n_input_synapses || synapse_id >= snn->n_synapses - snn->n_output_synapses)//synapse_id > snn->n_output_synapses)
         synapse->max_spikes = INPUT_MAX_SPIKES;
     else    
         synapse->max_spikes = MAX_SPIKES;
 
+    // initialize control parameters
     synapse->t_last_post_spike = -1;
     synapse->t_last_pre_spike = -1;
     
@@ -84,8 +91,9 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
     for(int i = 0; i<synapse->max_spikes; i++)
         synapse->l_spike_times[i] = -1; // no spikes yet
 
+
     // set training rule
-    switch (training)
+    switch (lists->training_zones[synapse_id]) // get synapse training zone from list
     {
     case 0:
         synapse->learning_rule = &add_stdp;//(void (*)())&add_stdp;
@@ -104,7 +112,7 @@ void initialize_synapse(synapse_t *synapse, float w, int delay, int training, sp
     }
 }
 
-void re_initialize_synapse(synapse_t *synapse){
+void re_initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists){
     synapse->t_last_post_spike = -1;
     synapse->t_last_pre_spike = -1;
     
@@ -125,7 +133,7 @@ void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, network_cons
     snn->synapses = (synapse_t *)malloc(n_synapses * sizeof(synapse_t));
 
     for(int i = 0; i<n_synapses; i++)
-        initialize_synapse(&(snn->synapses[i]), lists->weight_list[i], lists->delay_list[i], lists->training_zones[i], snn, i);
+        initialize_synapse(&(snn->synapses[i]), lists, snn, i);
 }
 
 
@@ -185,50 +193,7 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
     }
 }
 
-
-/*void initialize_network(spiking_nn_t *snn, int neuron_type, int n_neurons, int n_input, int n_output, int n_synapses, int n_input_synapses, int n_output_synapses, 
-                    int *neuron_behaviour_list, int **synaptic_connections, float *weight_list, int *delay_list, int *training_zones){ //void *neuron_initializer()){
-#ifdef DEBUF
-    printf("Initializing network...\n");
-#endif
-
-    // initialize general information
-    snn->n_neurons = n_neurons;
-    snn->n_input = n_input;
-    snn->n_output = n_output;
-    snn->n_synapses = n_synapses;
-    snn->neuron_type = neuron_type;
-
-    snn->n_input_synapses = n_input_synapses; 
-    snn->n_output_synapses = n_output_synapses;
-
-    // initialize neurons of the network
-    initialize_network_neurons(snn, neuron_behaviour_list, synaptic_connections);
-
-#ifdef DEBUG
-    printf("Neurons initialized\n");
-#endif
-
-    // initialize synapses
-    initialize_network_synapses(snn, n_synapses, weight_list, delay_list, training_zones);
-
-#ifdef DEBUG
-    printf("synapses initilized\n");
-#endif
-
-    // connect neurons and synapses
-    connect_neurons_and_synapses(snn, synaptic_connections);
-
-#ifdef DEBUF
-    printf("Network correctly initialized!\n");
-#endif
-}*/
-
 void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, network_construction_lists_t *lists){ //void *neuron_initializer()){
-#ifdef DEBUG
-    printf("Initializing network...\n");
-#endif
-
     // initialize general information
     snn->neuron_type = conf->neuron_type;
 
@@ -259,15 +224,11 @@ void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, net
     initialize_network_synapses(snn, snn->n_synapses, lists);
 
 #ifdef DEBUG
-    printf("synapses initilized\n");
+    printf("Synapses initilized\n");
 #endif
 
     // connect neurons and synapses
     connect_neurons_and_synapses(snn, lists->synaptic_connections);
-
-#ifdef DEBUF
-    printf("Network correctly initialized!\n");
-#endif
 }
 
 void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn){

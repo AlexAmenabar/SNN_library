@@ -126,7 +126,7 @@ typedef struct{
     //input spikes...
 
     // control variables to indicate what parameters have been provided
-    int delays_provided, weights_provided, training_zones_provided, thresholds_provided; // TODO: add more 
+    int behaviours_provided, delays_provided, weights_provided, training_zones_provided, thresholds_provided, refract_times_provided; // TODO: add more 
 } simulation_configuration_t;
 
 typedef struct{
@@ -164,9 +164,9 @@ void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t 
 /// @param w Weight to set to the synapse
 /// @param delay Delay to set to the synapse
 /// @param training Training type to set to the synapse
-void initialize_synapse(synapse_t *synapse, float w, int delay, int training, spiking_nn_t *snn, int synapse_id);
+void initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists, spiking_nn_t *snn, int synapse_id);
 
-void re_initialize_synapse(synapse_t *synapse);
+void re_initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists);
 
 
 

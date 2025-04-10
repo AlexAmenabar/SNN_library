@@ -29,26 +29,31 @@ int main(int argc, char *argv[]) {
 
     // load configuration parameters from input file
     //load_configuration_params(argv[1], &conf);
+    printf("Loading configuration parameters...\n");
     load_configuration_params_from_toml(argv[1], &conf);
-    printf("Configuration file loaded\n");
+    printf("Configuration parameters loaded!\n\n");
 
     // load information about the snn from the network file
-    printf("%s\n", conf.network_file);
-    load_network_information(conf.network_file, &snn, &lists);
-    printf("Network information loaded\n");
+    printf("Loading network...\n");
+    load_network_information(conf.network_file, &snn, &lists, &conf);
+    printf("Network information loaded!\n\n");
 
 
-    // initialize the network 
+    // initialize the network
+    printf("Initializing network...\n"); 
     initialize_network(&snn, &conf, &lists);
-    printf("Network initialized\n");
+    printf("Network initialized!\n\n");
 
 
     // load input spike train from file (different depending on execution type) // ESTO DEBERÍA CAMBIARLO; NO ME TERMINA DE GUSTAR COMO ESTÁ PASANDO DIRECTAMENTE EL PARÁMETRO DE ENTRADA
+    printf("Loading input spike trains...\n");
     load_input_spike_trains_on_snn(conf.input_spikes_file, &snn);
-    printf("Spike trains loaded\n");
+    printf("Spike trains loaded!\n");
 
     // initialize struct to store results
+    printf("Initializing results struct...\n");
     initialize_results_struct(&results, &conf, &snn);
+    printf("Results strcut initialized!\n");
 
 // print general information about the simulation: simulation configuration, network information...
 #ifdef DEBUG //////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,12 +87,10 @@ int main(int argc, char *argv[]) {
     printf(" - Training zones: ");
     print_array(lists.training_zones, snn.n_synapses);
     printf("===================\n\n");
-#endif ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef DEBUG /////////////////////////////
     printf("Network initialized\n");
-
 
     // print information of network neurons
     printf("Printing neuron information...\n");
@@ -131,10 +134,8 @@ int main(int argc, char *argv[]) {
     }
     
     printf("===================\n\n");
-#endif ///////////////////////////////////
 
-
-#ifdef DEBUG
+    //////////////////////////////////////////////////////////////////////////////////////////////
 
     printf("Printing network input synapses input spike times: \n", i);
 
@@ -151,20 +152,22 @@ int main(int argc, char *argv[]) {
     }
 #endif
 
+    return 0;
 
-    // free memory (THIS SHOULD BE IN A FUNCTION)
+    // free memory TODO: must be corrected
     //free_lists_memory(&lists, &snn);
 
     printf("Initializing training / simulation\n");
 
-    // call simulation function
-    // if simulation{} else if sample_simulation{}
+    // Run the simulation
 
 #ifndef BY_SAMPLE
     simulate(&snn, &conf, &results);
 #else
     simulate_by_samples();
 #endif
+
+
     // store simulation results
     store_results(&results, &conf, &snn);
   

@@ -23,20 +23,18 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
 /// @param generated_spikes List to store generated spikes
 void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results);
 
-//void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes);
-
 
 /// @brief Initialize a lif neuron
 /// @param snn SNN structure with neuron information
 /// @param neuron_index Index to get the neuron to be initialized from snn
 /// @param excitatory If the neuron is excitatory or not
 /// @param synapse_matrix Synapse matrix to count the number of input and output synapses and reserve memory
-void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int **synaptic_connections, int n_input_synapse, int n_output_synapse);
+void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, network_construction_lists_t *lists, int **synaptic_connections, int n_input_synapse, int n_output_synapse);
 
 /// @brief Initialize a lif neuron
 /// @param snn SNN structure with neuron information
 /// @param neuron_index Index to get the neuron to be initialized from snn
-void re_initialize_lif_neuron(spiking_nn_t *snn, int neuron_index);
+void re_initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, network_construction_lists_t *lists);
 
 /// @brief Add an input synapse to the neuron
 /// @param neuron Neuron to add the synapse

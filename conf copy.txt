@@ -1,0 +1,14 @@
+0
+0
+networks/toml_format/network0.toml
+
+4
+0
+
+networks/sarteco_exp_networks/network3_test_generated_spikes.txt
+networks/sarteco_exp_networks/network3_test_weights.txt
+networks/sarteco_exp_networks/network3_test_times.txt
+networks/sarteco_exp_networks/network3_test_n_spikes.txt
+
+input_spikes_10_10000.txt
+5000

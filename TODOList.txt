@@ -4,9 +4,14 @@ gcc -o snn snn.c load_data.c training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=
 gcc -Iinclude -o main src/main.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
     "./main 0 0 0 ./data/nn1/snn1.txt 100 ./data/nn1/input_spike_times.txt"
 
+./main 0 0 0 ./4000_10_10_16000.txt 10000 ./input_spikes_10_10000.txt output/test_spikes_4000_10_10_16000.txt output/test_weights_4000_10_10_4000.txt output/4000_10_10_4000_times.txt 0
+./main 1 0 0 ./4000_10_10_16000.txt 10000 ./input_spikes_10_10000.txt output/test_spikes_4000_10_10_16000.txt output/test_weights_4000_10_10_4000.txt output/4000_10_10_4000_times.txt 0
+
+
 
 gcc -Iinclude -o build/network_generator src/network_generator_main.c src/network_generator.c -lm
 ./build/network_generator 10000 500 100
+./build/network_generator 500 10 5 0 0 0 ./networks/sarteco_exp_networks/network1.txt 2.5
 
 gcc -Iinclude -o build/input_spike_generator src/spike_train_generator_main.c src/helpers.c -lm
 ./build/input_spike_generator 20 100000
@@ -21,4 +26,35 @@ gcc -Iinclude -o build/input_spike_generator src/spike_train_generator_main.c sr
 -- Network generator (if parameters are not provided)
 
 -- Makefile
+
+
+
+Las neuronas de entrada deberían tener periodo refractario?
+
+gcc -Iinclude -o ml_main src/test_load_mnist_data.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c -lm -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
+./ml_main 1 0 0 ./mnist_network.txt 10000 ./data/MNIST/train/spike_trains.txt output/test_spikes_4000_10_10_16000.txt 0
+
+
+
+gcc -Iinclude -o BIE_main src/BIE_test_main.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c -lm -DDEBUG -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1
+./main 0 0 0 ./4000_10_10_16000.txt 10000 ./input_spikes_10_10000.txt output/test_spikes_4000_10_10_16000.txt output/test_weights_4000_10_10_4000.txt output/4000_10_10_4000_times.txt 0
+
+./BIE_main 5 10 1 0 0 networks/BIE_test_networks/network1.txt networks/BIE_test_networks/network2.txt networks/BIE_test_networks/network3.txt networks/BIE_test_networks/network4.txt networks/BIE_test_networks/network5.txt ./data/MNIST/train/spike_trains.txt
+
+
+
+Compilar nuevo no paralelo
+gcc -Iinclude -o new_main src/main_new.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c src/simulations/simulations.c -lm  -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1 -DDEBUG 
+
+Compilar nuevo paralelo
+gcc -Iinclude -o new_main src/main_new.c src/snn_library.c src/load_data.c src/helpers.c src/neuron_models/lif_neuron.c src/training_rules/stdp.c src/simulations/simulations.c -lm  -DINPUT_SYNAPSES=1 -DINPUT_NEURON_BEHAVIOUR=2 -DINPUT_WEIGHTS=1 -DINPUT_DELAYS=2 -DINPUT_TRAINING_ZONES=1 -DOPENMP -fopenmp
+
+Ejecutar
+./new_main ./conf.txt
+
+
+Perf
+perf record -e cache-misses ./new_main ./conf.txt
+perf report -v
+sudo perf stat -B -e cache-references,cache-misses,cycles,instructions,branches,faults,migrations ./new_main ./conf.txt
 
