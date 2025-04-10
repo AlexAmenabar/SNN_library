@@ -111,7 +111,7 @@ typedef struct{
 
 typedef struct{
     // general
-    int simulation_type, neuron_type, learn, n_process, store;
+    int simulation_type, neuron_type, n_process, store, learn;
 
     char *spike_times_file, *weights_file, *times_file, *n_spikes_file, *final_network_file;
     char *network_file;
@@ -125,10 +125,12 @@ typedef struct{
     int n_samples;
     //input spikes...
 
+    // control variables to indicate what parameters have been provided
+    int delays_provided, weights_provided, training_zones_provided, thresholds_provided; // TODO: add more 
 } simulation_configuration_t;
 
 typedef struct{
-    double elapsed_time, elapsed_time_neurons, elapsed_time_synapses;
+    double elapsed_time, elapsed_time_neurons, elapsed_time_neurons_input, elapsed_time_neurons_output, elapsed_time_synapses;
     unsigned char **generated_spikes;
     unsigned int *n_spikes_per_neuron;
 } simulation_results_t;
@@ -140,7 +142,7 @@ typedef struct{
 
     // lists dependent on neuron types
     // LIF neuron
-    float *v_list, *v_tresh_list, *R_list, *v_rest_list;
+    float *v_list, *v_thres_list, *R_list, *v_rest_list;
     int *r_time_list; //refractory time
 
 } network_construction_lists_t;

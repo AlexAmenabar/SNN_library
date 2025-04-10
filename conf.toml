@@ -1,0 +1,30 @@
+[general]
+    execution_type = 0
+    neuron_type = 0
+    execution_obj = 0
+    n_process = 1
+    learn = 1
+
+[simulation]
+    time_steps = 5000
+    input_file = "input_spikes_10_10000.txt"
+
+[samples]
+    dataset = ""
+    dataset_name = ""
+    num_classes = 1
+    epochs = 1
+
+[output]
+    generated_spikes = "networks/toml_format/generated_spikes.txt"
+    final_weights = "networks/toml_format/final_weights.txt"
+    execution_times = "networks/toml_format/execution_times.txt"
+    spikes_per_neuron = "networks/toml_format/spikes_per_neuron.txt"
+    store_network = 1
+    store_network_file = "networks/toml_format/network_after_training.txt"
+
+[network]
+    network_file = "networks/toml_format/network0.toml"
+    delays = 1
+    weights = 1
+    training_zones = 1

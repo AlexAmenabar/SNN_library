@@ -1,0 +1,25 @@
+[general]
+	neurons = 5
+	input_neurons = 2
+	output_neurons = 1
+	synapsis = 9
+	input_synapsis = 2
+	output_synapsis = 1
+
+[neurons]
+	behaviour = 1
+	behaviour_list = [1, 1, 1, 1, 1]
+	v_thres = 150
+	v_thres_list = [150, 150, 150, 150, 150]
+	t_refract = 2
+	t_refract_list = [2, 2, 2, 2, 2]
+	input_synapsis = [1, 1, 1, 2, 3]
+	output_synapsis = [2, 2, 1, 1, 1]
+
+[synapsis]
+	latency = 1
+	latency_list = [1, 1, 1, 1, 1, 1, 1, 1, 1]
+	weights = [200, 200, 120, 100, 40, 60, 75, 25, 1]
+	training_zones = 0
+	training_zones_list = [0, 0, 0, 0, 0, 0, 0, 0, 0]
+	connections = [[2, 0, 1, 1, 1], [2, 2, 1, 3, 1], [2, 3, 1, 4, 1], [1, 4, 1], [1, 4, 1], [1, -1, 1]]

@@ -58,8 +58,8 @@ void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t 
             initialize_lif_neuron(snn, i, lists->neuron_excitatory[i], lists->synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
 
     // free memory
-    free(neurons_input_synapses);
-    free(neurons_output_synapses);
+    //free(neurons_input_synapses);
+    //free(neurons_output_synapses);
 }
 
 void initialize_synapse(synapse_t *synapse, float w, int delay, int training, spiking_nn_t *snn, int synapse_id){
@@ -275,10 +275,12 @@ void initialize_results_struct(simulation_results_t *results, simulation_configu
     results->elapsed_time = 0;
     results->elapsed_time_neurons = 0;
     results->elapsed_time_synapses = 0;
+    results->elapsed_time_neurons_input = 0;
+    results->elapsed_time_neurons_output = 0;
 
     results->generated_spikes = malloc(snn->n_neurons * sizeof(unsigned char *));
     for (int i = 0; i<snn->n_neurons; i++)
-        results->generated_spikes[i] = malloc(conf->time_steps * sizeof(unsigned char));
+        results->generated_spikes[i] = malloc((conf->time_steps) * sizeof(unsigned char));
 }
 
 void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
@@ -289,5 +291,4 @@ void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
     free(lists->weight_list);
     free(lists->delay_list);
     free(lists->training_zones);
-    free(lists);
 }

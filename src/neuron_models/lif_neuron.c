@@ -7,7 +7,7 @@
 #include<unistd.h>
 
 
-void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes){
+void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -27,7 +27,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
         lif_neuron->r_time_rest --;
         
         // no spike generated
-        generated_spikes[neuron_id][t] = ' ';
+        results->generated_spikes[neuron_id][t] = ' ';
     }
     else{ // if r_t equal to 0 start processing neuron again
         // check all input synapses to find if there are spikes to process
@@ -81,7 +81,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
     }
 }
 
-void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes, int *spike_amount){
+void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -130,18 +130,18 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
             lif_neuron->v = lif_neuron->v_reset; // reset potential
 
             // for output
-            generated_spikes[neuron_id][t] = '|';
+            results->generated_spikes[neuron_id][t] = '|';
 
             //*spike_amount += 1;
         }
         else{
             // no spike generated
-            generated_spikes[neuron_id][t] = ' ';
+            results->generated_spikes[neuron_id][t] = ' ';
         }
     } 
 }
 
-void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes){
+void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -158,7 +158,7 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
         lif_neuron->r_time_rest --;
         
         // no spike generated
-        generated_spikes[neuron_id][t] = ' ';
+        results->generated_spikes[neuron_id][t] = ' ';
     }
     else{ // if r_t equal to 0 start processing neuron again
         // check all input synapses to find if there are spikes to process
@@ -245,13 +245,13 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, unsigned char **ge
             lif_neuron->v = lif_neuron->v_reset; // reset potential
 
             // for output
-            generated_spikes[neuron_id][t] = '|';
+            results->generated_spikes[neuron_id][t] = '|';
 
             //*spike_amount += 1;
         }
         else{
             // no spike generated
-            generated_spikes[neuron_id][t] = ' ';
+            results->generated_spikes[neuron_id][t] = ' ';
         }
     }
 }
@@ -571,7 +571,7 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, 
     int i;
 
     lif_neuron_t *neuron = &(snn->lif_neurons[neuron_index]);
-    neuron->v_tresh = 150;//-50;//0.25;
+    neuron->v_tresh = 1;//150;//-50;//0.25;
     neuron->v_rest = 0;//-65;// -70 to -50 mV --> random value on that range?
     neuron->v_reset = 0;//-70;
     neuron->v= neuron->v_rest; //0.1;

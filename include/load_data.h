@@ -102,6 +102,8 @@ void insert_at_file_init(const char *file_name, const char *temp_file_name);*/
 /// @param file_name Configuration file name
 /// @param conf struct to store configuration parameters
 int load_configuration_params(const char *file_name, simulation_configuration_t *conf);
+int load_configuration_params_from_toml(const char *file_name, simulation_configuration_t *conf);
+
 
 void store_results(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn);
 

@@ -13,15 +13,15 @@
  * LIF neuron model functions
  */
 
-void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes);
-void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes, int *spike_amount);
+void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results);
+void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results);
 
 /// @brief Computes a time step for a lif neuron (process input synapse spikes and generate an spike if necessary)
 /// @param snn SNN structure
 /// @param t Time step
 /// @param neuron_id Identifier to neuron to be computed
 /// @param generated_spikes List to store generated spikes
-void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes);
+void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results);
 
 //void step_lif_neuron(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes);
 

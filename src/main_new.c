@@ -14,6 +14,7 @@
 #include <math.h>
 #include <time.h>
 
+
 /* main.c */
 int main(int argc, char *argv[]) {
     // variables definition
@@ -21,25 +22,24 @@ int main(int argc, char *argv[]) {
     spiking_nn_t snn;
     simulation_configuration_t conf;
     simulation_results_t results;
-    network_construction_lists_t *lists;
-    lists = malloc(sizeof(network_construction_lists_t));
+    network_construction_lists_t lists;
 
     // randomize execution
     srand(time(NULL));
 
-    
     // load configuration parameters from input file
-    load_configuration_params(argv[1], &conf);
+    //load_configuration_params(argv[1], &conf);
+    load_configuration_params_from_toml(argv[1], &conf);
     printf("Configuration file loaded\n");
 
     // load information about the snn from the network file
     printf("%s\n", conf.network_file);
-    load_network_information(conf.network_file, &snn, lists);
+    load_network_information(conf.network_file, &snn, &lists);
     printf("Network information loaded\n");
 
 
     // initialize the network 
-    initialize_network(&snn, &conf, lists);
+    initialize_network(&snn, &conf, &lists);
     printf("Network initialized\n");
 
 
@@ -64,23 +64,23 @@ int main(int argc, char *argv[]) {
     printf(" - Number input synapses = %d\n", snn.n_input_synapses);
     printf(" - Number output synapses = %d\n", snn.n_output_synapses);
     printf(" - Neurons behaviour: ");
-    print_array(lists->neuron_excitatory, snn.n_neurons);
+    print_array(lists.neuron_excitatory, snn.n_neurons);
     printf(" - Synapses:\n");
     for(i = 0; i<(snn.n_neurons + 1); i++){
-        printf("Printing neuron %d connections %d: ", i-1, lists->synaptic_connections[i][0]); // -1 input synapses
-        for(j = 0; j<(lists->synaptic_connections[i][0]); j++){
-            printf("%d ", lists->synaptic_connections[i][j*2+1]);
-            printf("%d ", lists->synaptic_connections[i][j*2+2]);
+        printf("Printing neuron %d connections %d: ", i-1, lists.synaptic_connections[i][0]); // -1 input synapses
+        for(j = 0; j<(lists.synaptic_connections[i][0]); j++){
+            printf("%d ", lists.synaptic_connections[i][j*2+1]);
+            printf("%d ", lists.synaptic_connections[i][j*2+2]);
 
         }
         printf("\n");
     }
     printf(" - Weights list: ");
-    print_array_f(lists->weight_list, snn.n_synapses);
+    print_array_f(lists.weight_list, snn.n_synapses);
     printf(" - Delays list: ");
-    print_array(lists->delay_list, snn.n_synapses);
+    print_array(lists.delay_list, snn.n_synapses);
     printf(" - Training zones: ");
-    print_array(lists->training_zones, snn.n_synapses);
+    print_array(lists.training_zones, snn.n_synapses);
     printf("===================\n\n");
 #endif ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -153,27 +153,27 @@ int main(int argc, char *argv[]) {
 
 
     // free memory (THIS SHOULD BE IN A FUNCTION)
-    free_lists_memory(lists, &snn);
-
+    //free_lists_memory(&lists, &snn);
 
     printf("Initializing training / simulation\n");
 
     // call simulation function
     // if simulation{} else if sample_simulation{}
+
+#ifndef BY_SAMPLE
     simulate(&snn, &conf, &results);
-
-
-    // IFDEFS TO INDICATE WHAT MUST BE STORED
-    // STORE AMOUNT OF SPIKES FOR EACH NEURON TOO
-
-    // LO DE ABAJO ORGANIZARLO EN FUNCIONES, ESTO ES UN DESASTRE
-    printf("Execution time: %f seconds\n", results.elapsed_time);
-    //else{}
-    printf(" - Execution time for neurons: %f seconds\n", results.elapsed_time_neurons);
-    printf(" - Execution time for sybnapses: %f seconds\n", results.elapsed_time_synapses);
-
+#else
+    simulate_by_samples();
+#endif
     // store simulation results
     store_results(&results, &conf, &snn);
   
+    // print execution times
+    printf("Execution time: %f seconds\n", results.elapsed_time);
+    printf(" - Execution time for neurons: %f seconds\n", results.elapsed_time_neurons);
+    printf("    - Execution time for neurons input: %f seconds\n", results.elapsed_time_neurons_input);
+    printf("    - Execution time for neurons output: %f seconds\n", results.elapsed_time_neurons_output);
+    printf(" - Execution time for sybnapses: %f seconds\n", results.elapsed_time_synapses);
+
     return 0;
 }
