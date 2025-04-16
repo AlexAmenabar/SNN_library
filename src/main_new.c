@@ -55,8 +55,47 @@ int main(int argc, char *argv[]) {
     initialize_results_struct(&results, &conf, &snn);
     printf("Results strcut initialized!\n");
 
+
+#ifdef REORDER
+    printf("Reordering synapses list...\n");
+    reorder_synapse_list(&snn);
+    printf("List of synapses reordered!\n");
+#endif
+
+/*
+    // reorder list of synaptic connections
+        // print information of network synapses
+        printf("Printing synapses information...\n");
+        for(i = 0; i<snn.n_synapses; i++)
+            printf("Synapse %d: \n - W = %f\n - Delay = %d\n", 
+                    i, snn.synapses[i].w, snn.synapses[i].delay);
+        printf("===================\n\n");
+    
+    
+        // print information of network synapses
+        printf("Printing neuron input synapses...\n");
+        for(i = 0; i<snn.n_neurons; i++){
+            printf("Neuron %d inpyt synapse indexes (%d): ", i, snn.lif_neurons[i].n_input_synapse);
+            for(int j = 0; j<snn.lif_neurons[i].n_input_synapse; j++){
+                printf("%d ", snn.lif_neurons[i].input_synapse_indexes[j]);
+            }
+            printf("\n");
+        }
+        
+        printf("===================\n\n");
+    
+        printf("Printing neuron output synapses...\n");
+        for(i = 0; i<snn.n_neurons; i++){
+            printf("Neuron %d output synapse indexes (%d): ", i, snn.lif_neurons[i].n_output_synapse);
+            for(int j = 0; j<snn.lif_neurons[i].n_output_synapse; j++){
+                printf("%d ", snn.lif_neurons[i].output_synapse_indexes[j]);
+            }
+            printf("\n");
+        }
+    
 // print general information about the simulation: simulation configuration, network information...
 #ifdef DEBUG //////////////////////////////////////////////////////////////////////////////////////////////
+/*
     printf("===================\n");
     printf("Execution properies:\n");
     printf(" - Execution type = %d\n", conf.simulation_type);
@@ -90,6 +129,7 @@ int main(int argc, char *argv[]) {
 
     ////////////////////////////////////////////////////////////////////////////////////////////
 
+    /*
     printf("Network initialized\n");
 
     // print information of network neurons
@@ -134,9 +174,9 @@ int main(int argc, char *argv[]) {
     }
     
     printf("===================\n\n");
-
+*/
     //////////////////////////////////////////////////////////////////////////////////////////////
-
+/*
     printf("Printing network input synapses input spike times: \n", i);
 
     // print spike trains
@@ -150,9 +190,8 @@ int main(int argc, char *argv[]) {
         }
         printf("\n");
     }
-#endif
-
-    return 0;
+    */
+//#endif
 
     // free memory TODO: must be corrected
     //free_lists_memory(&lists, &snn);

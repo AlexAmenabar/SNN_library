@@ -215,6 +215,7 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
 /// @param training_zones List of training types for each synapse
 void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, network_construction_lists_t *lists);
 
+void reorder_synapse_list(spiking_nn_t *snn);
 
 void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn);
 

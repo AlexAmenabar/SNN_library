@@ -455,7 +455,7 @@ void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, network_construc
     neuron->r = 10;
     neuron->excitatory = lists->neuron_excitatory[neuron_index];//excitatory;
     neuron->r_time_rest = 0;
-    neuron->r_time = lists->r_time_list[i];//2;
+    neuron->r_time = lists->r_time_list[neuron_index];//2;
 
     // check if neuron is input/output neuron 
     if(neuron_index < snn->n_input)

@@ -57,10 +57,12 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
                 clock_gettime(CLOCK_MONOTONIC, &end_neurons_input);
                 }
 
+
                 #pragma omp single
                 {
                 clock_gettime(CLOCK_MONOTONIC, &start_neurons_output);
                 }
+                
                 #pragma omp for schedule(static, 10) private(i)
                 for(i=0; i<snn->n_neurons; i++)
                     snn->output_step(snn, time_step, i, results);

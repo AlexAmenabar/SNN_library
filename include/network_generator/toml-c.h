@@ -1024,7 +1024,6 @@ static int parse_keyval(context_t *ctx, toml_table_t *tab) {
 
 	switch (ctx->tok.tok) {
 		case STRING: { // key = "value"
-			//printf("Key = 'valie'\n");
 			toml_keyval_t *keyval = create_keyval_in_table(ctx, tab, key);
 			if (!keyval)
 				return -1;
@@ -1040,19 +1039,14 @@ static int parse_keyval(context_t *ctx, toml_table_t *tab) {
 			return 0;
 		}
 		case LBRACKET: { /* key = [ array ] */
-			//printf("Key = '[array]'\n");
 			toml_array_t *arr = create_keyarray_in_table(ctx, tab, key, 0);
-			//printf("Array created\n");
 			if (!arr)
 				return -1;
-			//printf("2\n");
 			if (parse_array(ctx, arr))
 				return -1;
-			//printf("3\n");
 			return 0;
 		}
 		case LBRACE: { /* key = { table } */
-			//printf("Key = '{table}'\n");
 			toml_table_t *nxttab = create_keytable_in_table(ctx, tab, key);
 			if (!nxttab)
 				return -1;
@@ -1291,49 +1285,37 @@ toml_table_t *toml_parse(char *toml, char *errbuf, int errbufsz) {
 	// set root as default table
 	ctx.curtab = ctx.root;
 
-	//printf("In toml_parse for\n");
-	int iteration = -1;
 	// Scan forward until EOF
 	for (token_t tok = ctx.tok; !tok.eof; tok = ctx.tok) {
-		iteration ++;
-		//printf("Iteration %d\n", iteration);
 		switch (tok.tok) {
 			case NEWLINE:
-				//printf("NEWLINE\n");
 				if (next_token(&ctx, true))
 					goto fail;
 				break;
 
 			case STRING:
-				//printf("STRING\n");
 				if (parse_keyval(&ctx, ctx.curtab))
 					goto fail;
-				//printf("keyval parsed\n");
 
 				if (ctx.tok.tok != NEWLINE) {
 					e_syntax(&ctx, ctx.tok.lineno, "extra chars after value");
 					goto fail;
 				}
-				//printf("e_syntax executed\n");
 
 				if (eat_token(&ctx, NEWLINE, 1, FLINE))
 					goto fail;
-				//printf("STRING FINISHED\n");
 				break;
 
 			case LBRACKET: /* [ x.y.z ] or [[ x.y.z ]] */
-				//printf("LBRACKET\n");
 				if (parse_select(&ctx))
 					goto fail;
 				break;
 
 			default:
-				//printf("DEFAULT\n");
 				e_syntax(&ctx, tok.lineno, "syntax error");
 				goto fail;
 		}
 	}
-	//printf("TOML for finished\n");
 
 	/// success
 	for (int i = 0; i < ctx.tpath.top; i++)
@@ -1341,7 +1323,6 @@ toml_table_t *toml_parse(char *toml, char *errbuf, int errbufsz) {
 	return ctx.root;
 
 fail:
-	printf("Fail\n");
 	// Something bad has happened. Free resources and return error.
 	for (int i = 0; i < ctx.tpath.top; i++)
 		xfree(ctx.tpath.key[i]);
@@ -1355,15 +1336,9 @@ toml_table_t *toml_parse_file(FILE *fp, char *errbuf, int errbufsz) {
 	int off = 0;
 	int inc = 1024;
 
-	int iteration = -1;
-
 	while (!feof(fp)) {
-		iteration ++;
-		//printf("Iteration %d\n", iteration);
-		if (bufsz == 1024 * 20){ /// Increment buffer by 20k after 20k.
+		if (bufsz == 1024 * 20) /// Increment buffer by 20k after 20k.
 			inc = 1024 * 20;
-			//printf("Expanded: %d\n", inc);
-		}
 		if (off == bufsz) {
 			int xsz = bufsz + inc;
 			char *x = expand(buf, bufsz, xsz);
@@ -1386,8 +1361,6 @@ toml_table_t *toml_parse_file(FILE *fp, char *errbuf, int errbufsz) {
 		off += n;
 	}
 
-	//printf("While finished\n");
-
 	/// tag on a NUL to cap the string
 	if (off == bufsz) {
 		int xsz = bufsz + 1;
@@ -1403,7 +1376,6 @@ toml_table_t *toml_parse_file(FILE *fp, char *errbuf, int errbufsz) {
 	buf[off] = 0;
 
 	/// parse it, cleanup and finish.
-	//printf("Calling toml_parse\n");
 	toml_table_t *ret = toml_parse(buf, errbuf, errbufsz);
 	xfree(buf);
 	return ret;

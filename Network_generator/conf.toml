@@ -1,0 +1,49 @@
+[general]
+    neurons = 1
+    synapses = 0
+    n_neurons = 10000
+    n_input_neurons = 10
+    n_output_neurons = 1
+    n_synapses = 0
+    n_input_synapses = 0
+    n_output_synapses = 0
+	output_file = "Network_generator/prueba.toml"
+    output_is_separated = 1
+	lambda = 2.25
+    lambda_delays = 0.6
+    integers = 1
+    max_connections_pair_neurons = 8
+
+[neurons]
+    v_thres = 1
+    v_thres_min = 120
+    v_thres_max = 150
+
+    v_rest = 1
+    v_rest_min = 0
+    v_rest_max = 20
+
+    R = 1
+    R_min = 10
+    R_max = 20
+
+    refract_time = 1
+    refract_time_min = 1
+    refract_time_max = 5
+
+    behaviour = 1
+    behaviour_min = 0
+    behaviour_max = 1
+
+[synapses]
+    latency = 1
+    latency_min = 1
+    latency_max = 4
+
+    training_zone = 1
+    training_zone_min = 0
+    training_zone_max = 2
+
+    weight = 1
+    weight_min = -100
+    weight_max = 100
