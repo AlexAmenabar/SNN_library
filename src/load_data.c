@@ -77,7 +77,9 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
     */
 
     printf("    - Loading general section...\n");
+    printf("Hola\n");
     n_neurons = toml_table_int(tbl_general, "neurons");
+    printf("Fail\n");
     n_input_neurons = toml_table_int(tbl_general, "input_neurons");
     n_output_neurons = toml_table_int(tbl_general, "output_neurons");
     n_synapses = toml_table_int(tbl_general, "synapsis");
@@ -92,7 +94,7 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
         copied_file_name = malloc(len * sizeof(char));
         strcpy(copied_file_name, file_name);
 
-        original_file_name = strtok(copied_file_name, "."); // split file name by extension
+        original_file_name = strtok(copied_file_name, ".toml"); // split file name by extension
         len = strlen(original_file_name);
     
         file_name_neurons = malloc((len + 20) * sizeof(char));
@@ -100,10 +102,12 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
     
         strcpy(file_name_neurons, original_file_name);  // copy original file name
         strcpy(file_name_synapses, original_file_name);
-        
+    
         strcat(file_name_neurons, "_neurons.toml"); // add extension to original file name for neurons and synapses
         strcat(file_name_synapses, "_synapses.toml");
-        
+    
+        printf("%s, %s\n", file_name_neurons, file_name_synapses);
+
         open_file(&f_neurons, file_name_neurons); // TOML file
         open_file(&f_synapses, file_name_synapses); // TOML file
     }

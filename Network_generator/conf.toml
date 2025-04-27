@@ -1,15 +1,15 @@
 [general]
     neurons = 1
     synapses = 0
-    n_neurons = 10000
+    n_neurons = 20000
     n_input_neurons = 10
     n_output_neurons = 1
     n_synapses = 0
     n_input_synapses = 0
     n_output_synapses = 0
-	output_file = "Network_generator/prueba.toml"
+	output_file = "Network_generator/network20000.toml"
     output_is_separated = 1
-	lambda = 2.25
+	lambda = 2
     lambda_delays = 0.6
     integers = 1
     max_connections_pair_neurons = 8

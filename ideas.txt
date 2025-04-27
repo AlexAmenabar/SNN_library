@@ -1,0 +1,3 @@
+correlación entre BIE inicial y la accuracy obtenida al final del entranmiento. Media y desviación estandar relacionado con el grado de mejoría de la red?
+
+Comparar HH y 

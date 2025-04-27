@@ -69,11 +69,12 @@ typedef struct {
 } synapse_t;
 
 
-/// @brief Structure to store motif types
+// Probably I will eliminate this
+/*/// @brief Structure to store motif types
 typedef struct {
     int type; 
     void *neurons; // each motif can have a different amount of neurons depending on the type 
-} motif_t;
+} motif_t;*/
 
 
 /// @brief SNN structure to store all the information about the network
