@@ -23,7 +23,9 @@ void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size)
 // PROBABLY MUST CHANGE THIS FUNCTION
 void allocate_memory_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
-    int j;
+    ind->obj = (double *)malloc(nsga2Params->nobj*sizeof(double));
+    ind->snn = (spiking_nn_t *)malloc(sizeof(spiking_nn_t));
+
     /*if (nsga2Params->nreal != 0)
     {
         ind->xreal = (double *)malloc(nsga2Params->nreal*sizeof(double));
@@ -71,7 +73,14 @@ void deallocate_memory_pop (NSGA2Type *nsga2Params, population *pop, int size)
 /* Function to deallocate memory to an individual */
 void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
 {
-    int j;
+    free(ind->obj);
+
+    // TODO: the deallocation of the snn structure is more complex than only this, first is necessary to deallocate other things
+    deallocate_memory_snn(ind->snn);
+    free(ind->snn);
+
+
+    /*int j;
     if (nsga2Params->nreal != 0)
     {
         free(ind->xreal);
@@ -89,6 +98,12 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     if (nsga2Params->ncon != 0)
     {
         free(ind->constr);
-    }
+    }*/
     return;
+}
+
+//TODO
+/* Function to deallocate memory to a Spiking Neural Network structure */
+void deallocate_memory_snn(spiking_nn_t *snn){
+
 }

@@ -1,10 +1,9 @@
 #include "snn_library.h"
-#include "neuron_models/neuron_models.h"
 #include "neuron_models/lif_neuron.h"
 
 #include <stdlib.h>
 #include <stdio.h>
-#include<unistd.h>
+#include <unistd.h>
 
 
 void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
@@ -441,7 +440,7 @@ void step_lif_neuron_stdp_integrated(spiking_nn_t *snn, int t, int neuron_id, un
 
 
 //void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, int excitatory, int **synaptic_connections, int n_input_synapse, int n_output_synapse){
-void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, network_construction_lists_t *lists, int **synaptic_connections, int n_input_synapse, int n_output_synapse){
+void initialize_lif_neuron(spiking_nn_t *snn, int neuron_index, network_construction_lists_t *lists, int n_input_synapse, int n_output_synapse){
  
     // Initialize lif neuron parameters
     int i;

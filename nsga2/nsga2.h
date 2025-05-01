@@ -43,78 +43,61 @@ typedef struct
 motif_t; // this struct is used to store existing motifs, not those
         // of the networks used in the genetic algorithm
 
-
-/* Motifs */
-typedef struct
-{
-    uint motif_id; // can not be negative --> can be the index???
-    uint8_t neuron_index; // can not be negative, and it is local inside motif, so can not be a large number
-                          // and it is a input neuron of the motif, it is stored the index of the input neuron
-}
-neuron_identifier_t;
-
 typedef struct
 {
     uint motif_id; 
     uint8_t motif_type;
     uint32_t initial_global_index; // index of the first neuron in the neuron list
-
-
-    // I am not being able to do it with the info below, so I will use a sparse matrix
-
-    // for each output neuron, the neurons to which is connected
-    int *n_connections_to_motifs; // number of motifs each output neuron is connected to
-    int *n_input_synapses_per_neuron; // number of input connections per each input neuron
-    int *n_output_synapses_per_neuron; // number of output connections per each output neuron
-
-    // these lists are used to manage the creation of new motifs and connections on crossover and mutation operations
-    neuron_identifier_t **output_neurons; // list of postsinaptic neurons identifiers (tuple of motif id and neuron index)
-    neuron_identifier_t **input_neurons; // list of presinaptic neurons identifier (tuple of motif id and neuron index)
-    // this could be a triple pointer too and locate outside pf here, it would be a better place
 }
 motif_node_t;
-
-typedef struct neuron_node_t
-{
-    double threshold;
-    uint8_t refract_time;
-    double v_rest;
-    uint8_t r;
-
-    // next neuron
-    struct neuron_node_t *next_neuron;
-}
-neuron_node_t;
 
 typedef struct sparse_matrix_node_t
 {
     uint32_t row, col;
     int8_t value;
 
-    uint8_t latency; //latency of the synaptic connection
-    double weight;
-    uint8_t learning_rule;
+    uint8_t *latency; //latency of the synaptic connection (is a list if value is bigger than 1)
+    double *weight;
+    uint8_t *learning_rule;
 
     // next element of the sparse matrix
     struct sparse_matrix_node_t *next_element;
 }
 sparse_matrix_node_t;
 
-
-// change individual class to be a snn
-typedef struct
+typedef struct neuron_node_t
 {
-    int n_motifs; // number of motifs for the individual
-    motif_node_t *motifs;
+    double threshold;
+    uint8_t refract_time;
+    double v_rest;
+    float r;
 
-    // dynamic list of neurons
-    neuron_node_t *neurons;
-
-    // sparse matrix of connections (dynamic list)
-    sparse_matrix_node_t *connectivity_matrix; // connectivity sparse matrix: first pointer for rows, second one for columns, and the third one for values. It is a ordered list
-    // int8_t as there can be negative and positive values (sign indicates if the weight must be positive or negative) and the value indicates the amount of connections between two neurons
+    // next neuron
+    struct neuron_node_t *next_neuron;
 }
-genotype;
+neuron_node_t;
+
+typedef struct new_motif_t
+{
+    uint motif_id; 
+    uint8_t motif_type;
+    uint32_t initial_global_index; // index of the first neuron in the neuron list
+    neuron_node_t *first_neuron;
+
+    struct new_motif_t *next_motif;
+    struct learning_zone_t *learning_zone;
+}
+new_motif_t;
+
+typedef struct learning_zone_t
+{
+    int stdp_type;
+    int n_motifs;
+    new_motif_t *first_motif;
+
+    struct learning_zone_t *next_zone;
+}
+learning_zone_t;
 
 typedef struct
 {
@@ -129,15 +112,16 @@ typedef struct
 
     // structure to store the spiking neural network
     spiking_nn_t *snn; // decoded
-    genotype genotype; // genotype is a list of integers
     
     int n_motifs; // number of motifs for the individual
     motif_node_t *motifs;
 
     // network number of motifs, neurons and synapses
     int n_neurons; // total amount of neurons for the network
-
+    int n_input_neurons;
+    
     int n_synapses; // total amount of synapses for the network
+    int n_input_synapses;
 
     // dynamic list of neurons
     neuron_node_t *neurons;
@@ -145,6 +129,12 @@ typedef struct
     // sparse matrix of connections (dynamic list)
     sparse_matrix_node_t *connectivity_matrix; // connectivity sparse matrix: first pointer for rows, second one for columns, and the third one for values. It is a ordered list
     // int8_t as there can be negative and positive values (sign indicates if the weight must be positive or negative) and the value indicates the amount of connections between two neurons 
+
+
+    // new
+    int n_learning_zones;
+    learning_zone_t *learning_zones;
+    new_motif_t *motifs_new;
 }
 individual;
 
@@ -220,8 +210,10 @@ typedef struct NSGA2Type
 
     // dataset variables
     int dataset_type; // for the future, now only images
-    int train_samples;
-    int test_samples;
+    char train_dataset_dir[500];
+    char test_dataset_dir[500];
+    int n_train_samples;
+    int n_test_samples;
     int image_size;
     int bins;
 } NSGA2Type;
@@ -246,9 +238,19 @@ void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size);
 void allocate_memory_ind (NSGA2Type *nsga2Params, individual *ind);
 void deallocate_memory_pop (NSGA2Type *nsga2Params, population *pop, int size);
 void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind);
+void deallocate_memory_snn(spiking_nn_t *snn);
 
 double maximum (double a, double b);
 double minimum (double a, double b);
+void copy_motif_node(motif_node_t *motif1, motif_node_t *motif2);
+void copy_motifs(individual *ind1, individual *ind2);
+void copy_neuron_node(neuron_node_t *neuron_node1, neuron_node_t *neuron_node2);
+void copy_neuron_nodes(individual *ind1, individual *ind2);
+void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *synapse2);
+void copy_synapse_nodes(individual *ind1, individual *ind2);
+void copy_individual(individual *ind1, individual *ind2);
+void print_individuals(NSGA2Type *nsga2Params, population *pop);
+void print_networks(NSGA2Type *nsga2Params, population *pop);
 
 void crossover (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);
 void realcross (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);

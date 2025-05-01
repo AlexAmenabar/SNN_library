@@ -9,7 +9,7 @@
 
 
 
-/* # define sch1 */
+ # define sch1 
 /* # define sch2 */
 /* # define fon */
 /* # define kur */
@@ -25,7 +25,7 @@
 /* # define osy */
 /* # define srn */
 /* # define tnk */
- # define ctp1 
+/* # define ctp1 */
 /* # define ctp2 */
 /* # define ctp3 */
 /* # define ctp4 */
@@ -33,6 +33,18 @@
 /* # define ctp6 */
 /* # define ctp7 */
 /*# define ctp8*/
+
+
+/* Problem for SNNs */
+void ESNN_problem(double *obj, NSGA2Type *nsga2Params, spiking_nn_t *snn){
+    // compute 
+    
+
+
+    return;
+}
+
+
 
 /*  Test problem SCH1
     # of real variables = 1

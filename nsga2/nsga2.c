@@ -3,6 +3,8 @@
 # include "nsga2.h"
 # include "rand.h"
 
+#include "encoders/image_encoders.h"
+
 FILE *fpt1;
 FILE *fpt2;
 FILE *fpt3;
@@ -19,6 +21,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     int i;
     NSGA2Type nsga2Params;
     
+	printf("== Read input parameters == \n");
+
     if (argc<2)
     {
         printf("\n Usage ./nsga2r random_seed \n");
@@ -287,13 +291,13 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%lf",&nsga2Params.pcross);
     scanf("%lf",&nsga2Params.pmut);
 
-    printf("\n - Neuron type: %d\n", nsga2Params.neuron_type);
-    printf("\n - Max motifs: %d\n", nsga2Params.max_motifs);
-    printf("\n - Min motifs: %d\n", nsga2Params.min_motifs);
-    printf("\n - Max multiple connections: %d\n", nsga2Params.max_multiple_connections);
-    printf("\n - Min multiple connections: %d\n", nsga2Params.min_multiple_connections);
-    printf("\n - P cross: %e\n", nsga2Params.pcross);
-    printf("\n - P mut: %e\n", nsga2Params.pmut);
+    printf(" > Neuron type: %d\n", nsga2Params.neuron_type);
+    printf(" > Max motifs: %d\n", nsga2Params.max_motifs);
+    printf(" > Min motifs: %d\n", nsga2Params.min_motifs);
+    printf(" > Max multiple connections: %d\n", nsga2Params.max_multiple_connections);
+    printf(" > Min multiple connections: %d\n", nsga2Params.min_multiple_connections);
+    printf(" > P cross: %e\n", nsga2Params.pcross);
+    printf(" > P mut: %e\n", nsga2Params.pmut);
 
     // read parameters related to neurons
     scanf("%lf",&nsga2Params.max_vthres);
@@ -305,14 +309,14 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.max_R);
     scanf("%d",&nsga2Params.min_R);
 
-    printf("\n - Max V threshold: %e\n", nsga2Params.max_vthres);
-    printf("\n - Min V threshold: %e\n", nsga2Params.min_vthres);
-    printf("\n - Max V rest: %e\n", nsga2Params.max_vrest);
-    printf("\n - Min V rest: %e\n", nsga2Params.min_vrest);
-    printf("\n - Max refractary time: %d\n", nsga2Params.max_refracttime);
-    printf("\n - Min refractary time: %d\n", nsga2Params.min_refracttime);
-    printf("\n - Max R: %d\n", nsga2Params.max_R);
-    printf("\n - Min R: %d\n", nsga2Params.min_R);
+    printf(" > Max V threshold: %e\n", nsga2Params.max_vthres);
+    printf(" > Min V threshold: %e\n", nsga2Params.min_vthres);
+    printf(" > Max V rest: %e\n", nsga2Params.max_vrest);
+    printf(" > Min V rest: %e\n", nsga2Params.min_vrest);
+    printf(" > Max refractary time: %d\n", nsga2Params.max_refracttime);
+    printf(" > Min refractary time: %d\n", nsga2Params.min_refracttime);
+    printf(" > Max R: %d\n", nsga2Params.max_R);
+    printf(" > Min R: %d\n", nsga2Params.min_R);
 
     // read parameters realted to synapses
     scanf("%d",&nsga2Params.max_latency);
@@ -320,23 +324,27 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.max_learning_rule);
     scanf("%d",&nsga2Params.min_learning_rule);
 
-    printf("\n - Max latency: %d\n", nsga2Params.max_latency);
-    printf("\n - Min latency: %d\n", nsga2Params.min_latency);
-    printf("\n - Max learning rule: %d\n", nsga2Params.max_learning_rule);
-    printf("\n - Min learning rule: %d\n", nsga2Params.min_learning_rule);
+    printf(" > Max latency: %d\n", nsga2Params.max_latency);
+    printf(" > Min latency: %d\n", nsga2Params.min_latency);
+    printf(" > Max learning rule: %d\n", nsga2Params.max_learning_rule);
+    printf(" > Min learning rule: %d\n", nsga2Params.min_learning_rule);
     
     // read dataset parameters
     scanf("%d",&nsga2Params.dataset_type);
-    scanf("%d",&nsga2Params.train_samples);
-    scanf("%d",&nsga2Params.test_samples);
+    scanf("%s",&nsga2Params.train_dataset_dir);
+    scanf("%s",&nsga2Params.test_dataset_dir);
+    scanf("%d",&nsga2Params.n_train_samples);
+    scanf("%d",&nsga2Params.n_test_samples);
     scanf("%d",&nsga2Params.image_size);
     scanf("%d",&nsga2Params.bins);
 
-    printf("\n - Dataset type: %d\n", nsga2Params.dataset_type);
-    printf("\n - N train samples: %d\n", nsga2Params.train_samples);
-    printf("\n - N test samples: %d\n", nsga2Params.test_samples);
-    printf("\n - Image size: %d\n", nsga2Params.image_size);
-    printf("\n - Image size: %d\n", nsga2Params.bins);
+    printf(" > Dataset type: %d\n", nsga2Params.dataset_type);
+    printf(" > Dataset directory: %s\n", nsga2Params.train_dataset_dir);
+    printf(" > Dataset directory: %s\n", nsga2Params.test_dataset_dir);
+    printf(" > N train samples: %d\n", nsga2Params.n_train_samples);
+    printf(" > N test samples: %d\n", nsga2Params.n_test_samples);
+    printf(" > Image size: %d\n", nsga2Params.image_size);
+    printf(" > Bins: %d\n", nsga2Params.bins);
 
     return nsga2Params;
 }
@@ -345,9 +353,9 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
 void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 {
-    int i;
+    int i, j ,l;
     
-    printf("\n\n\n == InitNSGA2 ==");
+    printf("== InitNSGA2 ==\n");
     
     // Initialize the files...
     fpt1 = fopen("initial_pop.out","w"); // file to store initial population
@@ -408,65 +416,87 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     nsga2Params->nbincross = 0;
     nsga2Params->nrealcross = 0;
     
-    // Initialize motifs list
-    printf("\nInitializing motifs...\n");
+    // Initialize motifs list. This motifs are the general motif structures used to store the information necessary for all motifs
     initialize_motifs(nsga2Params, inp, out);
-    printf("\nMotifs initialized!\n");
 
-    // I think that is better for me to allocate memory and initialize all in a single function
-    // Initializing the populations
-    printf("\nAllocating memory...\n");
+    // Allocate memory for populations
     parent_pop = (population *)malloc(sizeof(population));
     child_pop = (population *)malloc(sizeof(population));
     mixed_pop = (population *)malloc(sizeof(population));
     allocate_memory_pop (nsga2Params, parent_pop, nsga2Params->popsize);
     allocate_memory_pop (nsga2Params, child_pop, nsga2Params->popsize);
     allocate_memory_pop (nsga2Params, mixed_pop, 2*nsga2Params->popsize);
-    printf("\nMemory allocated!\n");
 
     // Preparing first Population
-    randomize(nsga2Params->seed); // randomize execution
+    randomize(nsga2Params->seed);
 
-    printf("\nInitializing population...\n");
-    initialize_pop (nsga2Params,  parent_pop); // initialize first population
-    printf("\n Initialization done, now performing first generation\n");
+    // initialize the parent population
+    initialize_pop (nsga2Params,  parent_pop); 
+    printf("\n Population initialized!\n");
     
-    printf("\n\n\n Printing population information\n");
+    // print the parent population
+    print_individuals(nsga2Params, parent_pop);
 
-    for(i = 0; i<nsga2Params->popsize; i++){
-        printf("    - Printing individual %d\n", i);
-        printf("        - number of motifs: %d\n", parent_pop->ind[i].n_motifs);
-        printf("        - Printing motifs: ");
-        for(int j = 0; j<parent_pop->ind[i].n_motifs; j++){
-            printf("%d ", parent_pop->ind[i].motifs[j].motif_type);
-        }
-        printf("\n");
+    decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
+    printf("\n Population decoded!\n");
 
-        printf("        - Printing matrix elements:\n");
-        sparse_matrix_node_t *matrix_node = parent_pop->ind[i].connectivity_matrix; 
 
-        while(matrix_node != NULL){
-            printf("                (row = %d, col = %d, value = %d)\n", matrix_node->row, matrix_node->col, matrix_node->value);
-            matrix_node = matrix_node->next_element;
-        }
-        printf("\n");
+    // print decoded networks
+    print_networks(nsga2Params, parent_pop);
+
+    // load input dataset
+    printf("Loading input spikes...\n");
+    // TODO: this MUST be a function
+    image_dataset_t image_dataset;
+    int pT = 100;
+    int pDT = 1;
+    int bins = (int)(pT/pDT);
+
+    image_dataset.bins = nsga2Params->bins;
+    image_dataset.image_size = nsga2Params->image_size;
+    image_dataset.n_images = nsga2Params->n_train_samples;
+
+    image_dataset.images = malloc(image_dataset.n_images * sizeof(image_dataset_t)); // alloc memory for images
+    for(i = 0; i<image_dataset.n_images; i++){
+        image_dataset.images[i].image = malloc(image_dataset.image_size * sizeof(int *));
+        for(j=0; j<image_dataset.image_size; j++)
+            image_dataset.images[i].image[j] = malloc(image_dataset.bins * sizeof(int));
     }
 
-    printf("\n Population printing finished\n\n\n");
+    // load spike trains
+    FILE *f = fopen(nsga2Params->train_dataset_dir, "r");
+    if(f == NULL) printf("Error opening the file\n");
 
-    printf("Decoding population...\n");
-    decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
-    printf("Population decoded!\n");
+    printf("Reading input spike train...\n");
+    for(i=0; i<image_dataset.n_images; i++){
+        for(j=0; j<image_dataset.image_size; j++){
+            fscanf(f, "%d", &(image_dataset.images[i].image[j][0]));
+            for(l = 1; l<image_dataset.images[i].image[j][0]; l++){
+                fscanf(f, "%d", &(image_dataset.images[i].image[j][l]));
+            }
+        }
+    }
+    printf("Input spikes loaded!\n");
 
+    printf("Evaluating parent population...\n");
     evaluate_pop (nsga2Params, parent_pop, inp, out);
+    printf("Parent population evaluated!\n");
+
+
     assign_rank_and_crowding_distance (nsga2Params, parent_pop);
-    report_pop (nsga2Params, parent_pop, fpt1);
+    printf("Rank and crowding distance assigned\n");
+
+    //report_pop (nsga2Params, parent_pop, fpt1);
+    printf("Report population\n");
+    
     fprintf(fpt4,"# gen = 1\n");
-    report_pop(nsga2Params, parent_pop,fpt4);
+    //report_pop(nsga2Params, parent_pop,fpt4);
     printf("\n -- Generation 1 --");
     
     fflush(stdout);
-    if (nsga2Params->choice!=0)    onthefly_display (nsga2Params, parent_pop,gp,1);
+    /*if (nsga2Params->choice!=0)    
+        onthefly_display (nsga2Params, parent_pop,gp,1);*/
+
     fflush(fpt1);
     fflush(fpt2);
     fflush(fpt3);
@@ -484,24 +514,38 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // NSGA2 simulation: loop over ngen generations
     for (i=2; i<=nsga2Params->ngen; i++)
     {
+        printf("Selecting...\n");
         selection (nsga2Params,  parent_pop, child_pop);
+        
+        printf("Mutating...\n");
         mutation_pop (nsga2Params,  child_pop);
+        
+        printf("Decoding...\n");
         decode_pop(nsga2Params,  child_pop);
+        
+        printf("Evaluating...\n");
         evaluate_pop(nsga2Params,  child_pop, inp, out);
+        
+        printf("Merging...\n");
         merge (nsga2Params,  parent_pop, child_pop, mixed_pop);
+        
+        printf("Filling...\n");
         fill_nondominated_sort (nsga2Params,  mixed_pop, parent_pop);
+
+
         /* Comment following four lines if information for all
          generations is not desired, it will speed up the execution */
         fprintf(fpt4,"# gen = %d\n",i);
-        report_pop(nsga2Params, parent_pop,fpt4);
+        //report_pop(nsga2Params, parent_pop,fpt4);
         fflush(fpt4);
-        if (nsga2Params->choice!=0)    onthefly_display (nsga2Params, parent_pop,gp,i);
+        if (nsga2Params->choice!=0)    
+            onthefly_display (nsga2Params, parent_pop,gp,i);
         printf("\n -- Generation %d --", i);
     }
     printf("\n Generations finished, now reporting solutions");
     
-    report_pop(nsga2Params,  parent_pop,fpt2);
-    report_feasible(nsga2Params,  parent_pop,fpt3);
+    //report_pop(nsga2Params,  parent_pop,fpt2);
+    //report_feasible(nsga2Params,  parent_pop,fpt3);
     
     if (nsga2Params->nreal!=0)
     {

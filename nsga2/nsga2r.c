@@ -10,15 +10,13 @@ int main(int argc, char **argv)
 
 	// read input parameters
 	nsga2Params = ReadParameters(argc, argv);
-	printf("\nInput parameters readed\n");
 
 	// Init population and individuals
 	InitNSGA2(&nsga2Params, inp, out);
-	printf("\nNSGAII initialized\n");
 
 	// loop over generations
+	printf("Looping...\n");
 	NSGA2(&nsga2Params, inp, out);
-	printf("\nLoop finished\n");
 
 	return 0;
 }

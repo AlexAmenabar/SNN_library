@@ -14,32 +14,50 @@ void selection (NSGA2Type *nsga2Params,  population *old_pop, population *new_po
     int temp;
     int i;
     int rand;
-    individual *parent1, *parent2;
+    individual *parent1, *parent2, *parent;
+    
     a1 = (int *)malloc(nsga2Params->popsize*sizeof(int));
     a2 = (int *)malloc(nsga2Params->popsize*sizeof(int));
     for (i=0; i<nsga2Params->popsize; i++)
     {
         a1[i] = a2[i] = i;
     }
+
+    // get indexes to find pairs of individuals to compite
     for (i=0; i<nsga2Params->popsize; i++)
     {
         rand = rnd (i, nsga2Params->popsize-1);
         temp = a1[rand];
         a1[rand] = a1[i];
         a1[i] = temp;
+
         rand = rnd (i, nsga2Params->popsize-1);
         temp = a2[rand];
         a2[rand] = a2[i];
         a2[i] = temp;
     }
+
+
     for (i=0; i<nsga2Params->popsize; i+=4)
     {
         parent1 = tournament (nsga2Params, &old_pop->ind[a1[i]], &old_pop->ind[a1[i+1]]);
         parent2 = tournament (nsga2Params, &old_pop->ind[a1[i+2]], &old_pop->ind[a1[i+3]]);
-        crossover (nsga2Params, parent1, parent2, &new_pop->ind[i], &new_pop->ind[i+1]);
+        
+        // TODO: Improve this
+        // copy parents to child population
+        copy_individual(parent1, &(new_pop->ind[i]));
+        copy_individual(parent2, &(new_pop->ind[i+1]));
+
+        //crossover (nsga2Params, parent1, parent2, &new_pop->ind[i], &new_pop->ind[i+1]);
+
         parent1 = tournament (nsga2Params, &old_pop->ind[a2[i]], &old_pop->ind[a2[i+1]]);
         parent2 = tournament (nsga2Params, &old_pop->ind[a2[i+2]], &old_pop->ind[a2[i+3]]);
-        crossover (nsga2Params, parent1, parent2, &new_pop->ind[i+2], &new_pop->ind[i+3]);
+
+        // TODO: improve this
+        copy_individual(parent1, &(new_pop->ind[i+2]));
+        copy_individual(parent2, &(new_pop->ind[i+1+3]));
+
+        //crossover (nsga2Params, parent1, parent2, &new_pop->ind[i+2], &new_pop->ind[i+3]);
     }
     free (a1);
     free (a2);

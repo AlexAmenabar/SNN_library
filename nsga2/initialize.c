@@ -34,7 +34,7 @@ void initialize_neuron_node(neuron_node_t *neuron_node){
     neuron_node->threshold = 150;
     neuron_node->refract_time = 3;
     neuron_node->v_rest = 0;
-    neuron_node->r = 10;
+    neuron_node->r = 10.0;
 }
 
 // Function to initialize all neuron nodes
@@ -65,14 +65,6 @@ void initialize_neuron_nodes(individual *ind){
 /**
 Functions to connect motifs and construct the sparse matrix
 */
-
-
-
-void connect_motif_all_outputs_2_motif_all_inputs(){
-
-}
-
-
 
 void construct_sparse_matrix(individual *ind, int *n_selected_motifs_per_motif, int **selected_motifs_per_motif){
     int i, j, k, l, s, neuron_index, temp_neuron_index, actual_motif_index, temp_motif_index;
@@ -382,23 +374,19 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     
     // initialize number of neurons and synapses of the individual to 0
     ind->n_neurons = 0;
+    ind->n_input_neurons = 0;
+
     ind->n_synapses = 0;
-
-
+    ind->n_input_synapses = 0;
+    
     // initialize motifs
     initialize_ind_motifs(ind);
-
 
     // initialize neurons
     initialize_neuron_nodes(ind);
 
-
     // connect motifs and construct sparse matrix
     connect_motifs(ind);
-
-
-    // allocate memory for spiking neural network structure
-    ind->snn = (spiking_nn_t *)malloc(sizeof(spiking_nn_t));
     
     return;
 }

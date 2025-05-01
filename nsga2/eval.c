@@ -13,7 +13,9 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     int i;
     for (i=0; i<nsga2Params->popsize; i++)
     {
+        printf("Individual %d:\n", i);
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out);
+        printf("\n");
     }
     return;
 }
@@ -21,8 +23,18 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
 /* Routine to evaluate objective function values and constraints for an individual */
 void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out)
 {
-    int j;
-    test_problem (ind->xreal, ind->xbin, ind->gene, ind->obj, ind->constr);
+    int i, j;
+    
+
+    ind->obj[0] = -ind->snn->n_synapses;
+    ind->obj[1] = ind->snn->n_neurons;
+
+
+    printf("Obj 1 = %f, obj 2 = %f\n", ind->obj[0], ind->obj[1]);
+
+    // provisional 
+    
+    /*test_problem (ind->xreal, ind->xbin, ind->gene, ind->obj, ind->constr);
     
     if (nsga2Params->ncon==0)
     {
@@ -38,6 +50,7 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
                 ind->constr_violation += ind->constr[j];
             }
         }
-    }
+    }*/
+
     return;
 }

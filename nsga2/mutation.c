@@ -18,20 +18,35 @@ void mutation_pop (NSGA2Type *nsga2Params,  population *pop)
     return;
 }
 
+
+// MUTATE ALWAYS
 /* Function to perform mutation of an individual */
 void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
-    if (nsga2Params->nreal!=0)
-    {
-        real_mutate_ind(nsga2Params, ind);
-    }
-    if (nsga2Params->nbin!=0)
-    {
-        bin_mutate_ind(nsga2Params, ind);
-    }
+    /*
+    Existing mutations:
+        - Add motif(s)
+        - Delete motif(s)
+        - Change refractory time value(s)
+        - ...
+    */
+
+    // For instance I only implemented the add motif mutation
+
     return;
 }
 
+
+void mutate_add_motif(individual *ind){
+    ind->n_motifs += 1;
+
+    
+
+}
+
+
+
+// THIS CAN BE REMOVED
 /* Routine for binary mutation of an individual */
 void bin_mutate_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
@@ -59,6 +74,8 @@ void bin_mutate_ind (NSGA2Type *nsga2Params,  individual *ind)
     return;
 }
 
+
+// THIS CAN BE REMOVED
 /* Routine for real polynomial mutation of an individual */
 void real_mutate_ind (NSGA2Type *nsga2Params,  individual *ind)
 {

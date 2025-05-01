@@ -1,11 +1,13 @@
 #include "snn_library.h"
-#include "training_rules/stdp.h"
-#include "neuron_models/lif_neuron.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
+
+#include "training_rules/stdp.h"
+#include "neuron_models/lif_neuron.h"
+#include "encoders/image_encoders.h"
 
 void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t *lists){
     int i, j;
@@ -58,7 +60,7 @@ void initialize_network_neurons(spiking_nn_t *snn, network_construction_lists_t 
     // initialize lif neurons
     for(i=0; i<snn->n_neurons; i++){
         if(snn->neuron_type == 0) // lif neuron
-            initialize_lif_neuron(snn, i, lists, lists->synaptic_connections, neurons_input_synapses[i], neurons_output_synapses[i]);
+            initialize_lif_neuron(snn, i, lists, neurons_input_synapses[i], neurons_output_synapses[i]);
     }
 
     // free memory TODO, THIS GENERATES AN ERROR
@@ -113,7 +115,15 @@ void initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists,
     }
 }
 
-void re_initialize_synapse(synapse_t *synapse, network_construction_lists_t *lists){
+
+
+void re_initialize_synapses(spiking_nn_t *snn){
+    for(int i = 0; i<snn->n_synapses; i++)
+        re_initialize_synapse(&(snn->synapses[i]));
+}
+
+
+void re_initialize_synapse(synapse_t *synapse){
     synapse->t_last_post_spike = -1;
     synapse->t_last_pre_spike = -1;
     
@@ -238,6 +248,8 @@ void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, net
     printf("Neurons connected!\n");
 }
 
+
+// This function reorders the list of synapses following the input criterion
 void reorder_synapse_list(spiking_nn_t *snn){
     int *new_order_indexes = (int *)malloc(snn->n_synapses * sizeof(int));
     int *map_indexes = (int *)malloc(snn->n_synapses * sizeof(int));
@@ -247,25 +259,6 @@ void reorder_synapse_list(spiking_nn_t *snn){
 
     lif_neuron_t *lif_neuron, *pre_neuron;
     synapse_t *synapse;
-
-    /*printf("Index lists by neurons\n");
-    for(i=0; i<snn->n_neurons;i++){
-        printf("    - Printing neuron %d lists\n", i);
-        lif_neuron = &(snn->lif_neurons[i]);
-
-        printf("        -");
-        for(j=0; j<lif_neuron->n_input_synapse; j++){
-            printf("%d ,", lif_neuron->input_synapse_indexes[j]);
-        }
-        printf("\n");
-
-        printf("        -");
-        for(j=0; j<lif_neuron->n_output_synapse; j++){
-            printf("%d ,", lif_neuron->output_synapse_indexes[j]);
-        }
-        printf("\n");
-    }*/
-
 
     // input synapses are maintained as at the beginning
     for(i=0; i<snn->n_input_synapses; i++){
@@ -282,40 +275,6 @@ void reorder_synapse_list(spiking_nn_t *snn){
             lif_neuron = &(snn->lif_neurons[i]);
             n_synap = snn->lif_neurons[i].n_input_synapse;
             for(j=0; j<n_synap; j++){
-                /*printf("    Input synapse %d: %d\n", j, lif_neuron->input_synapse_indexes[j]);
-                // only if it is not a network input synapse
-                if(lif_neuron->input_synapse_indexes[j] >= snn->n_input_synapses){
-                    printf("        Entered to if\n");
-                    new_order_indexes[next_pos] = lif_neuron->input_synapse_indexes[j];
-
-                    // get pre and post synaptic neurons from synapse
-                    synapse = &(snn->synapses[lif_neuron->input_synapse_indexes[j]]);
-
-                    // change indexes of pre and post synaptic neurons lists
-
-                    // if synapse is not network input synapse
-                    if(lif_neuron->input_synapse_indexes[j] >= snn->n_input_synapses){
-                        //printf("Computing input synapses...\n");
-                        pre_neuron = synapse->pre_synaptic_lif_neuron;
-                        // find synapse index in input and output indexes lists and update (for presynaptic neuron find in output synapses, for post synaptic in input synapses)
-                        printf("            Pre-neuron n output synapses: %d\n", pre_neuron->n_output_synapse);
-                        for(l = 0; l<pre_neuron->n_output_synapse; l++){
-                            if(pre_neuron->output_synapse_indexes[l] == lif_neuron->input_synapse_indexes[j])
-                                pre_neuron->output_synapse_indexes[l] = next_pos;
-                        }
-                    }
-
-                    //printf("Computing output synapses\n");
-                    lif_neuron->input_synapse_indexes[j] = next_pos;
-
-                    /*for(l = 0; l<post_neuron->n_input_synapses; l++){
-                        if(post_neuron->output_synapse_indexes[l] == lif_neuron->input_synapse_indexes[j])
-                            pre_neuron->output_synapse_indexes[l] = next_pos;
-                    }*/
-
-                    //map_indexes[lif_neuron->input_synapse_indexes[j]] = next_pos;
-
-
                 if(lif_neuron->input_synapse_indexes[j] >= snn->n_input_synapses){
                     new_order_indexes[next_pos] = lif_neuron->input_synapse_indexes[j]; // store synapse index in the list
                     map_indexes[lif_neuron->input_synapse_indexes[j]] = next_pos; // store mapping
@@ -402,11 +361,124 @@ void initialize_results_struct(simulation_results_t *results, simulation_configu
 }
 
 void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
-    for(int i=0; i<(snn->n_neurons+1); i++){
+    int i;
+
+    for(i=0; i<(snn->n_neurons+1); i++){
         free(lists->synaptic_connections[i]);
     }
     free(lists->synaptic_connections);
     free(lists->weight_list);
     free(lists->delay_list);
     free(lists->training_zones);
+}
+
+
+void print_lif_neuron_information(lif_neuron_t *lif_neuron){
+    int i;
+    
+    printf("      > Excitatory (1) / inhibitory (0) = %d\n", lif_neuron->excitatory);
+    printf("      > Neuron membrane potential = %f\n", lif_neuron->v);
+    printf("      > Neuron membrane potential threshold = %f\n", lif_neuron->v_tresh);
+    printf("      > Neuron resting membrane potential = %f\n", lif_neuron->v_rest);
+    printf("      > Neuron resistance = %f\n", lif_neuron->r);
+    printf("      > Neuron refractory time = %d\n", lif_neuron->r_time);
+    printf("      > Neuron is input = %d\n", lif_neuron->is_input_neuron);
+    printf("      > Neuron is output = %d\n", lif_neuron->is_output_neuron);
+    printf("      > Neuron number of input synapses = %d\n", lif_neuron->n_input_synapse);
+    printf("      > Neuron number of output synapses = %d\n", lif_neuron->n_output_synapse);
+    printf("      > Neuron input synapse indexes = ");
+    for(i=0; i<lif_neuron->n_input_synapse; i++){
+        printf("%d ", lif_neuron->input_synapse_indexes[i]);
+    }
+    printf("\n");
+
+    printf("      > Neuron output synapse indexes = ");
+    for(i=0; i<lif_neuron->n_output_synapse; i++){
+        printf("%d ", lif_neuron->output_synapse_indexes[i]);
+    }
+    printf("\n");
+    printf("\n");
+}
+
+void print_lif_neurons_information(spiking_nn_t *snn){
+    int i;
+    
+    for(i = 0; i<snn->n_neurons; i++){
+        print_lif_neuron_information(&(snn->lif_neurons[i]));
+    }
+}
+
+void print_neurons_information(spiking_nn_t *snn){
+    switch(snn->neuron_type)
+    {
+        case 0:
+            print_lif_neurons_information(snn);
+            break;
+        default:
+            print_lif_neurons_information(snn);
+            break;
+    }
+}
+
+
+void print_input_synapse_information(synapse_t *synapse){
+    printf("      > Weight = %f\n", synapse->w);
+    printf("      > Delay = %d\n", synapse->delay);
+}
+
+void print_synapse_information(synapse_t *synapse){
+    printf("      > Weight = %f\n", synapse->w);
+    printf("      > Delay = %d\n", synapse->delay);
+}
+
+void print_output_synapse_information(synapse_t *synapse){
+    printf("      > Weight = %f\n", synapse->w);
+    printf("      > Delay = %d\n", synapse->delay);
+}
+
+void print_synapses_information(spiking_nn_t *snn){
+    int i;
+
+    // print input synapses
+    printf("    > Printing input synapses:\n");
+    for(i=0; i<snn->n_input_synapses; i++){
+        print_input_synapse_information(&(snn->synapses[i]));
+        printf("\n");
+    }
+    printf("\n");
+
+    // print synapses (not input or output)
+    printf("    > Printing middle synapses:\n");
+    for(i = snn->n_input_synapses; i<snn->n_synapses - snn->n_output_synapses; i++){
+        print_synapse_information(&(snn->synapses[i]));
+        printf("\n");
+    }
+    printf("\n");
+
+    // print output synapses
+    printf("     > Printing output synapses:\n");
+    for(i=snn->n_synapses - snn->n_output_synapses; i<snn->n_synapses; i++){
+        print_output_synapse_information(&(snn->synapses[i]));
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void print_network_information(spiking_nn_t *snn){
+    printf("    > Printing general information:\n");
+    printf("      > Type of the neurons = %d\n", snn->neuron_type);
+    printf("      > Number of neurons = %d\n", snn->n_neurons);
+    printf("      > Number of input neurons = %d\n", snn->n_input);
+    printf("      > Number of output neurons = %d\n", snn->n_output);
+    printf("      > Number of synapses = %d\n", snn->n_synapses);
+    printf("      > Number of input synapses = %d\n", snn->n_input_synapses);
+    printf("      > Number of output synapses = %d\n\n", snn->n_output_synapses);
+
+    printf("    > Printing neurons information:\n");
+    print_neurons_information(snn);
+    printf("    > All neurons printed!\n\n");
+
+    printf("    > Printing synapses information:\n");
+    print_synapses_information(snn);
+    printf("    > All synapses printed!\n\n");
 }

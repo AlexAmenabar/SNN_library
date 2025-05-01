@@ -5,6 +5,10 @@
 #include <math.h>
 #include <time.h>
 
+/**
+Helper functions not related only to SNN use cases
+*/
+
 /// @brief Print matrix
 /// @param matrix Matrix to be printed
 /// @param rows Number of rows of the matrix
@@ -35,6 +39,12 @@ void print_matrix_f(float *matrix, int rows, int columns);
 void print_array_f(float *array, int length);
 
 
+/// @brief This function generates random spike trains
+/// @param spike_trains List of lists to store the spike trains
+/// @param n_spikes Pointer to store the number of spikes for each spike train
+/// @param n_input_spike_trains Number of spike trains to be generated
+/// @param time_steps Maximum number of spikes for each spike train 
+/// @param prob Probability to generate a spike in a time step
 void random_input_spike_train_generator(int **spike_trains, int *n_spikes, int n_input_spike_trains, int time_steps, int prob);
 
 #endif

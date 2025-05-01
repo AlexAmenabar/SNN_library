@@ -12,9 +12,151 @@
 #include <time.h>
 
 
-void simulate_by_samples(){
+// The way to deal with datasets should be revised and generalized
+/*void simulate_by_samples(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_results_t *results, image_dataset_t *dataset){
+    int time_step = 0, i, j, l; 
+    int n_process = conf->n_process;
+    struct timespec start, end; // to measure simulation complete time
+    struct timespec start_neurons, end_neurons; // to measure neurons imulation time
+    struct timespec start_synapses, end_synapses; // to measure synapses simulation time
+    struct timespec start_neurons_input, end_neurons_input; // to measure synapses simulation time
+    struct timespec start_neurons_output, end_neurons_output; // to measure synapses simulation time
 
-}
+
+    if(conf->simulation_type == 0){ // clock-based
+
+        // loop over samples
+        for(i = 0; i<dataset->n_images; i++){
+            printf("Starting processing sample %d...\n", i);
+            // initialize network (THIS MUST BE MOVED TO A FUNCTION AND GENERALIZED FOR DIFFERENT NEURON TYPES
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            #pragma omp parallel for schedule(dynamic, 10) private(j)  // this and the next loops: 4.5 seconds
+            for(j = 0; j<snn->n_neurons; j++){
+                re_initialize_lif_neuron(snn, j);
+            }
+            clock_gettime(CLOCK_MONOTONIC, &end);
+            elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("Neurons initialization: %f seconds\n", elapsed_time);
+
+            printf("Neuron reinitialized\n");
+            // reinitialize synapses
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            #pragma omp parallel for schedule(dynamic, 10) private(j) 
+            for(j=0; j<snn->n_synapses; j++){
+                re_initialize_synapse(&(snn->synapses[j]));
+            }
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+            elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("Synapses initialization: %f seconds\n", elapsed_time);
+            printf("Synapses reinitialized\n");
+
+            // introduce spikes into input neurons input synapses (I think that this is not paralelizable)
+            // try using pointers directly
+            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            for(j=0; j<snn->n_input; j++){ // 3 seconds??
+                
+                //for(int s = 0; s<snn.lif_neurons[j].n_input_synapse; s++){
+                    synapse_t *synap = &(snn.synapses[snn.lif_neurons[j].input_synapse_indexes[0]]);
+                    
+                    /*
+                    synap->l_spike_times = spike_images.spike_images[i].spike_image[j];
+                    synap->last_spike += spike_images.spike_images[i].spike_image[j][0];
+                    if(synap->last_spike>0)
+                        synap->next_spike = 1; // when copying the pointer the first position is the number of spikes
+                    synap->max_spikes = synap->last_spike;
+                    */
+                    ///*
+/*                    for(l = 0; l<dataset.images[i].image[j][0]; l++){
+                        synap->l_spike_times[synap->last_spike] = spike_images.spike_images[i].spike_image[j][l];
+                        synap->last_spike +=1;
+                    }
+                    //synap->max_spikes = synap->last_spike;
+                    //*/
+                //}
+/*            }
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+            elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("SPikes introduction into network: %f seconds\n", elapsed_time);
+            
+            printf("Spikes introduced on input neurons\n");
+
+            // check that the image has been correctly loaded into the neuron synapse
+            /*for(l = 0; l<784; l++){
+                if(spike_images.spike_images[i].spike_image[l][0]>0){
+                    for(j=0; j<spike_images.spike_images[i].spike_image[l][0]; j++){
+                        printf("(%d, %d) ", spike_images.spike_images[i].spike_image[l][j], snn.synapses[snn.lif_neurons[l].input_synapse_indexes[0]].l_spike_times[j]);
+                    }
+                    printf("\n");
+                }
+            }*/
+
+/*            clock_gettime(CLOCK_MONOTONIC, &start);
+
+            for(j=0; j<dataset->bins; j++){ // this loop more or less 6 
+
+                clock_gettime(CLOCK_MONOTONIC, &start_bin);
+
+                // process training sample
+                //printf("processing bin %d\n", j);
+                #pragma omp parallel num_threads(n_process)
+                {
+                    clock_gettime(CLOCK_MONOTONIC, &start_neurons);
+                    #pragma omp for schedule(dynamic, 10) private(l) 
+                    for(l=0; l<snn->n_neurons; l++){
+                        input_step(snn, j, l, generated_spikes);
+                    } 
+                    clock_gettime(CLOCK_MONOTONIC, &end_neurons);
+                    input_neurons_elapsed_time = (end_neurons.tv_sec - start_neurons.tv_sec) + (end_neurons.tv_nsec - start_neurons.tv_nsec) / 1e9;
+                    printf(" - Input neurons: %f seconds\n", input_neurons_elapsed_time);
+
+                    //printf("Input synapses processed\n");
+
+                    clock_gettime(CLOCK_MONOTONIC, &start_neurons);
+                    #pragma omp for schedule(dynamic, 10) private(l)
+                    for(l=0; l<snn->n_neurons; l++){
+                        output_step(snn, j, l, generated_spikes);
+                    }
+                    clock_gettime(CLOCK_MONOTONIC, &end_neurons);
+                    output_neurons_elapsed_time = (end_neurons.tv_sec - start_neurons.tv_sec) + (end_neurons.tv_nsec - start_neurons.tv_nsec) / 1e9;
+                    printf(" - Output neurons: %f seconds\n", output_neurons_elapsed_time);
+
+                    //printf("Output synapses processed\n");
+                    // stdp
+
+                    clock_gettime(CLOCK_MONOTONIC, &start_neurons);
+                    #pragma omp for schedule(dynamic, 50) private(l)
+                    for(l  = 0; l<snn->n_synapses; l++){
+                        snn->synapses[l].learning_rule(&(snn.synapses[l])); 
+                    }
+                    clock_gettime(CLOCK_MONOTONIC, &end_neurons);
+                    synapses_elapse_time = (end_neurons.tv_sec - start_neurons.tv_sec) + (end_neurons.tv_nsec - start_neurons.tv_nsec) / 1e9;
+                    printf(" - Synapses: %f seconds\n", synapses_elapse_time);
+
+                    //printf("Training rules processed\n");
+                    // store generated output into another variable
+
+
+                    // train?
+                    clock_gettime(CLOCK_MONOTONIC, &end_bin);
+                    elapsed_time = (end_bin.tv_sec - start_bin.tv_sec) + (end_bin.tv_nsec - start_bin.tv_nsec) / 1e9;
+                    printf("Bin simulation: %f seconds\n", elapsed_time);
+                }
+            }
+            clock_gettime(CLOCK_MONOTONIC, &end);
+
+            elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+            printf("Sample simulation: %f seconds\n", elapsed_time);
+        }
+    }
+    else{ // event-driven
+
+    }
+}*/
 
 
 void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_results_t *results){
