@@ -164,7 +164,7 @@ void initialize_CPG(motif_t *motif){
 
     // initialize conectivity matrix
     motif->connectivity_matrix[1] = 1;
-    motif->connectivity_matrix[2] = -1;
+    motif->connectivity_matrix[2] = 1;
     motif->connectivity_matrix[3] = 1;
     motif->connectivity_matrix[5] = 1;
     motif->connectivity_matrix[6] = 1;
@@ -228,58 +228,89 @@ void initialize_motifs(NSGA2Type *nsga2Params, void *, void *){
     int i, j, l;
     
     n_motifs = 7; // existing motifs
-    motifs = (motif_t *)malloc(n_motifs * sizeof(motif_t));
+    motifs_data = (motif_t *)malloc(n_motifs * sizeof(motif_t));
 
     // allocate memory for each motif
     for(i = 0; i<n_motifs; i++){
-        motifs[i].motif_type = i; // initialize type of motif
+        motifs_data[i].motif_type = i; // initialize type of motif
     }
 
     // initialize some parameters
-    motifs[0].n_neurons = 2;
-    motifs[0].n_input = 1;
-    motifs[0].n_output = 1;
+    motifs_data[0].n_neurons = 2;
+    motifs_data[0].n_input = 1;
+    motifs_data[0].n_output = 1;
 
-    motifs[1].n_neurons = 2;
-    motifs[1].n_input = 1;
-    motifs[1].n_output = 1;
+    motifs_data[1].n_neurons = 2;
+    motifs_data[1].n_input = 1;
+    motifs_data[1].n_output = 1;
 
-    motifs[2].n_neurons = 3;
-    motifs[2].n_input = 1;
-    motifs[2].n_output = 1;
+    motifs_data[2].n_neurons = 3;
+    motifs_data[2].n_input = 1;
+    motifs_data[2].n_output = 1;
 
-    motifs[3].n_neurons = 4;
-    motifs[3].n_input = 4;
-    motifs[3].n_output = 4;
+    motifs_data[3].n_neurons = 4;
+    motifs_data[3].n_input = 4;
+    motifs_data[3].n_output = 4;
 
-    motifs[4].n_neurons = 4;
-    motifs[4].n_input = 4;
-    motifs[4].n_output = 4;
+    motifs_data[4].n_neurons = 4;
+    motifs_data[4].n_input = 4;
+    motifs_data[4].n_output = 4;
 
-    motifs[5].n_neurons = 3;
-    motifs[5].n_input = 2;
-    motifs[5].n_output = 2;
+    motifs_data[5].n_neurons = 3;
+    motifs_data[5].n_input = 2;
+    motifs_data[5].n_output = 2;
 
-    motifs[6].n_neurons = 3;
-    motifs[6].n_input = 3;
-    motifs[6].n_output = 3;
+    motifs_data[6].n_neurons = 3;
+    motifs_data[6].n_input = 3;
+    motifs_data[6].n_output = 3;
     
     // allocate memory for neuron behaviours and connectivity  
     for(i=0; i<n_motifs; i++){
-        motifs[i].neuron_behaviour = (int *)malloc(motifs[i].n_neurons * sizeof(int));
-        motifs[i].connectivity_matrix = (int *)malloc(motifs[i].n_neurons * motifs[i].n_neurons * sizeof(int));
+        motifs_data[i].neuron_behaviour = (int *)malloc(motifs_data[i].n_neurons * sizeof(int));
+        motifs_data[i].connectivity_matrix = (int *)malloc(motifs_data[i].n_neurons * motifs_data[i].n_neurons * sizeof(int));
         
         // allocate memory for input and output synapses numbers for each neuron
-        motifs[i].n_input_synapses_per_neuron = (int *)calloc(motifs[i].n_neurons, sizeof(int)); // ititialize with 0 values
-        motifs[i].n_output_synapses_per_neuron = (int *)calloc(motifs[i].n_neurons, sizeof(int)); // initialize with 0 values
+        motifs_data[i].n_input_synapses_per_neuron = (int *)calloc(motifs_data[i].n_neurons, sizeof(int)); // ititialize with 0 values
+        motifs_data[i].n_output_synapses_per_neuron = (int *)calloc(motifs_data[i].n_neurons, sizeof(int)); // initialize with 0 values
 
         // allocate memory for input and output neurons identifiers
-        motifs[i].input_neurons = (int *)malloc(motifs[i].n_input * sizeof(int));
-        motifs[i].output_neurons = (int *)malloc(motifs[i].n_output * sizeof(int));
+        motifs_data[i].input_neurons = (int *)malloc(motifs_data[i].n_input * sizeof(int));
+        motifs_data[i].output_neurons = (int *)malloc(motifs_data[i].n_output * sizeof(int));
     }
 
     // initialize motifs
     for(i = 0; i<n_motifs; i++){
-        initialize_motif(&(motifs[i]));
+        initialize_motif(&(motifs_data[i]));
     }
+}
+
+
+int check_if_neuron_is_input(int motif_type, int neuron_index){
+    int i, is_input = 0;
+
+    // get motif information
+    motif_t *motif = &(motifs_data[motif_type]);
+
+    // check if the neuron neuron_index. is an output neuron
+    for(i = 0; i<motif->n_input; i++){
+        if(motif->input_neurons[i] == neuron_index)
+            is_input = 1;
+    }
+
+    return is_input; // 0 if is not input, 1 else
+}
+
+int check_if_neuron_is_output(int motif_type, int neuron_index){
+    int i, is_output = 0;
+
+    // get motif information
+    motif_t *motif = &(motifs_data[motif_type]);
+
+    // check if the neuron neuron_index. is an output neuron
+    for(i = 0; i<motif->n_output; i++){
+        if(motif->output_neurons[i] == neuron_index)
+            is_output = 1;
+    }
+
+    return is_output; // 0 if is not input, 1 else
 }

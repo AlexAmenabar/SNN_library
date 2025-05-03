@@ -51,6 +51,7 @@ typedef struct
 }
 motif_node_t;
 
+// The list of synapses is orderes following the input criterion for neurons
 typedef struct sparse_matrix_node_t
 {
     uint32_t row, col;
@@ -77,18 +78,20 @@ typedef struct neuron_node_t
 }
 neuron_node_t;
 
+// MEW
 typedef struct new_motif_t
 {
     uint motif_id; 
     uint8_t motif_type;
     uint32_t initial_global_index; // index of the first neuron in the neuron list
-    neuron_node_t *first_neuron;
-
-    struct new_motif_t *next_motif;
-    struct learning_zone_t *learning_zone;
+    
+    neuron_node_t *first_neuron; // n neurons can be gotten from motifs general structures
+    struct new_motif_t *next_motif; // pointer to the next motif of the list
+    struct sparse_matrix_node_t *first_input_synapse; // pointer to the first input synapse of the first neuron
 }
 new_motif_t;
 
+// NEW
 typedef struct learning_zone_t
 {
     int stdp_type;
@@ -121,17 +124,18 @@ typedef struct
     int n_input_neurons;
     
     int n_synapses; // total amount of synapses for the network
-    int n_input_synapses;
+    int n_input_synapses; // network number of input synapses
 
     // dynamic list of neurons
     neuron_node_t *neurons;
 
     // sparse matrix of connections (dynamic list)
+    sparse_matrix_node_t *input_synapses; // list that indicates which ones are the network input synapses
     sparse_matrix_node_t *connectivity_matrix; // connectivity sparse matrix: first pointer for rows, second one for columns, and the third one for values. It is a ordered list
     // int8_t as there can be negative and positive values (sign indicates if the weight must be positive or negative) and the value indicates the amount of connections between two neurons 
 
 
-    // new
+    // NEW
     int n_learning_zones;
     learning_zone_t *learning_zones;
     new_motif_t *motifs_new;
@@ -228,7 +232,7 @@ extern FILE *gp;
 extern population *parent_pop;
 extern population *child_pop;
 extern population *mixed_pop;
-extern motif_t *motifs; // list of motifs
+extern motif_t *motifs_data; // list of motifs
 extern int n_motifs; // number of motifs that can be used
 
 /**
@@ -327,6 +331,9 @@ void initialize_CPG(motif_t *motif);
 
 void initialize_motif(motif_t *motif);
 void initialize_motifs(NSGA2Type *nsga2Params, void *, void *);
+int check_if_neuron_is_input(int motif_type, int neuron_index);
+int check_if_neuron_is_output(int motif_type, int neuron_index);
+
 
 # endif
 #endif

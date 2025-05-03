@@ -205,6 +205,8 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
 
 /* General function to network initialization */
 
+void initialize_network_function_pointers(spiking_nn_t *snn);
+
 /// @brief Initialize spiking neural network structure
 /// @param snn Structure to initialize
 /// @param neuron_type Type of neuron of this simulation

@@ -14,7 +14,7 @@ FILE *gp;
 population *parent_pop;
 population *child_pop;
 population *mixed_pop;
-motif_t *motifs; // list of motifs
+motif_t *motifs_data; // list of motifs
 int n_motifs; // number of motifs that can be used
 
 NSGA2Type ReadParameters(int argc, char **argv){
@@ -431,12 +431,14 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     randomize(nsga2Params->seed);
 
     // initialize the parent population
+    printf("\n Initializing population!\n");
     initialize_pop (nsga2Params,  parent_pop); 
     printf("\n Population initialized!\n");
     
     // print the parent population
     print_individuals(nsga2Params, parent_pop);
 
+    
     decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
     printf("\n Population decoded!\n");
 
@@ -444,6 +446,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // print decoded networks
     print_networks(nsga2Params, parent_pop);
 
+    /*
     // load input dataset
     printf("Loading input spikes...\n");
     // TODO: this MUST be a function

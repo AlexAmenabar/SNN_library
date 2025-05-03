@@ -204,6 +204,26 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
     }
 }
 
+void initialize_network_function_pointers(spiking_nn_t *snn){
+    switch (snn->neuron_type)
+    { 
+        case 0: // LIF neuron
+            snn->complete_step = &lif_neuron_step;
+            snn->neuron_initializer = &initialize_lif_neuron;
+            snn->neuron_re_initializer = &re_initialize_lif_neuron;
+            snn->input_step = &lif_neuron_compute_input_synapses;
+            snn->output_step = &lif_neuron_compute_output_synapses;
+
+            // allocate memory for neurons
+            snn->lif_neurons = (lif_neuron_t *)malloc(snn->n_neurons * sizeof(lif_neuron_t));
+
+            break;
+        default:
+            break;
+    }
+}
+
+
 void initialize_network(spiking_nn_t *snn, simulation_configuration_t *conf, network_construction_lists_t *lists){ //void *neuron_initializer()){
     // initialize general information
     snn->neuron_type = conf->neuron_type;
@@ -376,16 +396,16 @@ void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
 void print_lif_neuron_information(lif_neuron_t *lif_neuron){
     int i;
     
-    printf("      > Excitatory (1) / inhibitory (0) = %d\n", lif_neuron->excitatory);
-    printf("      > Neuron membrane potential = %f\n", lif_neuron->v);
-    printf("      > Neuron membrane potential threshold = %f\n", lif_neuron->v_tresh);
-    printf("      > Neuron resting membrane potential = %f\n", lif_neuron->v_rest);
-    printf("      > Neuron resistance = %f\n", lif_neuron->r);
-    printf("      > Neuron refractory time = %d\n", lif_neuron->r_time);
-    printf("      > Neuron is input = %d\n", lif_neuron->is_input_neuron);
-    printf("      > Neuron is output = %d\n", lif_neuron->is_output_neuron);
-    printf("      > Neuron number of input synapses = %d\n", lif_neuron->n_input_synapse);
-    printf("      > Neuron number of output synapses = %d\n", lif_neuron->n_output_synapse);
+    printf("      > Excitatory (1) / inhibitory (0) = %d; ", lif_neuron->excitatory);
+    printf("Neuron membrane potential = %f; ", lif_neuron->v);
+    printf("Neuron membrane potential threshold = %f; ", lif_neuron->v_tresh);
+    printf("Neuron resting membrane potential = %f; ", lif_neuron->v_rest);
+    printf("Neuron resistance = %f; ", lif_neuron->r);
+    printf("Neuron refractory time = %d; ", lif_neuron->r_time);
+    printf("Neuron is input = %d; ", lif_neuron->is_input_neuron);
+    printf("Neuron is output = %d; ", lif_neuron->is_output_neuron);
+    printf("Neuron number of input synapses = %d; ", lif_neuron->n_input_synapse);
+    printf("Neuron number of output synapses = %d\n", lif_neuron->n_output_synapse);
     printf("      > Neuron input synapse indexes = ");
     for(i=0; i<lif_neuron->n_input_synapse; i++){
         printf("%d ", lif_neuron->input_synapse_indexes[i]);
@@ -422,44 +442,41 @@ void print_neurons_information(spiking_nn_t *snn){
 
 
 void print_input_synapse_information(synapse_t *synapse){
-    printf("      > Weight = %f\n", synapse->w);
-    printf("      > Delay = %d\n", synapse->delay);
+    printf("        > Weight = %f; ", synapse->w);
+    printf("Delay = %d\n", synapse->delay);
 }
 
 void print_synapse_information(synapse_t *synapse){
-    printf("      > Weight = %f\n", synapse->w);
-    printf("      > Delay = %d\n", synapse->delay);
+    printf("        > Weight = %f; ", synapse->w);
+    printf("Delay = %d\n", synapse->delay);
 }
 
 void print_output_synapse_information(synapse_t *synapse){
-    printf("      > Weight = %f\n", synapse->w);
-    printf("      > Delay = %d\n", synapse->delay);
+    printf("        > Weight = %f; ", synapse->w);
+    printf("Delay = %d\n", synapse->delay);
 }
 
 void print_synapses_information(spiking_nn_t *snn){
     int i;
 
     // print input synapses
-    printf("    > Printing input synapses:\n");
+    printf("      > Printing input synapses:\n");
     for(i=0; i<snn->n_input_synapses; i++){
         print_input_synapse_information(&(snn->synapses[i]));
-        printf("\n");
     }
     printf("\n");
 
     // print synapses (not input or output)
-    printf("    > Printing middle synapses:\n");
+    printf("      > Printing middle synapses:\n");
     for(i = snn->n_input_synapses; i<snn->n_synapses - snn->n_output_synapses; i++){
         print_synapse_information(&(snn->synapses[i]));
-        printf("\n");
     }
     printf("\n");
 
     // print output synapses
-    printf("     > Printing output synapses:\n");
+    printf("       > Printing output synapses:\n");
     for(i=snn->n_synapses - snn->n_output_synapses; i<snn->n_synapses; i++){
         print_output_synapse_information(&(snn->synapses[i]));
-        printf("\n");
     }
     printf("\n");
 }
@@ -478,7 +495,9 @@ void print_network_information(spiking_nn_t *snn){
     print_neurons_information(snn);
     printf("    > All neurons printed!\n\n");
 
-    printf("    > Printing synapses information:\n");
-    print_synapses_information(snn);
-    printf("    > All synapses printed!\n\n");
+    //printf("    > Printing synapses information:\n");
+    //print_synapses_information(snn);
+    //printf("    > All synapses printed!\n\n");
+
+    
 }
