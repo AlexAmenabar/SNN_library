@@ -14,6 +14,8 @@ int main(int argc, char **argv)
 	// Init population and individuals
 	InitNSGA2(&nsga2Params, inp, out);
 
+	return 0;
+
 	// loop over generations
 	printf("Looping...\n");
 	NSGA2(&nsga2Params, inp, out);

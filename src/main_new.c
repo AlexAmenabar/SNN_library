@@ -209,7 +209,9 @@ int main(int argc, char *argv[]) {
 
     // store simulation results
     store_results(&results, &conf, &snn);
-  
+
+    // free memory
+
     // print execution times
     printf("Execution time: %f seconds\n", results.elapsed_time);
     printf(" - Execution time for neurons: %f seconds\n", results.elapsed_time_neurons);

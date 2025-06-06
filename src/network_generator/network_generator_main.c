@@ -77,41 +77,4 @@ int main(int argc, char *argv[]) {
     printf("Network completely generated! Storing network...\n");
     store_network_in_toml_format(conf.output_file_name, &network_data, &conf);
     printf("Network succesfully stored!\n");
-    /*
-    // store neurons behaviour
-    for(int i = 0; i<n; i++)
-        fprintf(f, "%d ", neuron_behaviour[i]);
-    fprintf(f, "\n\n");
-
-    // write synaptic connections
-    for(int i = 0; i<(synaptic_connections[0][0] * 2 +1); i++){
-        fprintf(f, "%d ", synaptic_connections[0][i]);
-    }
-    fprintf(f, "\n");
-
-    for(int i=1; i<(n+1); i++){
-        for(int j=0; j<(synaptic_connections[i][0] * 2 +1); j++)
-            fprintf(f, "%d ", synaptic_connections[i][j]);
-        fprintf(f, "\n");
-    }
-    fprintf(f, "\n");
-
-    // write weights
-    for(int i = 0; i<n_synapses; i++)
-        fprintf(f, "%f ", synaptic_weights[i]);
-    fprintf(f, "\n\n");
-
-
-    // write weights
-    for(int i = 0; i<n_synapses; i++)
-        fprintf(f, "%d ", synaptic_delays[i]);
-    fprintf(f, "\n\n");
-
-    // write weights
-    for(int i = 0; i<n_synapses; i++)
-        fprintf(f, "%d ", synaptic_learning_rules[i]);
-    fprintf(f, "\n\n");
-
-
-    fclose(f);*/
 }

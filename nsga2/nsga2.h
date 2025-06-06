@@ -14,6 +14,7 @@
 # include <stdint.h> // uint8_t
 
 # include "snn_library.h"
+# include "encoders/image_encoders.h"
 
 
 # define INF 1.0e14
@@ -21,6 +22,15 @@
 # define eul  2.71828182845905
 # define pi 3.14159265358979
 # define GNUPLOT_COMMAND "gnuplot -persist"
+
+
+typedef struct
+{
+    int *array;
+    int n;
+}
+int_array_t;
+
 
 // In this struct the internal structure of each motif type is stored <-- ONLY INTERNAL STRUCTURE INFORMATION
 // this struct is used to avoid to repeat information
@@ -43,6 +53,8 @@ typedef struct
 motif_t; // this struct is used to store existing motifs, not those
         // of the networks used in the genetic algorithm
 
+
+// DEPRECATED
 typedef struct
 {
     uint motif_id; 
@@ -72,6 +84,7 @@ typedef struct neuron_node_t
     uint8_t refract_time;
     double v_rest;
     float r;
+    int behaviour;
 
     // next neuron
     struct neuron_node_t *next_neuron;
@@ -87,7 +100,11 @@ typedef struct new_motif_t
     
     neuron_node_t *first_neuron; // n neurons can be gotten from motifs general structures
     struct new_motif_t *next_motif; // pointer to the next motif of the list
-    struct sparse_matrix_node_t *first_input_synapse; // pointer to the first input synapse of the first neuron
+    
+    // The variables above could be used in the future to optimize the implementation
+    //struct sparse_matrix_node_t *first_input_synapse; // pointer to the first input synapse of the first neuron
+    //int_array_t *input_motifs;
+    //int_array_t *output_motifs; 
 }
 new_motif_t;
 
@@ -156,11 +173,20 @@ typedef struct lists
     struct lists *child;
 } list;
 
+typedef struct selected_samples_info_t
+{
+    int *sample_indexes; // selected sample indexes in the global dataset
+    int *labels; // selected samples labels
+    int *n_selected_samples_per_class; // number of selected samples for each class
+    int **sample_indexes_per_class; // indexes of selected samples for each class, in the sample_indexes
+} selected_samples_info_t;
+
 
 typedef struct NSGA2Type
 {
     // general variables
     double seed; // seed to randomize execution
+    int n_process;
     int popsize; // population size
     int nobj; // number of objective functions
     
@@ -215,11 +241,18 @@ typedef struct NSGA2Type
     // dataset variables
     int dataset_type; // for the future, now only images
     char train_dataset_dir[500];
+    char train_labels_dir[500];
     char test_dataset_dir[500];
+    char test_labels_dir[500];
     int n_train_samples;
     int n_test_samples;
+    int n_classes;
     int image_size;
     int bins;
+
+    int mode;
+    int n_samples;
+    int n_repetitions;
 } NSGA2Type;
 
 // Global 
@@ -234,6 +267,7 @@ extern population *child_pop;
 extern population *mixed_pop;
 extern motif_t *motifs_data; // list of motifs
 extern int n_motifs; // number of motifs that can be used
+extern image_dataset_t image_dataset;
 
 /**
  *  allocate.c
@@ -264,6 +298,7 @@ void assign_crowding_distance_list (NSGA2Type *nsga2Params,  population *pop, li
 void assign_crowding_distance_indices (NSGA2Type *nsga2Params,  population *pop, int c1, int c2);
 void assign_crowding_distance (NSGA2Type *nsga2Params,  population *pop, int *dist, int **obj_array, int front_size);
 
+/* Decodification */
 void decode_pop (NSGA2Type *nsga2Params, population *pop);
 void decode_ind (NSGA2Type *nsga2Params, individual *ind);
 
@@ -272,14 +307,32 @@ void onthefly_display (NSGA2Type *nsga2Params, population *pop, FILE *gp, int ii
 int check_dominance (NSGA2Type *nsga2Params, individual *a, individual *b);
 
 void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *, void *);
-void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *, void *);
+void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out, selected_samples_info_t *selected_samples_info);
 
 
 void fill_nondominated_sort (NSGA2Type *nsga2Params,  population *mixed_pop, population *new_pop);
 void crowding_fill (NSGA2Type *nsga2Params,  population *mixed_pop, population *new_pop, int count, int front_size, list *cur);
 
+/* Initialization functions */
 void initialize_pop (NSGA2Type *nsga2Params, population *pop);
 void initialize_ind (NSGA2Type *nsga2Params, individual *ind);
+void general_initialization(NSGA2Type *nsga2Params, individual *ind);
+void initialize_ind_motifs(individual *ind);
+new_motif_t* initialize_and_allocate_motif(new_motif_t *motif_node, int motif_id, individual *ind);
+void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind);
+void initialize_neuron_nodes(individual *ind);
+neuron_node_t* initialize_and_allocate_neuron_node(neuron_node_t *neuron_node);
+void set_neurons_behaviour(individual *ind);
+void initialize_neuron_node(neuron_node_t *neuron_node);
+void connect_motifs_and_neurons(individual *ind);
+void connect_motifs(individual *ind);
+void construct_sparse_matrix(individual *ind, int *n_selected_input_motifs_per_motif, int **selected_input_motifs_per_motif);
+void construct_semi_sparse_matrix(individual *ind, int n_new_motifs, new_motif_t *motif_node, int_array_t *input_motifs, int_array_t *output_motifs);
+sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
+void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
+sparse_matrix_node_t* build_motif_internal_structure_column_by_input(individual *ind, sparse_matrix_node_t *matrix_node, int motif_type, int global_neuron_index, int neuron_local_index);
+void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind);
+void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind);
 
 void insert (list *node, int x);
 list* del (list *node);
@@ -289,10 +342,18 @@ void copy_ind (NSGA2Type *nsga2Params, individual *ind1, individual *ind2);
 
 void mutation_pop (NSGA2Type *nsga2Params, population *pop);
 void mutation_ind (NSGA2Type *nsga2Params, individual *ind);
+void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
+void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind);
+void remove_motif_mutation(NSGA2Type *nsga2Params, individual *ind);
+void add_connection_mutation(NSGA2Type *nsga2Params, individual *ind);
+void remove_connection_mutation(NSGA2Type *nsga2Params, individual *ind);
 void bin_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
 void real_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
 
+void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info); 
 void test_problem (double *xreal, double *xbin, int **gene, double *obj, double *constr);
+void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset);
+void select_samples(selected_samples_info_t *selected_samples_info, int n_samples, int mode, int *percentages);
 
 void assign_rank_and_crowding_distance (NSGA2Type *nsga2Params, population *new_pop);
 

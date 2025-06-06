@@ -3,8 +3,6 @@
 # include "nsga2.h"
 # include "rand.h"
 
-#include "encoders/image_encoders.h"
-
 FILE *fpt1;
 FILE *fpt2;
 FILE *fpt3;
@@ -16,6 +14,9 @@ population *child_pop;
 population *mixed_pop;
 motif_t *motifs_data; // list of motifs
 int n_motifs; // number of motifs that can be used
+
+// dataset // TODO: This is only temporal
+image_dataset_t image_dataset;
 
 NSGA2Type ReadParameters(int argc, char **argv){
     int i;
@@ -283,6 +284,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     }
 
     // my parameters -- general
+    printf("\n\n Printing my paramters...\n");
     scanf("%d",&nsga2Params.neuron_type);    
     scanf("%d",&nsga2Params.max_motifs);
     scanf("%d",&nsga2Params.min_motifs);
@@ -332,19 +334,37 @@ NSGA2Type ReadParameters(int argc, char **argv){
     // read dataset parameters
     scanf("%d",&nsga2Params.dataset_type);
     scanf("%s",&nsga2Params.train_dataset_dir);
+    scanf("%s",&nsga2Params.train_labels_dir);
     scanf("%s",&nsga2Params.test_dataset_dir);
+    scanf("%s",&nsga2Params.test_labels_dir);
     scanf("%d",&nsga2Params.n_train_samples);
     scanf("%d",&nsga2Params.n_test_samples);
+    scanf("%d",&nsga2Params.n_classes);
     scanf("%d",&nsga2Params.image_size);
     scanf("%d",&nsga2Params.bins);
 
     printf(" > Dataset type: %d\n", nsga2Params.dataset_type);
-    printf(" > Dataset directory: %s\n", nsga2Params.train_dataset_dir);
-    printf(" > Dataset directory: %s\n", nsga2Params.test_dataset_dir);
+    printf(" > Dataset train samples directory: %s\n", nsga2Params.train_dataset_dir);
+    printf(" > Dataset train labels directory: %s\n", nsga2Params.train_labels_dir);
+    printf(" > Dataset test samples directory: %s\n", nsga2Params.test_dataset_dir);
+    printf(" > Dataset test labels directory: %s\n", nsga2Params.test_labels_dir);
     printf(" > N train samples: %d\n", nsga2Params.n_train_samples);
     printf(" > N test samples: %d\n", nsga2Params.n_test_samples);
+    printf(" > N classes: %d\n", nsga2Params.n_classes);
     printf(" > Image size: %d\n", nsga2Params.image_size);
     printf(" > Bins: %d\n", nsga2Params.bins);
+
+
+    // simulations repetitions and number of samples configuration
+    scanf("%d",&nsga2Params.mode);
+    scanf("%d",&nsga2Params.n_repetitions);
+    scanf("%d",&nsga2Params.n_samples);
+    
+    printf(" > Mode: %d\n", nsga2Params.mode);
+    printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
+    printf(" > N samples: %d\n", nsga2Params.n_samples);
+
+    printf("\n");
 
     return nsga2Params;
 }
@@ -416,10 +436,12 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     nsga2Params->nbincross = 0;
     nsga2Params->nrealcross = 0;
     
-    // Initialize motifs list. This motifs are the general motif structures used to store the information necessary for all motifs
+
+    /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
     initialize_motifs(nsga2Params, inp, out);
 
-    // Allocate memory for populations
+
+    /* Allocate memory for populations: parent population, children population, and mixed population */
     parent_pop = (population *)malloc(sizeof(population));
     child_pop = (population *)malloc(sizeof(population));
     mixed_pop = (population *)malloc(sizeof(population));
@@ -427,30 +449,31 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     allocate_memory_pop (nsga2Params, child_pop, nsga2Params->popsize);
     allocate_memory_pop (nsga2Params, mixed_pop, 2*nsga2Params->popsize);
 
-    // Preparing first Population
-    randomize(nsga2Params->seed);
+
+
+    /* Initialize the initial population */
+    randomize(nsga2Params->seed); // randomize the execution
 
     // initialize the parent population
-    printf("\n Initializing population!\n");
+    printf(" Initializing population...\n");
     initialize_pop (nsga2Params,  parent_pop); 
-    printf("\n Population initialized!\n");
+    printf(" Population initialized!\n");
     
     // print the parent population
     print_individuals(nsga2Params, parent_pop);
 
-    
+    printf(" Decoding population...\n");
     decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
-    printf("\n Population decoded!\n");
+    printf(" Population decoded!\n");
 
 
     // print decoded networks
     print_networks(nsga2Params, parent_pop);
 
-    /*
-    // load input dataset
-    printf("Loading input spikes...\n");
-    // TODO: this MUST be a function
-    image_dataset_t image_dataset;
+    
+    // initialize variables to store input spike trains
+    printf(" Loading input spike trains...\n");
+    // TODO: this MUST be a function and more general, as not always images are loaded
     int pT = 100;
     int pDT = 1;
     int bins = (int)(pT/pDT);
@@ -458,20 +481,26 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     image_dataset.bins = nsga2Params->bins;
     image_dataset.image_size = nsga2Params->image_size;
     image_dataset.n_images = nsga2Params->n_train_samples;
+    image_dataset.n_classes = nsga2Params->n_classes;
 
     image_dataset.images = malloc(image_dataset.n_images * sizeof(image_dataset_t)); // alloc memory for images
+    image_dataset.labels = malloc(image_dataset.n_images * sizeof(int)); // alloc memory for images
     for(i = 0; i<image_dataset.n_images; i++){
         image_dataset.images[i].image = malloc(image_dataset.image_size * sizeof(int *));
         for(j=0; j<image_dataset.image_size; j++)
             image_dataset.images[i].image[j] = malloc(image_dataset.bins * sizeof(int));
     }
 
-    // load spike trains
+    // load input spike trains
     FILE *f = fopen(nsga2Params->train_dataset_dir, "r");
-    if(f == NULL) printf("Error opening the file\n");
+    if(f == NULL) printf(" > Error opening the file\n");
 
-    printf("Reading input spike train...\n");
+    FILE *f_labels = fopen(nsga2Params->train_labels_dir, "r");
+    if(f_labels == NULL) printf(" > Error opening the labels file\n");
+
+    printf(" > Reading input spike trains and labels...\n");
     for(i=0; i<image_dataset.n_images; i++){
+        fscanf(f_labels, "%d", &(image_dataset.labels[i]));
         for(j=0; j<image_dataset.image_size; j++){
             fscanf(f, "%d", &(image_dataset.images[i].image[j][0]));
             for(l = 1; l<image_dataset.images[i].image[j][0]; l++){
@@ -479,32 +508,34 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
             }
         }
     }
-    printf("Input spikes loaded!\n");
-
-    printf("Evaluating parent population...\n");
+    printf(" Input spikes and labels loaded!\n");
+    
+    printf(" Evaluating parent population...\n");
     evaluate_pop (nsga2Params, parent_pop, inp, out);
-    printf("Parent population evaluated!\n");
+    printf(" Parent population evaluated!\n");
 
 
     assign_rank_and_crowding_distance (nsga2Params, parent_pop);
-    printf("Rank and crowding distance assigned\n");
+    printf(" Rank and crowding distance assigned\n");
 
     //report_pop (nsga2Params, parent_pop, fpt1);
-    printf("Report population\n");
+    printf(" Report population\n");
     
     fprintf(fpt4,"# gen = 1\n");
     //report_pop(nsga2Params, parent_pop,fpt4);
     printf("\n -- Generation 1 --");
     
     fflush(stdout);
-    /*if (nsga2Params->choice!=0)    
-        onthefly_display (nsga2Params, parent_pop,gp,1);*/
+    //if (nsga2Params->choice!=0)    
+    //    onthefly_display (nsga2Params, parent_pop,gp,1);
 
     fflush(fpt1);
     fflush(fpt2);
     fflush(fpt3);
     fflush(fpt4);
     fflush(fpt5);
+
+    return;
 }
 
 

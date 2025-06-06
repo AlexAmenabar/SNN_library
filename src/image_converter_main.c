@@ -14,7 +14,63 @@
 
 
 /* main.c */
-int main(int argc, char *argv[]) {    
+
+int main(int argc, char *argv[]) {
+    // randomize execution
+    srand(time(NULL));
+
+    int i, j;
+
+    load_mnist();
+
+    int *train_labels, *test_labels;
+    int n_train_images = 60000, n_test_images = 10000;
+
+    train_labels = (int *)malloc(n_train_images * sizeof(int));
+    test_labels = (int *)malloc(n_test_images * sizeof(int));
+
+
+    // read labels from the file
+    for(i=0; i<n_train_images; i++){
+        train_labels[i] = train_label[i];
+    }    
+    
+    // read labels from the file
+    for(i=0; i<n_test_images; i++){
+        test_labels[i] = test_label[i];
+    }    
+
+    // store generated spike trains
+    FILE *train_set_output_file, *test_set_output_file;
+    
+    train_set_output_file = fopen("./data/MNIST/train/labels.txt", "w");
+    if(train_set_output_file == NULL){
+        printf("Error opening the file. \n");
+        exit(1);
+    }
+    printf("File openned\n");
+
+    for(i = 0; i<n_train_images; i++){
+        fprintf(train_set_output_file, "%d ", train_labels[i]);
+    }
+
+    // test
+    test_set_output_file = fopen("./data/MNIST/test/labels.txt", "w");
+    if(test_set_output_file == NULL){
+        printf("Error opening the file. \n");
+        exit(1);
+    }
+    printf("File openned\n");
+
+    for(i = 0; i<n_test_images; i++){
+        fprintf(test_set_output_file, "%d ", test_labels[i]);
+    }
+
+
+    return 0;
+}
+
+/*int main(int argc, char *argv[]) {    
     // randomize execution
     srand(time(NULL));
 
@@ -116,4 +172,4 @@ int main(int argc, char *argv[]) {
 
 
     return 0;
-}
+}*/

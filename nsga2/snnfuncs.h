@@ -11,6 +11,10 @@
 
 /* Functions related to neurons */
 
+/// @brief
+/// @param
+void initialize_neurons_from_genotype(spiking_nn_t *snn, individual *ind, int *n_input_synapses, int *n_output_synapses, NSGA2Type *nsga2Params);
+
 /// @brief 
 /// @param
 void initialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind, int *n_input_synapses, int *n_output_synapses, NSGA2Type *nsga2Params);
@@ -19,9 +23,6 @@ void initialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind, in
 /// @param
 void reinitialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind);
 
-/// @brief
-/// @param
-void initialize_neurons_from_genotype(spiking_nn_t *snn, individual *ind, int *n_input_synapses, int *n_output_synapses, NSGA2Type *nsga2Params);
 
 /* Functions related to synaptic connections */
 
@@ -32,6 +33,7 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
 /// @brief
 /// @param
 void reinitialize_synapses_from_genotype(spiking_nn_t *snn);
+void reinitialize_synapse_from_genotype(spiking_nn_t *snn, int index);
 
 
 /* Neurons and synapses connections */

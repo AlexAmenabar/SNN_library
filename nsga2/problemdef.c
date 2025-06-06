@@ -35,14 +35,32 @@
 /*# define ctp8*/
 
 
-/* Problem for SNNs */
-void ESNN_problem(double *obj, NSGA2Type *nsga2Params, spiking_nn_t *snn){
-    // compute 
-    
 
+
+
+/* Problem for SNNs */
+/*void test_SNN(NSGA2Type *nsga2Params, individual *ind){
+    // simulate samples 
+    int i,j;
+    int n_repetitions = 10, rep = 0;
+    int n_samples = 150;
+
+    // allocate memory to store samples indexes
+    int *sample_indexes = (int *)malloc(n_samples * sizeof(int));
+
+    for(rep = 0; rep<n_repetitions; rep++){
+        // select samples to simulate
+        select_samples_randmly(sample_indexes, n_samples);        
+
+        // initialize weights randomly
+        initialize_synapse_weights(nsga2Params, ind);
+
+        // simulate the network
+        
+    }
 
     return;
-}
+}*/
 
 
 

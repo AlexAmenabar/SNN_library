@@ -20,40 +20,10 @@ void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size)
 }
 
 /* Function to allocate memory to an individual */
-// PROBABLY MUST CHANGE THIS FUNCTION
 void allocate_memory_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
     ind->obj = (double *)malloc(nsga2Params->nobj*sizeof(double));
     ind->snn = (spiking_nn_t *)malloc(sizeof(spiking_nn_t));
-
-    /*if (nsga2Params->nreal != 0)
-    {
-        ind->xreal = (double *)malloc(nsga2Params->nreal*sizeof(double));
-    }
-    if (nsga2Params->nbin != 0)
-    {
-        ind->xbin = (double *)malloc(nsga2Params->nbin*sizeof(double));
-        ind->gene = (int **)malloc(nsga2Params->nbin*sizeof(int *));
-        for (j=0; j<nsga2Params->nbin; j++)
-        {
-            ind->gene[j] = (int *)malloc(nsga2Params->nbits[j]*sizeof(int));
-        }
-    }*/
-    /*if (nsga2Params->ncon != 0)
-    {
-        ind->constr = (double *)malloc(nsga2Params->ncon*sizeof(double));
-    }*/
-    
-    //ind->obj = (double *)malloc(nsga2Params->nobj*sizeof(double)); // allocate memory for objective function results
-    
-
-    // ME
-    // allocate memory for snn
-    //ind->snn = (spiking_nn_t *)malloc(sizeof(spiking_nn_t));
-    //ind->genotype = (genotype *)malloc(sizeof(genotype));
-    // TODO
-
-    //ind->genotype = (int *)malloc(nsga2Params-> * sizeof(int));
 
     return;
 }
@@ -67,10 +37,12 @@ void deallocate_memory_pop (NSGA2Type *nsga2Params, population *pop, int size)
         deallocate_memory_ind (nsga2Params, &(pop->ind[i]));
     }
     free (pop->ind);
+
     return;
 }
 
 /* Function to deallocate memory to an individual */
+// TODO: This function must be revised
 void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
 {
     free(ind->obj);
@@ -79,26 +51,6 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     deallocate_memory_snn(ind->snn);
     free(ind->snn);
 
-
-    /*int j;
-    if (nsga2Params->nreal != 0)
-    {
-        free(ind->xreal);
-    }
-    if (nsga2Params->nbin != 0)
-    {
-        for (j=0; j<nsga2Params->nbin; j++)
-        {
-            free(ind->gene[j]);
-        }
-        free(ind->xbin);
-        free(ind->gene);
-    }
-    free(ind->obj);
-    if (nsga2Params->ncon != 0)
-    {
-        free(ind->constr);
-    }*/
     return;
 }
 

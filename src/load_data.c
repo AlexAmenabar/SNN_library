@@ -34,7 +34,7 @@ void close_file(FILE **f){
 
 void load_network_information(const char *file_name, spiking_nn_t *snn, network_construction_lists_t *lists, simulation_configuration_t *conf) {
     FILE *f = NULL, *f_neurons, *f_synapses;
-    char errbuf[100], *file_name_neurons, *file_name_synapses, *original_file_name, *copied_file_name;
+    char errbuf[100], *file_name_neurons, *file_name_synapses, *original_file_name, *tmp_file_name, *copied_file_name;
     int i, j, l;
 
     // define table and parameters variables
@@ -77,9 +77,7 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
     */
 
     printf("    - Loading general section...\n");
-    printf("Hola\n");
     n_neurons = toml_table_int(tbl_general, "neurons");
-    printf("Fail\n");
     n_input_neurons = toml_table_int(tbl_general, "input_neurons");
     n_output_neurons = toml_table_int(tbl_general, "output_neurons");
     n_synapses = toml_table_int(tbl_general, "synapsis");
@@ -90,16 +88,39 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
     // NETWORK IS SEPARATED IS TEMPORAL UNTIL SOMETHING BETTER IS FOUND
     // if network_is_separated == 1 network must be loaded from more than one file
     if(network_is_separated.ok && network_is_separated.u.i == 1){
+        // allocate memory for neurons and synapses files
+        int len = strlen(file_name);
+
+        file_name_neurons = malloc((len + 100) * sizeof(char));
+        file_name_synapses = malloc((len + 100) * sizeof(char));
+
+        // read files
+        open_file(&f_neurons, conf->network_neurons_file); // TOML file
+        open_file(&f_synapses, conf->network_synapses_file); // TOML file
+
+        /*
+        // copy the file name
         int len = strlen(file_name);
         copied_file_name = malloc(len * sizeof(char));
         strcpy(copied_file_name, file_name);
 
+        // split the final .toml
         original_file_name = strtok(copied_file_name, ".toml"); // split file name by extension
         len = strlen(original_file_name);
     
+        // allocate memory for neurons and synapses files
         file_name_neurons = malloc((len + 20) * sizeof(char));
         file_name_synapses = malloc((len + 25) * sizeof(char));
     
+        // split the "/" to keep the last word and remove path
+        tmp_file_name = malloc(len * sizeof(char));
+        tmp_file_name = strtok(original_file_name, ""); // split file name by extension
+
+        while(tmp_file_name != NULL){
+            tmp_file_name = strtok(NULL, "/")
+        }
+
+
         strcpy(file_name_neurons, original_file_name);  // copy original file name
         strcpy(file_name_synapses, original_file_name);
     
@@ -110,6 +131,7 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
 
         open_file(&f_neurons, file_name_neurons); // TOML file
         open_file(&f_synapses, file_name_synapses); // TOML file
+        */
     }
 
 
@@ -595,7 +617,7 @@ int load_configuration_params_from_toml(const char *file_name, simulation_config
                 time_steps, input_file,
                 dataset, dataset_name, num_classes, epochs,
                 generated_spikes, final_weights, execution_times, spikes_per_neuron, store_network, store_network_file,
-                network, behaviours, delays, weights, training_zones, thresh, t_refract;
+                network, network_neurons, network_synapses, behaviours, delays, weights, training_zones, thresh, t_refract;
 
 
     /* open TOML file */
@@ -741,6 +763,8 @@ int load_configuration_params_from_toml(const char *file_name, simulation_config
     NETWORK SECTION
     */
     network = toml_table_string(tbl_network, "network_file");
+    network_neurons = toml_table_string(tbl_network, "network_neurons_file");
+    network_synapses = toml_table_string(tbl_network, "network_synapses_file");
     behaviours = toml_table_int(tbl_network, "behaviours");
     delays = toml_table_int(tbl_network, "delays");
     weights = toml_table_int(tbl_network, "weights");
@@ -786,7 +810,13 @@ int load_configuration_params_from_toml(const char *file_name, simulation_config
     // load information into config structure
     l = network.u.sl;
     conf->network_file = malloc(l * sizeof(char));
+    conf->network_neurons_file = malloc(l * sizeof(char));
+    conf->network_synapses_file = malloc(l * sizeof(char));
     conf->network_file = network.u.s;
+    if(network_neurons.ok)
+        conf->network_neurons_file = network_neurons.u.s;
+    if(network_synapses.ok)
+        conf->network_synapses_file = network_synapses.u.s;
     
     conf->behaviours_provided = behaviours.u.i;
     conf->delays_provided = delays.u.i;
@@ -802,6 +832,9 @@ int load_configuration_params_from_toml(const char *file_name, simulation_config
 void store_results(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn){
     int i,j;
 
+    // TODO: Now this function only stores the first sample results
+    simulation_results_per_sample_t *results_per_sample = &(results->results_per_sample[i]);
+
     FILE *output_file;
     output_file = fopen(conf->spike_times_file, "w");
     if(output_file == NULL){
@@ -811,7 +844,7 @@ void store_results(simulation_results_t *results, simulation_configuration_t *co
     for (i = 0; i<snn->n_neurons; i++)
     {
         for(j = 0; j<conf->time_steps; j++)
-            fprintf(output_file, "%c", results->generated_spikes[i][j]);
+            fprintf(output_file, "%c", results_per_sample->generated_spikes[i][j]);
         
         fprintf(output_file, "\n");
     }
@@ -834,10 +867,10 @@ void store_results(simulation_results_t *results, simulation_configuration_t *co
         printf("Error opening the file. \n");
         exit(1);
     }    
-    fprintf(output_file, "%f ", results->elapsed_time);
-    fprintf(output_file, "%f ", results->elapsed_time_neurons);
-    fprintf(output_file, "%f \n", results->elapsed_time_neurons_input);
-    fprintf(output_file, "%f \n", results->elapsed_time_neurons_output);
-    fprintf(output_file, "%f \n", results->elapsed_time_synapses);
+    fprintf(output_file, "%f ", results_per_sample->elapsed_time);
+    fprintf(output_file, "%f ", results_per_sample->elapsed_time_neurons);
+    fprintf(output_file, "%f \n", results_per_sample->elapsed_time_neurons_input);
+    fprintf(output_file, "%f \n", results_per_sample->elapsed_time_neurons_output);
+    fprintf(output_file, "%f \n", results_per_sample->elapsed_time_synapses);
     fclose(output_file);
 }

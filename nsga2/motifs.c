@@ -72,7 +72,8 @@ void initialize_FBI(motif_t *motif){
 void initialize_RCE(motif_t *motif){
     motif->neuron_behaviour[0] = 1; // excitatory
     motif->neuron_behaviour[1] = 1; // excitatory
-    motif->neuron_behaviour[2] = -1; // inhibitory
+    motif->neuron_behaviour[2] = 1; // excitatory
+    motif->neuron_behaviour[3] = 1; // excitatory
 
     motif->n_synapses = 4;
 
@@ -106,6 +107,12 @@ void initialize_RCE(motif_t *motif){
 }
 
 void initialize_RCI(motif_t *motif){
+    motif->neuron_behaviour[0] = -1; // inhibitory
+    motif->neuron_behaviour[1] = -1; // inhibitory
+    motif->neuron_behaviour[2] = -1; // inhibitory
+    motif->neuron_behaviour[3] = -1; // inhibitory
+
+
     motif->n_synapses = 4;
 
     // initialize conectivity matrix
@@ -138,6 +145,10 @@ void initialize_RCI(motif_t *motif){
 }
 
 void initialize_LTI(motif_t *motif){
+    motif->neuron_behaviour[0] = 1; // excitatory
+    motif->neuron_behaviour[1] = -1; // inhibitory
+    motif->neuron_behaviour[2] = 1; // excitatory
+    
     motif->n_synapses = 2;
 
     // initialize conectivity matrix
@@ -160,6 +171,10 @@ void initialize_LTI(motif_t *motif){
 }
 
 void initialize_CPG(motif_t *motif){
+    motif->neuron_behaviour[0] = 1; // excitatory
+    motif->neuron_behaviour[1] = 1; // excitatory
+    motif->neuron_behaviour[2] = 1; // excitatory
+    
     motif->n_synapses = 5;
 
     // initialize conectivity matrix

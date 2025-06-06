@@ -123,7 +123,7 @@ void print_matrix_from_dynamic_list(sparse_matrix_node_t *matrix_node, int n_neu
 
     int *matrix = (int *)calloc(n_neurons * n_neurons, sizeof(int));
 
-    while(matrix_node->value != 0){
+    while(matrix_node != NULL){
         matrix[matrix_node->row * n_neurons + matrix_node->col] = matrix_node->value;
         matrix_node = matrix_node->next_element;
     }
@@ -135,6 +135,9 @@ void print_matrix_from_dynamic_list(sparse_matrix_node_t *matrix_node, int n_neu
         printf("\n");
     }
     printf("\n\n");
+
+    // free memory
+    free(matrix);
 }
 
 void print_individuals(NSGA2Type *nsga2Params, population *pop){
@@ -142,13 +145,13 @@ void print_individuals(NSGA2Type *nsga2Params, population *pop){
     new_motif_t *motif_node;
     sparse_matrix_node_t *matrix_node;
     
-    printf("\n ================================== \n");
-    printf(" Printing population information... \n");
+    printf("================================== \n");
+    printf(" > Printing population information... \n");
 
     for(i = 0; i<nsga2Params->popsize; i++){
-        printf(" > Printing individual %d\n", i);
-        printf("   > Number of motifs: %d\n", parent_pop->ind[i].n_motifs);
-        printf("   > Printing motifs: ");
+        printf(" >> Printing individual %d\n", i);
+        printf(" >>> Number of motifs: %d\n", parent_pop->ind[i].n_motifs);
+        printf(" >>> Printing motifs: ");
 
         motif_node = pop->ind[i].motifs_new;
         for(j = 0; j<pop->ind[i].n_motifs; j++){
@@ -159,35 +162,35 @@ void print_individuals(NSGA2Type *nsga2Params, population *pop){
 
         // TODO: Print neurons too
 
-        printf("   > Printing matrix elements (synapses):\n");
+        printf(" >>> Printing matrix elements (synapses):\n");
         matrix_node = pop->ind[i].connectivity_matrix; 
 
         while(matrix_node != NULL){
-            printf("      > col = %d, row = %d, value = %d\n", matrix_node->col, matrix_node->row, matrix_node->value);
+            printf(" >>>> col = %d, row = %d, value = %d\n", matrix_node->col, matrix_node->row, matrix_node->value);
             matrix_node = matrix_node->next_element;
         }
         printf("\n");
 
         // print matrix
-        print_matrix_from_dynamic_list(pop->ind[i].connectivity_matrix, pop->ind[i].n_neurons);
+        //print_matrix_from_dynamic_list(pop->ind[i].connectivity_matrix, pop->ind[i].n_neurons);
 
     }
 
-    printf("\n Population printed!");
-    printf("\n ================================== \n");
+    printf(" > Population printed!");
+    printf("================================== \n");
 }
 
 void print_networks(NSGA2Type *nsga2Params, population *pop){
     int i;
     
-    printf("\n ================================== \n");
-    printf(" Printing networks... \n");
+    printf("================================== \n");
+    printf(" > Printing networks... \n");
 
-    for(i = 0; i<2; i++){//for(i = 0; i<nsga2Params->popsize-2; i++){
-        printf(" > Printing network %d\n", i);
+    for(i = 0; i<nsga2Params->popsize; i++){//for(i = 0; i<nsga2Params->popsize-2; i++){
+        printf(" >> Printing network %d\n", i);
         print_network_information(parent_pop->ind[i].snn);
     }
 
-    printf("\n All networks printed!");
-    printf("\n ================================== \n");
+    printf(" > All networks printed!\n");
+    printf("================================== \n");
 }

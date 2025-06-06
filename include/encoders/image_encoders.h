@@ -15,6 +15,8 @@ typedef struct {
 /// @brief List of images converted into spikes
 typedef struct {
     spike_image_t *images; // list of images
+    int *labels;
+    int n_classes;
     int image_size;
     int n_images;
     int bins;

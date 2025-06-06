@@ -6,7 +6,7 @@
 #include <unistd.h>
 
 
-void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
+void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -52,7 +52,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
                 //    printf("Time step: %d, next_spike = %d, last_spike = %d, next_spike_time = %d, neuron index: %d, synapse index: %d\n", t, synapse->next_spike, synapse->last_spike, next_spike_time, neuron_id, synapse_index);
                 atascau ++;
                 if(atascau >= 1000){ 
-                    printf("Atascau, neuron = %d, synapse = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d, max_spikes = %d\n", neuron_id, synapse_index, t, next_spike_time, synapse->next_spike, synapse->last_spike, synapse->max_spikes);
+                    //printf("Atascau, neuron = %d, synapse = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d, max_spikes = %d\n", neuron_id, synapse_index, t, next_spike_time, synapse->next_spike, synapse->last_spike, synapse->max_spikes);
                 }
             }
 
@@ -80,7 +80,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
     }
 }
 
-void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
+void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -130,6 +130,7 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
 
             // for output
             results->generated_spikes[neuron_id][t] = '|';
+            results->n_spikes_per_neuron[neuron_id] += 1;
 
             //*spike_amount += 1;
         }
@@ -140,7 +141,7 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
     } 
 }
 
-void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_t *results){
+void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
     float input_current = 0;
@@ -183,7 +184,7 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results
                 //    printf("Time step: %d, next_spike = %d, last_spike = %d, next_spike_time = %d, neuron index: %d, synapse index: %d\n", t, synapse->next_spike, synapse->last_spike, next_spike_time, neuron_id, synapse_index);
                 atascau ++;
                 if(atascau >= 1000){ 
-                    printf("Atascau, neuron = %d, synapse = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d, max_spikes = %d\n", neuron_id, synapse_index, t, next_spike_time, synapse->next_spike, synapse->last_spike, synapse->max_spikes);
+                    //printf("Atascau, neuron = %d, synapse = %d, t = %d, next_spike_time = %d, next_spike = %d, last_spike = %d, max_spikes = %d\n", neuron_id, synapse_index, t, next_spike_time, synapse->next_spike, synapse->last_spike, synapse->max_spikes);
                 }
             }
 
@@ -245,6 +246,7 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results
 
             // for output
             results->generated_spikes[neuron_id][t] = '|';
+            results->n_spikes_per_neuron[neuron_id] += 1;
 
             //*spike_amount += 1;
         }

@@ -75,9 +75,9 @@
                         synap->last_spike +=1;
                     }
                     //synap->max_spikes = synap->last_spike;
-                    //*/
+                    //
                 //}
-/*            }
+            }
             clock_gettime(CLOCK_MONOTONIC, &end);
 
             elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
@@ -86,16 +86,16 @@
             printf("Spikes introduced on input neurons\n");
 
             // check that the image has been correctly loaded into the neuron synapse
-            /*for(l = 0; l<784; l++){
+            for(l = 0; l<784; l++){
                 if(spike_images.spike_images[i].spike_image[l][0]>0){
                     for(j=0; j<spike_images.spike_images[i].spike_image[l][0]; j++){
                         printf("(%d, %d) ", spike_images.spike_images[i].spike_image[l][j], snn.synapses[snn.lif_neurons[l].input_synapse_indexes[0]].l_spike_times[j]);
                     }
                     printf("\n");
                 }
-            }*/
+            }
 
-/*            clock_gettime(CLOCK_MONOTONIC, &start);
+            clock_gettime(CLOCK_MONOTONIC, &start);
 
             for(j=0; j<dataset->bins; j++){ // this loop more or less 6 
 
@@ -170,6 +170,9 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
     struct timespec start_neurons_input, end_neurons_input; // to measure synapses simulation time
     struct timespec start_neurons_output, end_neurons_output; // to measure synapses simulation time
 
+    // there is only one sample
+    simulation_results_per_sample_t *results_per_sample = &(results->results_per_sample[0]);
+
 
     if(conf->simulation_type == 0) // clock-based
     { 
@@ -193,7 +196,7 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
                 }
                 #pragma omp for schedule(static, 10) private(i) 
                 for(i=0; i<snn->n_neurons; i++)
-                    snn->input_step(snn, time_step, i, results);
+                    snn->input_step(snn, time_step, i, results_per_sample);
                 #pragma omp single
                 {
                 clock_gettime(CLOCK_MONOTONIC, &end_neurons_input);
@@ -207,7 +210,7 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
                 
                 #pragma omp for schedule(static, 10) private(i)
                 for(i=0; i<snn->n_neurons; i++)
-                    snn->output_step(snn, time_step, i, results);
+                    snn->output_step(snn, time_step, i, results_per_sample);
                 #pragma omp single
                 {
                 clock_gettime(CLOCK_MONOTONIC, &end_neurons_output);
@@ -215,7 +218,7 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
 
 #else // if is serial compute input and neuron synapses at the same iteration 
                 for(i = 0; i<snn->n_neurons; i++)
-                    snn->complete_step(snn, time_step, i, results);
+                    snn->complete_step(snn, time_step, i, results_per_sample);
 #endif
 
                 #pragma omp single
@@ -247,10 +250,10 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
             time_step++;
         
             // store neuron simulation and training rule simulation times
-            results->elapsed_time_neurons += (end_neurons.tv_sec - start_neurons.tv_sec) + (end_neurons.tv_nsec - start_neurons.tv_nsec) / 1e9;
-            results->elapsed_time_synapses += (end_synapses.tv_sec - start_synapses.tv_sec) + (end_synapses.tv_nsec - start_synapses.tv_nsec) / 1e9;
-            results->elapsed_time_neurons_input += (end_neurons_input.tv_sec - start_neurons_input.tv_sec) + (end_neurons_input.tv_nsec - start_neurons_input.tv_nsec) / 1e9;
-            results->elapsed_time_neurons_output += (end_neurons_output.tv_sec - start_neurons_output.tv_sec) + (end_neurons_output.tv_nsec - start_neurons_output.tv_nsec) / 1e9;
+            results_per_sample->elapsed_time_neurons += (end_neurons.tv_sec - start_neurons.tv_sec) + (end_neurons.tv_nsec - start_neurons.tv_nsec) / 1e9;
+            results_per_sample->elapsed_time_synapses += (end_synapses.tv_sec - start_synapses.tv_sec) + (end_synapses.tv_nsec - start_synapses.tv_nsec) / 1e9;
+            results_per_sample->elapsed_time_neurons_input += (end_neurons_input.tv_sec - start_neurons_input.tv_sec) + (end_neurons_input.tv_nsec - start_neurons_input.tv_nsec) / 1e9;
+            results_per_sample->elapsed_time_neurons_output += (end_neurons_output.tv_sec - start_neurons_output.tv_sec) + (end_neurons_output.tv_nsec - start_neurons_output.tv_nsec) / 1e9;
 
             // Print info about the simulation
             if(time_step % 1000 == 0)
@@ -274,5 +277,5 @@ void simulate(spiking_nn_t *snn, simulation_configuration_t *conf, simulation_re
         clock_gettime(CLOCK_MONOTONIC, &end);
     }
 
-    results->elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
+    results_per_sample->elapsed_time = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 }

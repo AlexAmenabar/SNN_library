@@ -204,6 +204,7 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
     }
 }
 
+/* Function to initialize pointers to functions that are used during the simulation */
 void initialize_network_function_pointers(spiking_nn_t *snn){
     switch (snn->neuron_type)
     { 
@@ -368,16 +369,22 @@ void reorder_synapse_list(spiking_nn_t *snn){
 }
 
 void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn){
+    int i, j;
+    
     // initialize struct to store simulation configuration and outputs
-    results->elapsed_time = 0;
-    results->elapsed_time_neurons = 0;
-    results->elapsed_time_synapses = 0;
-    results->elapsed_time_neurons_input = 0;
-    results->elapsed_time_neurons_output = 0;
-
-    results->generated_spikes = malloc(snn->n_neurons * sizeof(unsigned char *));
-    for (int i = 0; i<snn->n_neurons; i++)
-        results->generated_spikes[i] = malloc((conf->time_steps) * sizeof(unsigned char));
+    results->results_per_sample = (simulation_results_per_sample_t *)malloc(conf->n_samples * sizeof(simulation_results_per_sample_t));
+    
+    for(i = 0; i<conf->n_samples; i++){
+        results->results_per_sample[i].elapsed_time = 0;
+        results->results_per_sample[i].elapsed_time_neurons = 0;
+        results->results_per_sample[i].elapsed_time_synapses = 0;
+        results->results_per_sample[i].elapsed_time_neurons_input = 0;
+        results->results_per_sample[i].elapsed_time_neurons_output = 0;    
+        
+        results->results_per_sample[i].generated_spikes = (unsigned char **)malloc(snn->n_neurons * sizeof(unsigned char *));
+        for (j = 0; j<snn->n_neurons; j++)
+            results->results_per_sample[i].generated_spikes[j] = (unsigned char *)malloc((conf->time_steps) * sizeof(unsigned char));
+    }
 }
 
 void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
@@ -390,6 +397,23 @@ void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
     free(lists->weight_list);
     free(lists->delay_list);
     free(lists->training_zones);
+}
+
+
+// Synapse weight should depend on thresholds...
+void initialize_network_weights(spiking_nn_t *snn){
+    int i; 
+    for(i=0; snn->n_synapses; i++){
+        snn->synapses[i].w = (double)rand() / RAND_MAX;
+
+        // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution
+        if(snn->synapses[i].w < 10)
+            snn->synapses[i].w = 10;
+        if(snn->synapses[i].w > 200)
+            snn->synapses[i].w = 200;
+
+        // inhibitory / excitatory
+    }
 }
 
 

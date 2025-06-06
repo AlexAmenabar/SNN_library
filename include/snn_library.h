@@ -7,7 +7,7 @@
 #endif
 
 #ifndef INPUT_MAX_SPIKES
-#define INPUT_MAX_SPIKES 150
+#define INPUT_MAX_SPIKES 5000
 #endif
 
 
@@ -102,7 +102,7 @@ typedef struct{
     int simulation_type, neuron_type, n_process, store, learn;
 
     char *spike_times_file, *weights_file, *times_file, *n_spikes_file, *final_network_file;
-    char *network_file;
+    char *network_file, *network_neurons_file, *network_synapses_file;
 
     // biological simulation
     int time_steps;
@@ -118,14 +118,16 @@ typedef struct{
 } simulation_configuration_t;
 
 
-
-/// Struct used to store results of the simulation
 typedef struct{
     double elapsed_time, elapsed_time_neurons, elapsed_time_neurons_input, elapsed_time_neurons_output, elapsed_time_synapses;
     unsigned char **generated_spikes;
     unsigned int *n_spikes_per_neuron;
-} simulation_results_t;
+} simulation_results_per_sample_t;
 
+/// Struct used to store results of the simulation
+typedef struct{
+    simulation_results_per_sample_t *results_per_sample;
+} simulation_results_t;
 
 
 /// Struct used to help the construction of the network
@@ -242,6 +244,9 @@ void initialize_results_struct(simulation_results_t *results, simulation_configu
 /// @param snn Spiking neural network structure
 void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn);
 
+/// @brief Initialize weights of the network
+/// @param snn Spiking neural network structure
+void initialize_network_weights(spiking_nn_t *snn);
 
 
 /* Functions to print the network information */
