@@ -55,7 +55,7 @@ void selection (NSGA2Type *nsga2Params,  population *old_pop, population *new_po
 
         // TODO: improve this
         copy_individual(parent1, &(new_pop->ind[i+2]));
-        copy_individual(parent2, &(new_pop->ind[i+1+3]));
+        copy_individual(parent2, &(new_pop->ind[i+3]));
 
         //crossover (nsga2Params, parent1, parent2, &new_pop->ind[i+2], &new_pop->ind[i+3]);
     }

@@ -285,6 +285,9 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
     // my parameters -- general
     printf("\n\n Printing my paramters...\n");
+    printf(" > Number of generations: %d\n", nsga2Params.ngen);
+
+
     scanf("%d",&nsga2Params.neuron_type);    
     scanf("%d",&nsga2Params.max_motifs);
     scanf("%d",&nsga2Params.min_motifs);
@@ -438,7 +441,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     
 
     /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
-    initialize_motifs(nsga2Params, inp, out);
+    initialize_motifs();
 
 
     /* Allocate memory for populations: parent population, children population, and mixed population */
@@ -460,15 +463,16 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     printf(" Population initialized!\n");
     
     // print the parent population
-    print_individuals(nsga2Params, parent_pop);
+    //  print_individuals(nsga2Params, parent_pop);
 
     printf(" Decoding population...\n");
     decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
     printf(" Population decoded!\n");
 
+    fflush( stdout );
 
     // print decoded networks
-    print_networks(nsga2Params, parent_pop);
+    //print_networks(nsga2Params, parent_pop);
 
     
     // initialize variables to store input spike trains
@@ -514,6 +518,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     evaluate_pop (nsga2Params, parent_pop, inp, out);
     printf(" Parent population evaluated!\n");
 
+    fflush( stdout );
 
     assign_rank_and_crowding_distance (nsga2Params, parent_pop);
     printf(" Rank and crowding distance assigned\n");
@@ -546,38 +551,60 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     int i;
     
     // NSGA2 simulation: loop over ngen generations
+
+    // deallocate memory of SNN structures for parent population (this is done to avoid problems later, SNN structure is not copied when individual is copied, and then the deallocate function raises errors)
+    deallocate_memory_pop_snn_only(nsga2Params, parent_pop, nsga2Params->popsize);
+
     for (i=2; i<=nsga2Params->ngen; i++)
     {
-        printf("Selecting...\n");
+        printf(" In iteration %d...\n", i);
+        printf(" >>>>> Selecting...\n");
         selection (nsga2Params,  parent_pop, child_pop);
-        
-        printf("Mutating...\n");
+        fflush( stdout );
+
+        printf(" >>>>> Mutating...\n");
         mutation_pop (nsga2Params,  child_pop);
+        fflush( stdout );
         
-        printf("Decoding...\n");
+        printf(" >>>>> Decoding...\n");
         decode_pop(nsga2Params,  child_pop);
         
-        printf("Evaluating...\n");
+        printf(" >>>>> Evaluating...\n");
         evaluate_pop(nsga2Params,  child_pop, inp, out);
         
-        printf("Merging...\n");
+        printf(" >>>>> Merging...\n");
         merge (nsga2Params,  parent_pop, child_pop, mixed_pop);
         
-        printf("Filling...\n");
+        fflush( stdout );
+
+        // deallocate and allocate again the parent population
+        printf(" >>>>> Deallocating...\n");
+        deallocate_memory_pop(nsga2Params, parent_pop, nsga2Params->popsize);
+        printf(" >>>>> Allocating...\n");
+        allocate_memory_pop(nsga2Params, parent_pop, nsga2Params->popsize);
+
+        // fill nondominated sort
+        printf(" >>>>> Filling...\n");
         fill_nondominated_sort (nsga2Params,  mixed_pop, parent_pop);
 
+        // TODO: this is not optimal
+        decode_pop(nsga2Params, parent_pop);
+
+        printf(" >>>> Filled!\n");
+        fflush( stdout );
 
         /* Comment following four lines if information for all
          generations is not desired, it will speed up the execution */
         fprintf(fpt4,"# gen = %d\n",i);
         //report_pop(nsga2Params, parent_pop,fpt4);
         fflush(fpt4);
-        if (nsga2Params->choice!=0)    
-            onthefly_display (nsga2Params, parent_pop,gp,i);
+        //if (nsga2Params->choice!=0)    
+        //    onthefly_display (nsga2Params, parent_pop,gp,i);
         printf("\n -- Generation %d --", i);
     }
     printf("\n Generations finished, now reporting solutions");
-    
+    fflush( stdout );
+
     //report_pop(nsga2Params,  parent_pop,fpt2);
     //report_feasible(nsga2Params,  parent_pop,fpt3);
     

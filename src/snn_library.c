@@ -368,24 +368,44 @@ void reorder_synapse_list(spiking_nn_t *snn){
     free(new_order_indexes);
 }
 
-void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn){
-    int i, j;
-    
+void initialize_results_struct(simulation_results_t *results, results_configuration_t *conf){
     // initialize struct to store simulation configuration and outputs
     results->results_per_sample = (simulation_results_per_sample_t *)malloc(conf->n_samples * sizeof(simulation_results_per_sample_t));
     
-    for(i = 0; i<conf->n_samples; i++){
-        results->results_per_sample[i].elapsed_time = 0;
-        results->results_per_sample[i].elapsed_time_neurons = 0;
-        results->results_per_sample[i].elapsed_time_synapses = 0;
-        results->results_per_sample[i].elapsed_time_neurons_input = 0;
-        results->results_per_sample[i].elapsed_time_neurons_output = 0;    
-        
-        results->results_per_sample[i].generated_spikes = (unsigned char **)malloc(snn->n_neurons * sizeof(unsigned char *));
-        for (j = 0; j<snn->n_neurons; j++)
-            results->results_per_sample[i].generated_spikes[j] = (unsigned char *)malloc((conf->time_steps) * sizeof(unsigned char));
+    for(int i = 0; i<conf->n_samples; i++)
+        initialize_sample_results_struct(&(results->results_per_sample[i]), conf);
+}
+
+void initialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf){
+    results_per_sample->elapsed_time = 0;
+    results_per_sample->elapsed_time_neurons = 0;
+    results_per_sample->elapsed_time_synapses = 0;
+    results_per_sample->elapsed_time_neurons_input = 0;
+    results_per_sample->elapsed_time_neurons_output = 0;    
+    
+    results_per_sample->generated_spikes = (unsigned char **)malloc(conf->n_neurons * sizeof(unsigned char *));
+    results_per_sample->n_spikes_per_neuron = (int *)calloc(conf->n_neurons, sizeof(int));
+
+    for (int i = 0; i<conf->n_neurons; i++){
+        results_per_sample->generated_spikes[i] = (unsigned char *)malloc((conf->time_steps * 10) * sizeof(unsigned char));
+        results_per_sample->n_spikes_per_neuron[i] = 0;
     }
 }
+
+void free_results_struct_memory(simulation_results_t *results, results_configuration_t *conf){
+    for(int i = 0; i<conf->n_samples; i++)
+        free_sample_results_struct_memory(&(results->results_per_sample[i]), conf);
+    free(results->results_per_sample);
+}
+
+void free_sample_results_struct_memory(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf){
+    for (int i = 0; i<conf->n_neurons; i++)
+        free(results_per_sample->generated_spikes[i]);
+
+    free(results_per_sample->generated_spikes);
+    free(results_per_sample->n_spikes_per_neuron);
+}
+
 
 void free_lists_memory(network_construction_lists_t *lists, spiking_nn_t *snn){
     int i;
@@ -524,4 +544,44 @@ void print_network_information(spiking_nn_t *snn){
     //printf("    > All synapses printed!\n\n");
 
     
+}
+
+// Functions to free resources
+
+void free_snn_struct_memory(spiking_nn_t *snn){
+    // free neurons
+    printf(" >>>>>>>> Deallocating neurons memory\n");
+    fflush( stdout );
+
+    if(snn->neuron_type == 0){
+        free_lif_neurons(snn);
+        printf(" >>>>>>> Checkpoint\n");
+        fflush( stdout );
+        free(snn->lif_neurons);
+    }
+
+    // free synapses
+    printf(" >>>>>>>> Deallocating synapses memory\n");
+    free_synapses(snn);
+    free(snn->synapses);
+
+    printf(" >>>>>>> Deallocating snn pointer\n");
+    free(snn);
+    printf(" >>>>>>> Deallocated\n");
+    snn = NULL;
+}
+
+void free_lif_neurons(spiking_nn_t *snn){
+    printf(" >>>>>>>>> n_neurons = %d\n", snn->n_neurons);
+    fflush(stdout);
+    for(int i=0; i<snn->n_neurons; i++){
+        free(snn->lif_neurons[i].input_synapse_indexes);
+        free(snn->lif_neurons[i].output_synapse_indexes);
+    }
+}
+
+void free_synapses(spiking_nn_t *snn){
+    for(int i = 0; i<snn->n_synapses; i++){
+        free(snn->synapses[i].l_spike_times);
+    }
 }

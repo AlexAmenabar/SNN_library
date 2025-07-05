@@ -238,7 +238,7 @@ void initialize_motif(motif_t *motif){
 }
 
 // General function to initialize motifs
-void initialize_motifs(NSGA2Type *nsga2Params, void *, void *){
+void initialize_motifs(){
     // allocate memory for motifs list
     int i, j, l;
     

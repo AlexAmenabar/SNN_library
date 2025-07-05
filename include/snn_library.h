@@ -129,6 +129,12 @@ typedef struct{
     simulation_results_per_sample_t *results_per_sample;
 } simulation_results_t;
 
+typedef struct{
+    int n_neurons;
+    int n_samples;
+    int time_steps;
+} results_configuration_t;
+
 
 /// Struct used to help the construction of the network
 typedef struct{
@@ -237,7 +243,10 @@ void reorder_synapse_list(spiking_nn_t *snn);
 /// @param results Structure to initialize
 /// @param conf Structure with data about the simulation configuration
 /// @param snn Spiking neural network structure
-void initialize_results_struct(simulation_results_t *results, simulation_configuration_t *conf, spiking_nn_t *snn);
+void initialize_results_struct(simulation_results_t *results, results_configuration_t *conf);
+void initialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf);
+void free_results_struct_memory(simulation_results_t *results, results_configuration_t *conf);
+void free_sample_results_struct_memory(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf);
 
 /// @brief Function to free the memory of the lists used to initialize the network
 /// @param lists Structure of lists to free
@@ -283,5 +292,9 @@ void print_synapses_information(spiking_nn_t *snn);
 /// @param
 void print_network_information(spiking_nn_t *snn);
 
+
+void free_snn_struct_memory(spiking_nn_t *snn);
+void free_lif_neurons(spiking_nn_t *snn);
+void free_synapses(spiking_nn_t *snn);
 
 #endif
