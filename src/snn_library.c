@@ -150,14 +150,18 @@ void initialize_network_synapses(spiking_nn_t *snn, int n_synapses, network_cons
 
 void add_input_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index){
     if(snn->neuron_type == 0)
+    {
         add_input_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], &(snn->synapses[synapse_index]), synapse_index);
+    }
     // else{}
 }
 
 
 void add_output_synapse_to_neuron(spiking_nn_t *snn, int neuron_index, int synapse_index){
     if(snn->neuron_type == 0)
+    {
         add_output_synapse_to_lif_neuron(&snn->lif_neurons[neuron_index], &(snn->synapses[synapse_index]), synapse_index);
+    }
     // else{}
 }
 
@@ -392,6 +396,24 @@ void initialize_sample_results_struct(simulation_results_per_sample_t *results_p
     }
 }
 
+void reinitialize_results_struct(simulation_results_t *results, results_configuration_t *conf){
+    // initialize struct to store simulation configuration and outputs    
+    for(int i = 0; i<conf->n_samples; i++)
+        initialize_sample_results_struct(&(results->results_per_sample[i]), conf);
+}
+
+void reinitialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf){
+    results_per_sample->elapsed_time = 0;
+    results_per_sample->elapsed_time_neurons = 0;
+    results_per_sample->elapsed_time_synapses = 0;
+    results_per_sample->elapsed_time_neurons_input = 0;
+    results_per_sample->elapsed_time_neurons_output = 0;    
+    
+    for (int i = 0; i<conf->n_neurons; i++){
+        results_per_sample->n_spikes_per_neuron[i] = 0;
+    }
+}
+
 void free_results_struct_memory(simulation_results_t *results, results_configuration_t *conf){
     for(int i = 0; i<conf->n_samples; i++)
         free_sample_results_struct_memory(&(results->results_per_sample[i]), conf);
@@ -550,29 +572,29 @@ void print_network_information(spiking_nn_t *snn){
 
 void free_snn_struct_memory(spiking_nn_t *snn){
     // free neurons
-    printf(" >>>>>>>> Deallocating neurons memory\n");
-    fflush( stdout );
+    //printf(" >>>>>>>> Deallocating neurons memory\n");
+    //fflush( stdout );
 
     if(snn->neuron_type == 0){
         free_lif_neurons(snn);
-        printf(" >>>>>>> Checkpoint\n");
+        //printf(" >>>>>>> Checkpoint\n");
         fflush( stdout );
         free(snn->lif_neurons);
     }
 
     // free synapses
-    printf(" >>>>>>>> Deallocating synapses memory\n");
+    //printf(" >>>>>>>> Deallocating synapses memory\n");
     free_synapses(snn);
     free(snn->synapses);
 
-    printf(" >>>>>>> Deallocating snn pointer\n");
+    //printf(" >>>>>>> Deallocating snn pointer\n");
     free(snn);
-    printf(" >>>>>>> Deallocated\n");
+    //printf(" >>>>>>> Deallocated\n");
     snn = NULL;
 }
 
 void free_lif_neurons(spiking_nn_t *snn){
-    printf(" >>>>>>>>> n_neurons = %d\n", snn->n_neurons);
+    //printf(" >>>>>>>>> n_neurons = %d\n", snn->n_neurons);
     fflush(stdout);
     for(int i=0; i<snn->n_neurons; i++){
         free(snn->lif_neurons[i].input_synapse_indexes);

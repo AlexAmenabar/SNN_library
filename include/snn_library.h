@@ -293,6 +293,15 @@ void print_synapses_information(spiking_nn_t *snn);
 void print_network_information(spiking_nn_t *snn);
 
 
+
+void initialize_results_struct(simulation_results_t *results, results_configuration_t *conf);
+void initialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf);
+void reinitialize_results_struct(simulation_results_t *results, results_configuration_t *conf);
+void reinitialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf);
+void free_results_struct_memory(simulation_results_t *results, results_configuration_t *conf);
+void free_sample_results_struct_memory(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf);
+
+
 void free_snn_struct_memory(spiking_nn_t *snn);
 void free_lif_neurons(spiking_nn_t *snn);
 void free_synapses(spiking_nn_t *snn);

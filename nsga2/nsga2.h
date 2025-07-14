@@ -139,6 +139,30 @@ typedef struct learning_zone_t
 }
 learning_zone_t;
 
+typedef struct int_node_t
+{
+    int value;
+    struct int_node_t *next;
+    struct int_node_t *prev;
+}
+int_node_t;
+
+typedef struct int_dynamic_list_t{
+    int n_nodes;
+    struct int_node_t *first_node;
+}
+int_dynamic_list_t;
+
+
+typedef struct ind_connectivity_info_t
+{
+    struct int_dynamic_list_t *in_connections; // a dynamic list for each motif
+    struct int_dynamic_list_t *out_connections; // a dynamic list for each motif
+    int n_max_motifs; // the size of the in_connections and out_connections arrays
+}
+ind_connectivity_info_t;
+
+
 typedef struct
 {
     int rank;
@@ -176,6 +200,8 @@ typedef struct
     int n_learning_zones;
     learning_zone_t *learning_zones;
     new_motif_t *motifs_new;
+
+    struct ind_connectivity_info_t connectivity_info;
 }
 individual;
 
@@ -313,6 +339,7 @@ void copy_neuron_nodes(individual *ind1, individual *ind2);
 void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *synapse2);
 void copy_synapse_nodes(individual *ind1, individual *ind2);
 void copy_individual(individual *ind1, individual *ind2);
+void copy_connectivity(individual *ind1, individual *ind2);
 void print_individuals(NSGA2Type *nsga2Params, population *pop);
 void print_networks(NSGA2Type *nsga2Params, population *pop);
 void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_node_t *matrix_node, int n_neurons);
@@ -373,6 +400,8 @@ void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *m
 sparse_matrix_node_t* build_motif_internal_structure_column_by_input(individual *ind, sparse_matrix_node_t *matrix_node, int motif_type, int global_neuron_index, int neuron_local_index);
 void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind);
 void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind);
+void initialize_int_node(int_node_t *int_node, int value, int_node_t *prev, int_node_t *next);
+int_node_t* initialize_and_allocate_int_node(int value, int_node_t *prev, int_node_t *next);
 
 void insert (list *node, int x);
 list* del (list *node);
@@ -386,6 +415,7 @@ void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutatio
 void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
 void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs);
 void remove_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_remove_motifs);
+void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_motifs_to_remove);
 void add_connection_mutation(NSGA2Type *nsga2Params, individual *ind, int n_connections);
 void remove_connection_mutation(NSGA2Type *nsga2Params, individual *ind, int n_connections);
 void bin_mutate_ind (NSGA2Type *nsga2Params, individual *ind);

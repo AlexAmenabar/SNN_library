@@ -17,9 +17,12 @@ void decode_pop (NSGA2Type *nsga2Params, population *pop)
     int i;
     for (i=0; i<nsga2Params->popsize; i++)
     {
-        printf("Decoding individual %d\n", i);
+        #ifdef DEBUG2
+        printf(" > > Decoding individual %d...\n", i);
+        fflush(stdout);
+        #endif
         decode_ind (nsga2Params, &(pop->ind[i]));
-        printf("\n");
+        //printf("\n");
     }
     return;
 }
@@ -46,14 +49,15 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
 
 
     // set function pointers
+    //printf(" Initializing network function pointers\n");
     initialize_network_function_pointers(snn);
-
-    printf(" >>> Checkpoint 1\n");
+    //printf(" Network function pointers initialized!\n");
     
     /* count amount of synapses per each neuron */
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
     // count synapses
+    //printf(" Counting synapses\n");
     while(synapse_node != NULL){
         // TODO: indicate in some way if the connection is excitatory of inhibitory
         neurons_input_synapses[synapse_node->col] += abs(synapse_node->value);
@@ -64,13 +68,13 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
         // get next synapse node
         synapse_node = synapse_node->next_element;
     }
+    //printf(" Synapses counted!\n");
 
-    printf(" >>> Checkpoint 1\n");
     
     // count input synapses
+    //printf(" Counting input synapses\n");
     synapse_node = ind->input_synapses;
     while(synapse_node != NULL){
-        printf(" >>>>> %d\n", i);
         i++;
         neurons_input_synapses[synapse_node->col] += abs(synapse_node->value); // add input synapses to input neurons
 
@@ -80,32 +84,32 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
         // get next synapse node
         synapse_node = synapse_node->next_element;
     }
+    //printf(" Input synapses counted!\n");
 
-    printf(" >>> Checkpoint 1\n");
 
     // TODO: This must be fixed and computed in another place, I don't like how network input is managed actually
     snn->n_input = ind->n_input_neurons = snn->n_input_synapses;
 
     // CHECK that values are equals
-    printf(" >> SNN n synapses = %d, ind n synapses = %d\n", snn->n_synapses, ind->n_synapses);
-    printf(" >> Number of synaptic connections is equals? %d\n", snn->n_synapses == ind->n_synapses);
-    printf(" >> Number of input synaptic connections is equals? %d\n", snn->n_input_synapses == ind->n_input_synapses);
+    //printf(" >> SNN n synapses = %d, ind n synapses = %d\n", snn->n_synapses, ind->n_synapses);
+    //printf(" >> Number of synaptic connections is equals? %d\n", snn->n_synapses == ind->n_synapses);
+    //printf(" >> Number of input synaptic connections is equals? %d\n", snn->n_input_synapses == ind->n_input_synapses);
 
 
     /* initialize network neurons */
-    printf(" >> Initializing neurons from genotype\n");
+    //printf(" Initializing neurons from genotype\n");
     initialize_neurons_from_genotype(snn, ind, neurons_input_synapses, neurons_output_synapses, nsga2Params);
-    printf(" >> Neurons initialized!\n");
+    //printf(" Neurons initialized!\n");
 
     // initialize network synapses
-    printf(" >> Initializing synapses from genotype\n");
+    //printf(" Initializing synapses from genotype\n");
     initialize_synapses_from_genotype(snn, ind, nsga2Params);
-    printf(" >> Synapses initialized!\n");
+    //printf(" Synapses initialized!\n");
 
     // connect neurons and synapses
-    printf(" >> Connecting neurons and synapses\n");
+    //printf(" Connecting neurons and synapses\n");
     connect_neurons_by_synapses_from_genotype(snn, ind, nsga2Params);
-    printf(" >> Neurons and synapses connected!\n");
+    //printf(" Neurons and synapses connected!\n");
 
     // free memory
     free(neurons_input_synapses);

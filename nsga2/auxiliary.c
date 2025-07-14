@@ -41,19 +41,53 @@ void print_double_matrix(double *matrix, int n){
 /* Functions to copy individuals */
 
 void copy_individual(individual *ind1, individual *ind2){
-    printf(" >>>> Copy motifs\n");
+    
+    #ifdef DEBUG2
+    printf(" > > Copying individual...\n");
+    fflush(stdout);
+    #endif
+
+    #ifdef DEBUG3
+    printf(" > > > Copying motifs...\n");
+    fflush(stdout);
+    #endif 
+
     copy_motifs(ind1, ind2);
 
-    printf(" >>>> Copy neuron nodes\n");
+    #ifdef DEBUG3
+    printf(" > > > Copying neuron nodes...\n");
+    fflush(stdout);
+    #endif 
+
     copy_neuron_nodes(ind1, ind2);
 
     // connect motifs and nodes
+
+    #ifdef DEBUG3
+    printf(" > > > Connecting motifs and neurons...\n");
+    fflush(stdout);
+    #endif 
+
     connect_motifs_and_neurons(ind2);
 
-    printf(" >>>> Copy synapse nodes, input and middle ones\n");
+
+    #ifdef DEBUG3
+    printf(" > > > Copying synapses...\n");
+    fflush(stdout);
+    #endif 
     copy_synapse_nodes(ind1, ind2);
 
-    printf(" >>>> Finished copying!\n");
+
+    #ifdef DEBUG3
+    printf(" > > > Copying connectivity (dynamic lists)...\n");
+    fflush(stdout);
+    #endif 
+    copy_connectivity(ind1, ind2); // copy the list of what motifs are connected
+
+    #ifdef DEBUG2
+    printf(" > > Individual copied!\n");
+    fflush(stdout);
+    #endif
 
     return;
 }
@@ -64,23 +98,25 @@ void copy_motifs(individual *ind1, individual *ind2){
     // copy the number of motifs
     ind2->n_motifs = ind1->n_motifs;
 
-    printf(" >>>>>> N motifs: %d\n", ind1->n_motifs);
+    //printf(" >>>>>> N motifs: %d\n", ind1->n_motifs);
     fflush( stdout );
 
     // create motifs dynamic list
     original_motif = ind1->motifs_new;
     
-    printf(" >>>>> Allocating memory for motifs\n");
+    //printf(" >>>>> Allocating memory for motifs\n");
     ind2->motifs_new = (new_motif_t *)malloc(sizeof(new_motif_t));
     copied_motif = ind2->motifs_new;
-    printf(" >>>>> Memory allocated\n");
+    //printf(" >>>>> Memory allocated\n");
+    //ind2->n_input_motifs_per_motif[0] = ind1->n_input_motifs_per_motif[0];
+    //ind2->n_output_motifs_per_motif[0] = ind1->n_output_motifs_per_motif[0];
 
     // copy the first element
     copy_motif_node(original_motif, copied_motif);
-    printf(" >>>>> First motif copied\n");
+    //printf(" >>>>> First motif copied\n");
 
     // copy the rest of motifs
-    printf(" >>>>> Copying motifs...\n");
+    //printf(" >>>>> Copying motifs...\n");
     for(int i = 1; i<ind1->n_motifs; i++){
         original_motif = original_motif->next_motif;
         
@@ -161,7 +197,7 @@ void copy_synapse_nodes(individual *ind1, individual *ind2){
     }
 
     // Now the same for input synapses
-    printf(" >>>>>> In input synapses...\n");
+    //printf(" >>>>>> In input synapses...\n");
 
     ind2->input_synapses = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));
 
@@ -197,6 +233,69 @@ void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *syn
 
     synapse2->next_element = NULL;
 }
+
+
+void copy_connectivity(individual *ind1, individual *ind2){
+    int i, j;
+    int_node_t *int_node, *int_node_to_copy, *prev, *next;
+
+    // allocate memory for lists and copy general information
+    ind2->connectivity_info.in_connections = (int_dynamic_list_t *)calloc(ind1->n_motifs * 10, sizeof(int_dynamic_list_t));
+    ind2->connectivity_info.out_connections = (int_dynamic_list_t *)calloc(ind1->n_motifs * 10, sizeof(int_dynamic_list_t));
+    ind2->connectivity_info.n_max_motifs = ind1->connectivity_info.n_max_motifs;
+
+
+    // copy lists
+    for(i = 0; i<ind2->n_motifs; i++){
+        // copy number of input and output nodes for each motif
+        ind2->connectivity_info.in_connections[i].n_nodes = ind1->connectivity_info.in_connections[i].n_nodes;
+        ind2->connectivity_info.out_connections[i].n_nodes = ind1->connectivity_info.out_connections[i].n_nodes;
+
+        printf(" Copying input %d...\n", i);
+        fflush(stdout);
+
+        // if number of input connections is bigger than 0, then copy the dynamic list
+        if(ind2->connectivity_info.in_connections[i].n_nodes > 0){
+            int_node_to_copy = ind1->connectivity_info.in_connections[i].first_node;
+
+            // initialize first element            
+            int_node = initialize_and_allocate_int_node(int_node_to_copy->value, NULL, NULL);
+            ind2->connectivity_info.in_connections[i].first_node = int_node;
+
+            int_node_to_copy = int_node_to_copy->next;
+
+            // initialize the rest of nodes
+            while(int_node_to_copy){
+                int_node = initialize_and_allocate_int_node(int_node_to_copy->value, int_node, NULL); // int node is the previous for tbe new one
+                int_node_to_copy = int_node_to_copy->next;
+            }
+        }
+        
+        printf(" Copying output %d, %d...\n", i, ind2->connectivity_info.out_connections[i].n_nodes);
+        fflush(stdout);
+        
+        // the same for the output motifs
+        // if number of input connections is bigger than 0, then copy the dynamic list
+        if(ind2->connectivity_info.out_connections[i].n_nodes > 0){
+            int_node_to_copy = ind1->connectivity_info.out_connections[i].first_node;
+
+            // initialize first element            
+            int_node = initialize_and_allocate_int_node(int_node_to_copy->value, NULL, NULL);
+            ind2->connectivity_info.out_connections[i].first_node = int_node;
+
+            int_node_to_copy = int_node_to_copy->next;
+
+            // initialize the rest of nodes
+            printf(" In while...\n");
+            fflush(stdout);
+            while(int_node_to_copy){
+                int_node = initialize_and_allocate_int_node(int_node_to_copy->value, int_node, NULL); // int node is the previous for tbe new one
+                int_node_to_copy = int_node_to_copy->next;
+            }
+        }
+    }
+}
+
 
 void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_node_t *matrix_node, int n_neurons){
     int i,j;

@@ -780,6 +780,174 @@ int test5(){
 }
 
 
+int test6(){
+    int i, j, equals;
+    int *motif_types;
+    int_array_t *selected_input_motifs;
+    individual *ind;
+    int *result_matrix, *target_matrix;
+
+    ind = (individual *)malloc(sizeof(individual));
+    motif_types = (int *)malloc(4 * sizeof(int));
+
+    // configure test
+    ind->n_motifs = 5;
+    ind->n_neurons = 0;
+    ind->n_synapses = 0;
+
+    motif_types[0] = 1;
+    motif_types[1] = 4;
+    motif_types[2] = 2;
+    motif_types[3] = 0;
+    motif_types[4] = 0;
+
+    selected_input_motifs = (int_array_t *)malloc(5 * sizeof(int_array_t));
+    selected_input_motifs[0].n = 4;
+    selected_input_motifs[1].n = 3;
+    selected_input_motifs[2].n = 5;
+    selected_input_motifs[3].n = 5;
+    selected_input_motifs[4].n = 2;
+
+    selected_input_motifs[0].array = (int *)malloc(4 * sizeof(int));
+    selected_input_motifs[1].array = (int *)malloc(3 * sizeof(int));
+    selected_input_motifs[2].array = (int *)malloc(6 * sizeof(int));
+    selected_input_motifs[3].array = (int *)malloc(5 * sizeof(int));
+    selected_input_motifs[4].array = (int *)malloc(2 * sizeof(int));
+    
+    // select input motifs
+    selected_input_motifs[0].array[0] = 0;
+    selected_input_motifs[0].array[1] = 0;
+    selected_input_motifs[0].array[2] = 2;
+    selected_input_motifs[0].array[3] = 4;
+
+    selected_input_motifs[1].array[0] = 0;
+    selected_input_motifs[1].array[1] = 1;
+    selected_input_motifs[1].array[2] = 2;
+
+    selected_input_motifs[2].array[0] = 0;
+    selected_input_motifs[2].array[1] = 3;
+    selected_input_motifs[2].array[2] = 3;
+    selected_input_motifs[2].array[3] = 3;
+    selected_input_motifs[2].array[4] = 3;
+
+    selected_input_motifs[3].array[0] = 0;
+    selected_input_motifs[3].array[1] = 0;
+    selected_input_motifs[3].array[2] = 0;
+    selected_input_motifs[3].array[3] = 1;
+    selected_input_motifs[3].array[4] = 3;
+
+    selected_input_motifs[4].array[0] = 0;
+    selected_input_motifs[4].array[1] = 1;
+    
+
+    // initialize ind motifs from types
+    initialize_ind_motifs_from_types(ind, motif_types);
+
+    // initialize neurons (depend on motifs)
+    initialize_neuron_nodes(ind);
+    
+    // Connect motifs and its neurons: connect each motif to its first neuron in the neuron list
+    connect_motifs_and_neurons(ind);
+    
+    // build the sparse matrix
+    new_construct_sparse_matrix(ind, selected_input_motifs);
+
+
+    // allocate memory to store expected and obtained matrix
+    target_matrix = (int *)calloc(13 * 13, sizeof(int));
+    result_matrix = (int *)calloc(13 * 13, sizeof(int));
+
+    // construct expected matrix
+    target_matrix[1] = 1;
+
+    target_matrix[8] = 1;
+
+    target_matrix[12] = -1;
+    target_matrix[15] = 1;
+    target_matrix[16] = 1;
+    target_matrix[17] = 1;
+
+    target_matrix[22] = 1;
+    target_matrix[23] = 1;
+
+    target_matrix[27] = 1;
+    target_matrix[29] = 1;
+
+    target_matrix[33] = 1;
+    target_matrix[34] = 1;
+
+
+//# ifdef DEBUG
+    get_complete_matrix_from_dynamic_list(result_matrix, ind->connectivity_matrix, ind->n_neurons);
+
+    print_synapses_dynamic_list(ind->connectivity_matrix);
+    //print_connectivity_matrix(target_matrix, ind->n_neurons);
+    print_connectivity_matrix(result_matrix, ind->n_neurons);
+//# endif
+
+    // prepare data
+    int_array_t *motifs_to_remove = (int_array_t *)malloc(sizeof(int_array_t));
+    motifs_to_remove->n = 3;
+    motifs_to_remove->array = (int *)malloc(motifs_to_remove->n * sizeof(int));
+    motifs_to_remove->array[0] = 0;
+    motifs_to_remove->array[1] = 1;
+    motifs_to_remove->array[2] = 3;
+
+
+    // remove motifs from sparse matrix
+    remove_motif_mutation_test(ind, 2, motifs_to_remove);
+
+
+    ind->n_neurons = 5;
+    free(result_matrix);
+    result_matrix = (int *)calloc(5 * 5, sizeof(int));
+    
+    get_complete_matrix_from_dynamic_list(result_matrix, ind->connectivity_matrix, ind->n_neurons);
+
+    // compare
+    equals = compare_target_and_obtained_matrix(result_matrix, target_matrix, ind->n_neurons);
+    
+
+//# ifdef DEBUG
+    print_synapses_dynamic_list(ind->connectivity_matrix);
+    //print_connectivity_matrix(target_matrix, ind->n_neurons);
+    print_connectivity_matrix(result_matrix, ind->n_neurons);
+//# endif
+
+
+    new_motif_t *motif_node;
+    neuron_node_t *neuron_node;
+
+    // Now check that the dynamic lists of motifs and neurons are correct
+    if(equals == 1){
+
+        // check motifs
+        motif_node = ind->motifs_new;
+        if(motif_node->motif_type != 2 && motif_node->initial_global_index != 0
+            || motif_node->next_motif->motif_type != 6 && motif_node->next_motif->initial_global_index != 3 
+            || motif_node->next_motif->next_motif != NULL){
+            equals = 0;
+        }
+
+        if(ind->n_motifs != 2 || ind->n_neurons != 6 || ind->n_synapses != 12)
+            equals = 0;
+
+        // count neurons too
+        int n_neurons = 0;
+        neuron_node = ind->neurons;
+        while(neuron_node){
+            n_neurons ++;
+            neuron_node = neuron_node->next_neuron;
+        }
+
+        if(ind->n_neurons != n_neurons)
+            equals = 0;
+    }
+
+    return equals;
+}
+
+
 void print_result(int result, int test_id){
     if(result == 1) printf("      Tests %d: SUCCESS!!\n", test_id);
     else printf("      Tests %d: FAILURE!!\n", test_id);
@@ -794,7 +962,7 @@ void print_results(int *results, int n){
 }
 
 int main(int argc, char **argv){
-    int results[5];
+    int results[6];
 
     initialize_motifs();
 
@@ -814,6 +982,9 @@ int main(int argc, char **argv){
     
     results[4] = test5();
     print_result(results[4], 4);
+
+    results[5] = test6();
+    print_result(results[5], 5);
 
     printf("\n");
 }

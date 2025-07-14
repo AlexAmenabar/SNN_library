@@ -15,7 +15,6 @@ int main(int argc, char **argv)
 	InitNSGA2(&nsga2Params, inp, out);
 
 	// loop over generations
-	printf("Looping...\n");
 	NSGA2(&nsga2Params, inp, out);
 
 	return 0;

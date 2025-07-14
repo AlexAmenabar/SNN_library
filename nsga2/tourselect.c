@@ -45,8 +45,10 @@ void selection (NSGA2Type *nsga2Params,  population *old_pop, population *new_po
         
         // TODO: Improve this
         // copy parents to child population
+        printf(" Copying individual...\n ");
         copy_individual(parent1, &(new_pop->ind[i]));
         copy_individual(parent2, &(new_pop->ind[i+1]));
+        printf(" Individuals copied!\n");
 
         //crossover (nsga2Params, parent1, parent2, &new_pop->ind[i], &new_pop->ind[i+1]);
 

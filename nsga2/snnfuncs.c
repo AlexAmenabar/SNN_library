@@ -102,7 +102,7 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
     // allocate memory for synaptic connections
     snn->synapses = (synapse_t *)malloc(snn->n_synapses * sizeof(synapse_t));
 
-    printf(" >> Total number of synapses = %d, input synapses = %d, middle synapses %d\n", snn->n_synapses, nsga2Params->image_size, snn->n_synapses - nsga2Params->image_size);
+    //printf(" >> Total number of synapses = %d, input synapses = %d, middle synapses %d\n", snn->n_synapses, nsga2Params->image_size, snn->n_synapses - nsga2Params->image_size);
 
     /* initialize input synapses */
     synapse_node = ind->input_synapses;
@@ -253,26 +253,31 @@ void connect_neurons_by_synapses_from_genotype(spiking_nn_t *snn, individual *in
     sparse_matrix_node_t *synapse_node;
 
     // join input synapses
-    printf(" >> Joining input synapses and input neurons\n");
     synapse_node = ind->input_synapses;
 
+    //printf(" Connecting input synapses\n");
     while(i < snn->n_input_synapses){
         for(j = 0; j<abs(synapse_node->value); j++){
             add_input_synapse_to_neuron(snn, synapse_node->col, i); // i is the index of the synapse
-            printf(" >>> Input synapse: %d\n", synapse_node->col);
             i++;
         }
 
         // move to the next synapse node
         synapse_node = synapse_node->next_element;
     }
-    printf(" >> Input synapses and neurons joined!\n");
-    
+    //printf(" Connecting rest synapses\n");
+
     // join the rest of synapses
-    printf(" >> Joining the rest of neurons and synapses\n");
+    //printf(" %d / %d\n", i, ind->n_synapses);
     synapse_node = ind->connectivity_matrix;
     while(i < snn->n_synapses){
+        //printf("i = %d\n", i);
         for(j = 0; j<abs(synapse_node->value); j++){
+            //printf("j = %d, row = %d, col = %d\n", j, synapse_node->row, synapse_node->col);
+            
+            if(synapse_node == NULL)
+                printf("NULL\n");
+
             add_input_synapse_to_neuron(snn, synapse_node->col, i);
             add_output_synapse_to_neuron(snn, synapse_node->row, i);  
             i++;
@@ -281,6 +286,5 @@ void connect_neurons_by_synapses_from_genotype(spiking_nn_t *snn, individual *in
         // move to the next synapse node
         synapse_node = synapse_node->next_element;
     }
-
-    printf(" >> The rest of neurons and synapses joined!\n");
+    //printf(" Connected!\n");
 }

@@ -19,7 +19,6 @@ void merge(NSGA2Type *nsga2Params,  population *pop1, population *pop2, populati
     {
         copy_ind (nsga2Params,  &(pop2->ind[i]), &(pop3->ind[k]));
     }
-    printf(" HERE!!\n");
     return;
 }
 
