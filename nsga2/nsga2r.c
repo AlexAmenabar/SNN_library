@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	// read input parameters
 	nsga2Params = ReadParameters(argc, argv);
 
-	// Init population and individuals
+	// init population and individuals
 	InitNSGA2(&nsga2Params, inp, out);
 
 	// loop over generations

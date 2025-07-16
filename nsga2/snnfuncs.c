@@ -37,7 +37,7 @@ void initialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind, in
         // store if the neuron is excitatory or inhibitory
         lif_neuron->excitatory = neuron_node->behaviour;
 
-        // TODO: neuron is input, neuron is output...
+        // First n_input neurons are input neurons
         if(i < snn->n_input){
             lif_neuron->is_input_neuron = 1;
         }
@@ -102,8 +102,6 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
     // allocate memory for synaptic connections
     snn->synapses = (synapse_t *)malloc(snn->n_synapses * sizeof(synapse_t));
 
-    //printf(" >> Total number of synapses = %d, input synapses = %d, middle synapses %d\n", snn->n_synapses, nsga2Params->image_size, snn->n_synapses - nsga2Params->image_size);
-
     /* initialize input synapses */
     synapse_node = ind->input_synapses;
     while(i<snn->n_input_synapses){
@@ -132,7 +130,7 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
                 synapse->l_spike_times[k] = -1; // no spikes yet
 
 
-            // TODO: This must be revised and moved to a function
+            // TODO: This must be revised and moved to a function in Pultsito
             // set training rule
             switch (synapse_node->learning_rule[0]) // get synapse training zone from list
             {
@@ -255,7 +253,6 @@ void connect_neurons_by_synapses_from_genotype(spiking_nn_t *snn, individual *in
     // join input synapses
     synapse_node = ind->input_synapses;
 
-    //printf(" Connecting input synapses\n");
     while(i < snn->n_input_synapses){
         for(j = 0; j<abs(synapse_node->value); j++){
             add_input_synapse_to_neuron(snn, synapse_node->col, i); // i is the index of the synapse
@@ -265,15 +262,12 @@ void connect_neurons_by_synapses_from_genotype(spiking_nn_t *snn, individual *in
         // move to the next synapse node
         synapse_node = synapse_node->next_element;
     }
-    //printf(" Connecting rest synapses\n");
 
     // join the rest of synapses
-    //printf(" %d / %d\n", i, ind->n_synapses);
     synapse_node = ind->connectivity_matrix;
     while(i < snn->n_synapses){
-        //printf("i = %d\n", i);
+        
         for(j = 0; j<abs(synapse_node->value); j++){
-            //printf("j = %d, row = %d, col = %d\n", j, synapse_node->row, synapse_node->col);
             
             if(synapse_node == NULL)
                 printf("NULL\n");
@@ -286,5 +280,4 @@ void connect_neurons_by_synapses_from_genotype(spiking_nn_t *snn, individual *in
         // move to the next synapse node
         synapse_node = synapse_node->next_element;
     }
-    //printf(" Connected!\n");
 }

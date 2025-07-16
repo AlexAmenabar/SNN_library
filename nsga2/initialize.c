@@ -45,7 +45,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     initialize_ind_motifs(ind);
 
     // initialize neurons (depend on motifs)
-    initialize_neuron_nodes(ind);
+    initialize_neuron_nodes(nsga2Params, ind);
 
     // set the behaviour for neurons (excitatory or inhibitory)
     set_neurons_behaviour(ind);
@@ -54,7 +54,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     connect_motifs_and_neurons(ind);
 
     // connect motifs and construct sparse matrix
-    connect_motifs(ind);
+    connect_motifs(nsga2Params, ind);
 
     // initialize input synaptic connections (not included in the sparse matrix)
     initialize_input_synapses(nsga2Params, ind);
@@ -62,7 +62,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     return;
 }
 
-/// @brief
+/// @brief This function initializes 
 ///
 ///
 ///
@@ -76,7 +76,20 @@ void general_initialization(NSGA2Type *nsga2Params, individual *ind){
     ind->n_input_synapses = nsga2Params->image_size; // this depends on the input too // TODO: this approach is temporal
 
     // initialize randomly the amount of motifs for this individual
-    ind->n_motifs = rnd(nsga2Params->min_motifs, nsga2Params->max_motifs); // min motifs and max motifs should depend on the input
+    ind->n_motifs = rnd(nsga2Params->min_motifs, nsga2Params->max_motifs);
+}
+
+void general_initialization_not_random_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs){
+    // initialize number of neurons
+    ind->n_neurons = 0;
+    ind->n_input_neurons = nsga2Params->image_size; // this depends on the input // TODO: this approach is temporal
+
+    // initialize number of synapses
+    ind->n_synapses = 0;
+    ind->n_input_synapses = nsga2Params->image_size; // this depends on the input too // TODO: this approach is temporal
+
+    // initialize randomly the amount of motifs for this individual
+    ind->n_motifs = n_motifs;
 }
 
 /*
@@ -191,8 +204,8 @@ void initialize_motif_node_from_type(new_motif_t *motif, int motif_id, individua
     Functions related to neurons initialization
 */
 
-/* Function to initialize all neuron nodes from the neurons list */
-void initialize_neuron_nodes(individual *ind){
+/* Function to initialize all neuron nodes of the neurons list */
+void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind){
     int i;
     neuron_node_t *neuron_node;
 
@@ -201,32 +214,31 @@ void initialize_neuron_nodes(individual *ind){
 
     // initialize first neuron
     neuron_node = ind->neurons;
-    initialize_neuron_node(neuron_node);
+    initialize_neuron_node(nsga2Params, neuron_node);
 
     // loop to initialize the rest of the neurons
     for(i = 1; i<ind->n_neurons; i++)
-        neuron_node = initialize_and_allocate_neuron_node(neuron_node);
+        neuron_node = initialize_and_allocate_neuron_node(nsga2Params, neuron_node);
 }
 
 /* Function to allocate memory for the next neuron node and initialize it */
-neuron_node_t* initialize_and_allocate_neuron_node(neuron_node_t *neuron_node){
+neuron_node_t* initialize_and_allocate_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node){
     // allocate memory for next neuron
     neuron_node->next_neuron = (neuron_node_t *)malloc(sizeof(neuron_node_t));
     neuron_node = neuron_node->next_neuron;
 
     // initialize neuron
-    initialize_neuron_node(neuron_node);
+    initialize_neuron_node(nsga2Params, neuron_node);
 
     return neuron_node;
 }
 
 /* Function to initialize neuron nodes */
-// TODO: this function should be more general and initialize neuron with some randomization
-void initialize_neuron_node(neuron_node_t *neuron_node){
-    neuron_node->threshold = 150;
-    neuron_node->refract_time = 3;
-    neuron_node->v_rest = 0;
-    neuron_node->r = 10.0;
+void initialize_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node){
+    neuron_node->threshold = rndreal(nsga2Params->min_vthres, nsga2Params->max_vthres);
+    neuron_node->refract_time = rnd(nsga2Params->min_refracttime, nsga2Params->max_refracttime);
+    neuron_node->v_rest = rndreal(nsga2Params->min_vrest, nsga2Params->max_vrest);
+    neuron_node->r = rnd(nsga2Params->min_R, nsga2Params->max_R);
     neuron_node->next_neuron = NULL; // the next element is not initialized yet
 }
 
@@ -234,18 +246,23 @@ void initialize_neuron_node(neuron_node_t *neuron_node){
 /* Function to set the behaviour (excitatory or inhibitory) of the neurons */
 void set_neurons_behaviour(individual *ind){
     int i;
-    new_motif_t *motif_node;
-    neuron_node_t *neuron_node;
+    motif_t *motif_data;
 
-    motif_node = ind->motifs_new;
-    neuron_node = ind->neurons;
+    // get first motif and first neuron nodes
+    new_motif_t *motif_node = ind->motifs_new;
+    neuron_node_t *neuron_node = ind->neurons;
 
     // motif info is used to set the behaviour
-    while(motif_node != NULL){
-        for(i = 0; i<motifs_data[motif_node->motif_type].n_neurons; i++){
-            neuron_node->behaviour = motifs_data[motif_node->motif_type].neuron_behaviour[i];
-            neuron_node = neuron_node->next_neuron;
+    while(motif_node){
+        // get the information about this motif type
+        motif_data = &(motifs_data[motif_node->motif_type]);
+
+        // loop over motif neurons to set the behaviour
+        for(i = 0; i<motif_data->n_neurons; i++){
+            neuron_node->behaviour = motif_data->neuron_behaviour[i]; // set behaviour
+            neuron_node = neuron_node->next_neuron; // move to the next neuron node
         }
+        // move to the next motif
         motif_node = motif_node->next_motif;
     }
 }
@@ -256,26 +273,27 @@ void set_neurons_behaviour(individual *ind){
     Functions to connect motifs and neurons 
 */
 
-/* Function to connect each motif with its first neuron in the neurons list */
+/* Function to connect each motif with its first neuron in the neurons list (this can be used in any moment to reconnect) */
 void connect_motifs_and_neurons(individual *ind){
     int i,j;
-    new_motif_t *motif_node;
-    neuron_node_t *neuron_node;
 
-    motif_node = ind->motifs_new;
-    neuron_node = ind->neurons;
+    // get the first motif and neuron nodes
+    new_motif_t *motif_node = ind->motifs_new;
+    neuron_node_t *neuron_node = ind->neurons;
 
     // connect the first motif with the first neuron
     motif_node->first_neuron = neuron_node;
 
-    // for each motif, find the first neuron using the number of neuron for each motif
+    // loop over motifs and neurons to connect each motif with its first neuron in the neuron list
     for(i = 1; i<ind->n_motifs; i++){
+        // move to the next motif
         motif_node = motif_node->next_motif;
 
         // advance the amount of neurons of the actual motif type
         for(j = 0; j<motifs_data[motif_node->motif_type].n_neurons; j++){
             neuron_node = neuron_node->next_neuron;
         }
+        
         // set the neuron as the neuron of the motif
         motif_node->first_neuron = neuron_node;
     }
@@ -288,6 +306,7 @@ void connect_motifs_and_neurons(individual *ind){
 */
 
 
+/* Function to selected to which motifs is connected is motif */
 void randomize_motif_connections(individual *ind, int *n_connections_per_motif){
     int i, n_change, tmp_motif, n_con;
     
@@ -307,7 +326,7 @@ void randomize_motif_connections(individual *ind, int *n_connections_per_motif){
 }
 
 /* Function to randomly selected to which motifs is each motif connected, and then build the sparse matrix */
-void connect_motifs(individual *ind){
+void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
     int i, j, tmp_motif, valid, tmp_n;
 
     int n_connections, max_connect_per_motif;
@@ -339,63 +358,42 @@ void connect_motifs(individual *ind){
 
 
 
-    /* set the maximum number of input and output connections per each motif TODO: it should be dependent on the amount of motifs in the individual */
-    max_connect_per_motif = rnd(2, 5); // this is done like this to get a divisible number by // TODO: I think it should be dependent on the amount of motifs?
-
+    /* set the maximum number of input and output connections per each motif */
+    int min_val, max_val;
+    min_val = (int)(ind->n_motifs * 0.25);
+    max_val = (int)(ind->n_motifs * 0.50);
+    max_connect_per_motif = rnd(min_val, max_val); // this is the maximum number of connections that a motif can contain as input or output //rnd(2, 5);
+    max_connect_per_motif = rnd(2,5);
     /* Initialize the lists */
     for(i = 0; i<ind->n_motifs; i++){
         // set the amount of input and output connections for the motif 
         n_input_connections_per_motif[i] = max_connect_per_motif; // I am not very convinced with this
         n_output_connections_per_motif[i] = max_connect_per_motif;
 
-        // not connections done for motifs yet
+        // not connections done yet
         n_input_connections_per_motif_done[i] = 0;
         n_output_connections_per_motif_done[i] = 0;
     }
 
+
     //===================================================================================================
-    // TODO: This should be refactorized to a function: 
+    // TODO: Some things here should be refactorized to a function: 
 
     // make some randomization to change the amount of input and output connections for each motifs
     randomize_motif_connections(ind, n_input_connections_per_motif);
     randomize_motif_connections(ind, n_output_connections_per_motif);
 
-    /*for(i = 0; i<ind->n_motifs; i++){
-        n_change = rnd(0, n_input_connections_per_motif[i] - 1); // let at least one connection for the motif
-        n_input_connections_per_motif[i] -= n_change; // we are moving n_change connections to another motif
 
-        // select a motif (or a set of motifs) to give these connections
-        while(n_change > 0){
-            r_motif = rnd(0, ind->n_motifs-1); // motif to give connections
-            n_con = rnd(1, n_change); // number of motif connections to give to this motif
-
-            n_input_connections_per_motif[r_motif] += n_con; // add n_con connections to the motif
-            n_change -= n_con; // now we have less connections to move
-        }
-
-        // do the same with the output synapses
-        n_change = rnd(0, n_output_connections_per_motif[i] - 1);
-        n_output_connections_per_motif[i] -= n_change;
-
-        // select a motif (or a set of motifs) to give this input synapses
-        while(n_change > 0){
-            r_motif = rnd(0, ind->n_motifs-1); // motif to give connections
-            n_con = rnd(1, n_change); // number of connections to give to this motif
-
-            n_output_connections_per_motif[r_motif] += n_con;
-            n_change -= n_con;
-        }
-    }*/
-
-    /* allocate memory for selected motifs */
+    /* allocate memory for selected input and output motifs for each motif */
     for(i = 0; i<ind->n_motifs; i++){
         selected_input_motifs_per_motif[i] = (int *)malloc(n_input_connections_per_motif[i] * sizeof(int));
         selected_output_motifs_per_motif[i] = (int *)malloc(n_output_connections_per_motif[i] * sizeof(int));
     }
 
 
-    /* connect the motifs */
+    /* connect the motifs with their input and output motifs */
     for(i = 0; i<ind->n_motifs; i++){
+
         // loop until all motifs to connect with are selected
         for(j = n_input_connections_per_motif_done[i]; j<n_input_connections_per_motif[i]; j++){
             // select a random motif to connect with, and connect if that motif has connections remaining
@@ -444,6 +442,20 @@ void connect_motifs(individual *ind){
         // order the lists (motifs from lower to higher)
         insertion_sort(selected_input_motifs_per_motif[i], n_input_connections_per_motif[i]);
         insertion_sort(selected_output_motifs_per_motif[i], n_output_connections_per_motif[i]);
+
+
+        // copy the information to the int_array_t struct
+        selected_input_motifs[i].n = n_input_connections_per_motif[i];
+        selected_input_motifs[i].array = (int *)malloc(selected_input_motifs[i].n * sizeof(int));
+
+        for(j = 0; j<selected_input_motifs[i].n; j++)
+            selected_input_motifs[i].array[j] = selected_input_motifs_per_motif[i][j];
+        
+        selected_output_motifs[i].n = n_output_connections_per_motif[i];
+        selected_output_motifs[i].array = (int *)malloc(selected_output_motifs[i].n * sizeof(int));
+        
+        for(j = 0; j<selected_output_motifs[i].n; j++)
+            selected_output_motifs[i].array[j] = selected_output_motifs_per_motif[i][j];
     }
 
 
@@ -479,10 +491,12 @@ void connect_motifs(individual *ind){
     }*/
 
 
-    // copy information to int_array_t structs
-    motif = ind->motifs_new;
 
-    for(i = 0; i<ind->n_motifs; i++){
+
+    // copy information of connections to int_array_t structs
+    //motif = ind->motifs_new;
+
+    /*for(i = 0; i<ind->n_motifs; i++){
         selected_input_motifs[i].n = n_input_connections_per_motif[i];
         selected_input_motifs[i].array = (int *)malloc(selected_input_motifs[i].n * sizeof(int));
 
@@ -494,7 +508,7 @@ void connect_motifs(individual *ind){
         
         for(j = 0; j<selected_output_motifs[i].n; j++)
             selected_output_motifs[i].array[j] = selected_output_motifs_per_motif[i][j];
-    }
+    }*/
 
     
 
@@ -503,13 +517,15 @@ void connect_motifs(individual *ind){
     // Copy information to dynamic lists of individuals (ALL THIS MUST BE REFACTORIZED AND OPTIMIZED AS MOST COPIES NOW ARE USELESS - THIS ONE IS WHAT WILL REMAIN)
     int_node_t *int_node;
     
-    // allocate memory for dynamic lists to store motif connectivity information
+    // allocate memory for dynamic lists to store motif connectivity information. Larger lists than neccessary are allocated as network will raise
     ind->connectivity_info.in_connections = (int_dynamic_list_t *)calloc(ind->n_motifs * 10, sizeof(int_dynamic_list_t));
     ind->connectivity_info.out_connections = (int_dynamic_list_t *)calloc(ind->n_motifs * 10, sizeof(int_dynamic_list_t));
-    ind->connectivity_info.n_max_motifs = ind->n_motifs * 10;
+    ind->connectivity_info.n_max_motifs = ind->n_motifs * 10; 
 
+    // loop and initialize all int nodes (THIS CAN BE MOVED TO A FUNCTION???)
     for(i = 0; i<ind->n_motifs; i++){
-        // copy number of input and output nodes for each motif
+
+        // copy number of input and output nodes (motifs) for each motif
         ind->connectivity_info.in_connections[i].n_nodes = selected_input_motifs[i].n;
         ind->connectivity_info.out_connections[i].n_nodes = selected_output_motifs[i].n;
 
@@ -517,12 +533,13 @@ void connect_motifs(individual *ind){
         if(ind->connectivity_info.in_connections[i].n_nodes > 0){
 
             // initialize first element            
-            int_node = initialize_and_allocate_int_node(selected_input_motifs[i].array[0], NULL, NULL);
-            ind->connectivity_info.in_connections[i].first_node = int_node;
+            int_node = initialize_and_allocate_int_node(selected_input_motifs[i].array[0], NULL, NULL); // get first node of the list
+            ind->connectivity_info.in_connections[i].first_node = int_node; // connect int node to the dynamic list
 
             // initialize the rest of nodes
             for(j = 1; j<ind->connectivity_info.in_connections[i].n_nodes; j++)
                 int_node = initialize_and_allocate_int_node(selected_input_motifs[i].array[j], int_node, NULL); // int node is the previous for tbe new one
+        
         }
 
         // the same for the output motifs
@@ -535,7 +552,9 @@ void connect_motifs(individual *ind){
             // initialize the rest of nodes
             for(j = 1; j<ind->connectivity_info.out_connections[i].n_nodes; j++)
                 int_node = initialize_and_allocate_int_node(selected_output_motifs[i].array[j], int_node, NULL);
+        
         }
+
     }
 
 
@@ -560,6 +579,40 @@ void connect_motifs(individual *ind){
             printf("\n");
         }
         fflush(stdout);
+
+            #ifdef DEBUG3
+        printf(" > > > > > Printing input motifs from dynamic list:\n");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > > > Motif %d (%d): ", i, ind->connectivity_info.in_connections[i].n_nodes);
+            if(ind->connectivity_info.in_connections[i].n_nodes > 0){
+                int_node_t *int_node = ind->connectivity_info.in_connections[i].first_node;
+
+                while(int_node){
+                    printf("%d ", int_node->value);
+                    int_node = int_node->next;
+                }
+            }
+            printf("\n");
+        }
+
+        printf(" > > > > > Printing output motifs from dynamic list:");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > > > Motif %d (%d): ", i, ind->connectivity_info.out_connections[i].n_nodes);
+            if(ind->connectivity_info.out_connections[i].n_nodes > 0){
+                int_node_t *int_node = ind->connectivity_info.out_connections[i].first_node;
+
+                while(int_node){
+                    printf("%d ", int_node->value);
+                    int_node = int_node->next;
+                }
+            }
+            printf("\n");
+        }
+
+        printf("\n > > > > Updating dynamic lists...\n");
+        fflush(stdout);
+
+    #endif
     #endif
 
 
@@ -576,8 +629,8 @@ void connect_motifs(individual *ind){
 
 
     /* free memory allocated by lists */
-    deallocate_int_array(selected_input_motifs);
-    deallocate_int_array(selected_output_motifs);
+    deallocate_int_array(selected_input_motifs, ind->n_motifs);
+    deallocate_int_array(selected_output_motifs, ind->n_motifs);
     
     for(i = 0; i<ind->n_motifs; i++){
         free(selected_input_motifs_per_motif[i]);
@@ -596,11 +649,12 @@ void connect_motifs(individual *ind){
 
 // This function initializes an int node setting the value and the references to the previous and the next int nodes
 void initialize_int_node(int_node_t *int_node, int value, int_node_t *prev, int_node_t *next){    
+    // initialize int node
     int_node->value = value;
     int_node->next = next;
     int_node->prev = prev;
 
-    // the int node is the next of the actual one too
+    // update previous and next int nodes linked list connections
     if(prev)
         prev->next = int_node;
     
@@ -1017,6 +1071,10 @@ sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *sy
             if(check_if_neuron_is_output(input_motif_type, i) == 1){
                 value = n_connections;
                 row = input_motif_first_neuron_index + i; // we are processing the i.th neuron of the input motif
+                if(row < 0){
+                    printf(" NEGATIVE!!!\n");
+                    fflush(stdout);
+                }
                 col = actual_motif_first_neuron_index + actual_neuron_local_index; // we are processing the neuron_local_index.th neuron of the actual motif
 
                 synapse_node = initialize_sparse_matrix_node(ind, synapse_node, value, row, col);
@@ -1300,24 +1358,17 @@ void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind){
     input_synapse = ind->input_synapses;
     initialize_sparse_matrix_node_only(ind, ind->input_synapses, 1, 0, 0); // it is only a column, so row -1, and the value is 1 always
 
-    // initialize all synapses
-    //printf(" >>>>> n_input_neurons = %d\n", ind->n_input_neurons);
-    //printf(" >>>>> n_input_synapses = %d\n", ind->n_input_synapses);
+    // initialize input synapses
     for(i = 1; i<ind->n_input_synapses; i++){
-        // allocate memory for next input synapse and move to it
-        //input_synapse->next_element = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));
-        //input_synapse = input_synapse->next_element;
-        // initialize synapse
-        //printf(" >>>>> i = %d\n", i);
-        input_synapse = initialize_sparse_matrix_node(ind, input_synapse, 1, 0, i); // it is only a column, so row -1, and the value is 1 always
+        input_synapse = initialize_sparse_matrix_node(ind, input_synapse, 1, 0, i); // it is only a column, so row -1, and the value is 1 always TODO: value shoul be 1 always???
     }
 }
 
-/* Function to initialize synapse weights */
+/* Function to initialize synapse weights in the SNN structure (I THINK THIS FUNCTION SHOULD BE LOCATED IN ANOTHER FILE) */
 void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind){
     int i, j; 
     spiking_nn_t *snn = ind->snn;
-    lif_neuron_t neuron;
+    lif_neuron_t *neuron;
     synapse_t *synapse;
 
     // input synapses are located at the begining of the list
@@ -1326,28 +1377,28 @@ void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind){
         synapse->w = (double)rand() / RAND_MAX;
 
         // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution
-        if(synapse->w < 100)
-            synapse->w = 100;
-        if(synapse->w > 500)
-            synapse->w = 500;
+        if(synapse->w < nsga2Params->min_weight)
+            synapse->w = nsga2Params->min_weight;
+        if(synapse->w > nsga2Params->max_weight)
+            synapse->w = nsga2Params->max_weight;
     }
 
     // Initialize the rest of synapses
     for(i=0; i<snn->n_neurons; i++){
         // loop over neuron output synapses (weight sign depends on the behaviour of the neuron)
-        neuron = snn->lif_neurons[i];
-        for(j = 0; j<neuron.n_output_synapse; j++){
-            synapse = &(snn->synapses[neuron.output_synapse_indexes[j]]);
+        neuron = &(snn->lif_neurons[i]);
+        for(j = 0; j<neuron->n_output_synapse; j++){
+            synapse = &(snn->synapses[neuron->output_synapse_indexes[j]]);
             
             synapse->w = (double)rand() / RAND_MAX;
 
             // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution
-            if(synapse->w < 10)
-                synapse->w = 10;
-            if(synapse->w > 200)
-                synapse->w = 200;
+            if(synapse->w < nsga2Params->min_weight)
+                synapse->w = nsga2Params->min_weight;
+            if(synapse->w > nsga2Params->max_weight)
+                synapse->w = nsga2Params->max_weight;
 
-            if(neuron.excitatory == -1){
+            if(neuron->excitatory == -1){
                 synapse->w = -synapse->w;
             }
         }

@@ -47,6 +47,12 @@ void copy_individual(individual *ind1, individual *ind2){
     fflush(stdout);
     #endif
 
+    ind2->n_motifs = ind1->n_motifs;
+    ind2->n_neurons = ind1->n_neurons;
+    ind2->n_input_neurons = ind1->n_input_neurons;
+    ind2->n_synapses = ind1->n_synapses;
+    ind2->n_input_synapses = ind1->n_input_synapses;
+
     #ifdef DEBUG3
     printf(" > > > Copying motifs...\n");
     fflush(stdout);
@@ -251,8 +257,6 @@ void copy_connectivity(individual *ind1, individual *ind2){
         ind2->connectivity_info.in_connections[i].n_nodes = ind1->connectivity_info.in_connections[i].n_nodes;
         ind2->connectivity_info.out_connections[i].n_nodes = ind1->connectivity_info.out_connections[i].n_nodes;
 
-        printf(" Copying input %d...\n", i);
-        fflush(stdout);
 
         // if number of input connections is bigger than 0, then copy the dynamic list
         if(ind2->connectivity_info.in_connections[i].n_nodes > 0){
@@ -271,8 +275,6 @@ void copy_connectivity(individual *ind1, individual *ind2){
             }
         }
         
-        printf(" Copying output %d, %d...\n", i, ind2->connectivity_info.out_connections[i].n_nodes);
-        fflush(stdout);
         
         // the same for the output motifs
         // if number of input connections is bigger than 0, then copy the dynamic list
@@ -286,8 +288,7 @@ void copy_connectivity(individual *ind1, individual *ind2){
             int_node_to_copy = int_node_to_copy->next;
 
             // initialize the rest of nodes
-            printf(" In while...\n");
-            fflush(stdout);
+
             while(int_node_to_copy){
                 int_node = initialize_and_allocate_int_node(int_node_to_copy->value, int_node, NULL); // int node is the previous for tbe new one
                 int_node_to_copy = int_node_to_copy->next;
@@ -301,6 +302,8 @@ void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_n
     int i,j;
 
     while(matrix_node != NULL){
+        printf(" matrix_node->row = %d, col = %d\n", matrix_node->row, matrix_node->col);
+        fflush(stdout);
         complete_matrix[matrix_node->row * n_neurons + matrix_node->col] = matrix_node->value;
         matrix_node = matrix_node->next_element;
     }
@@ -376,6 +379,7 @@ void print_individuals(NSGA2Type *nsga2Params, population *pop){
 
         while(matrix_node != NULL){
             printf(" >>>> col = %d, row = %d, value = %d\n", matrix_node->col, matrix_node->row, matrix_node->value);
+            fflush(stdout);
             matrix_node = matrix_node->next_element;
         }
         printf("\n");

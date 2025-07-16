@@ -399,7 +399,7 @@ void initialize_sample_results_struct(simulation_results_per_sample_t *results_p
 void reinitialize_results_struct(simulation_results_t *results, results_configuration_t *conf){
     // initialize struct to store simulation configuration and outputs    
     for(int i = 0; i<conf->n_samples; i++)
-        initialize_sample_results_struct(&(results->results_per_sample[i]), conf);
+        reinitialize_sample_results_struct(&(results->results_per_sample[i]), conf);
 }
 
 void reinitialize_sample_results_struct(simulation_results_per_sample_t *results_per_sample, results_configuration_t *conf){

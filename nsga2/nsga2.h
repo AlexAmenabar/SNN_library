@@ -26,10 +26,19 @@
 
 typedef struct
 {
-    int *array;
+    int *array; // array of numbers
     int n;
 }
 int_array_t;
+
+
+// array of int_arrays
+typedef struct
+{
+    int_array_t *int_array; // array of int_arrays
+    int n;
+}
+list_int_array_t;
 
 
 // In this struct the internal structure of each motif type is stored <-- ONLY INTERNAL STRUCTURE INFORMATION
@@ -53,15 +62,6 @@ typedef struct
 motif_t; // this struct is used to store existing motifs, not those
         // of the networks used in the genetic algorithm
 
-
-// DEPRECATED
-typedef struct
-{
-    uint motif_id; 
-    uint8_t motif_type;
-    uint32_t initial_global_index; // index of the first neuron in the neuron list
-}
-motif_node_t;
 
 // The list of synapses is orderes following the input criterion for neurons
 typedef struct sparse_matrix_node_t
@@ -178,7 +178,6 @@ typedef struct
     spiking_nn_t *snn; // decoded
     
     int n_motifs; // number of motifs for the individual
-    motif_node_t *motifs;
 
     // network number of motifs, neurons and synapses
     int n_neurons; // total amount of neurons for the network
@@ -283,6 +282,7 @@ typedef struct NSGA2Type
     // variables for synapes
     int max_latency, min_latency;
     int max_learning_rule, min_learning_rule;
+    double max_weight, min_weight;
 
     // dataset variables
     int dataset_type; // for the future, now only images
@@ -326,8 +326,10 @@ void deallocate_memory_pop_snn_included (NSGA2Type *nsga2Params, population *pop
 void deallocate_memory_ind_snn_included (NSGA2Type *nsga2Params, individual *ind);
 void deallocate_memory_pop_snn_only (NSGA2Type *nsga2Params, population *pop, int size);
 void deallocate_memory_snn_only (NSGA2Type *nsga2Params, individual *ind);
+void allocate_int_array(int_array_t *int_array, int n);
+void allocate_list_int_array(list_int_array_t *list_int_array, int n);
 void deallocate_int_array(int_array_t *int_array);
-
+void deallocate_list_int_array(list_int_array_t *list_int_array, int n);
 
 double maximum (double a, double b);
 double minimum (double a, double b);
@@ -380,12 +382,12 @@ new_motif_t* initialize_and_allocate_motif_from_type(new_motif_t *motif_node, in
 void initialize_motif_node_from_type(new_motif_t *motif, int motif_id, individual *ind, int type);
 new_motif_t* initialize_and_allocate_motif(new_motif_t *motif_node, int motif_id, individual *ind);
 void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind);
-void initialize_neuron_nodes(individual *ind);
-neuron_node_t* initialize_and_allocate_neuron_node(neuron_node_t *neuron_node);
+void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind);
+neuron_node_t* initialize_and_allocate_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
+void initialize_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
 void set_neurons_behaviour(individual *ind);
-void initialize_neuron_node(neuron_node_t *neuron_node);
 void connect_motifs_and_neurons(individual *ind);
-void connect_motifs(individual *ind);
+void connect_motifs(NSGA2Type *nsga2Params, individual *ind);
 void construct_sparse_matrix(individual *ind, int *n_selected_input_motifs_per_motif, int **selected_input_motifs_per_motif);
 void new_construct_sparse_matrix(individual *ind, int_array_t *selected_input_motifs);
 sparse_matrix_node_t* construct_motif_sparse_matrix_columns(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);

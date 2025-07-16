@@ -20,6 +20,8 @@ int check_dominance (NSGA2Type *nsga2Params, individual *a, individual *b)
     int flag2;
     flag1 = 0;
     flag2 = 0;
+
+    // CHECK THIS
     if (a->constr_violation<0 && b->constr_violation<0)
     {
         if (a->constr_violation > b->constr_violation)

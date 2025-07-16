@@ -320,7 +320,9 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.min_latency);
     scanf("%d",&nsga2Params.max_learning_rule);
     scanf("%d",&nsga2Params.min_learning_rule);
-    
+    scanf("%lf",&nsga2Params.max_weight);
+    scanf("%lf",&nsga2Params.min_weight);
+
     // read dataset parameters
     scanf("%d",&nsga2Params.dataset_type);
     scanf("%s",&nsga2Params.train_dataset_dir);
@@ -370,6 +372,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Min latency: %d\n", nsga2Params.min_latency);
     printf(" > Max learning rule: %d\n", nsga2Params.max_learning_rule);
     printf(" > Min learning rule: %d\n", nsga2Params.min_learning_rule);
+    printf(" > Max weight: %e\n", nsga2Params.max_weight);
+    printf(" > Min weight: %e\n", nsga2Params.min_weight);
 
     printf(" > Dataset type: %d\n", nsga2Params.dataset_type);
     printf(" > Dataset train samples directory: %s\n", nsga2Params.train_dataset_dir);
@@ -462,20 +466,27 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     nsga2Params->nrealmut = 0;
     nsga2Params->nbincross = 0;
     nsga2Params->nrealcross = 0;
+    nsga2Params->ncon = 0;
     
 
+    //  =========================  //
+    // == MY CHANGES START HERE == //
+    //  =========================  //
+
+
     /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
-    
     initialize_motifs();
+
+
 
 #ifdef DEBUG1
     printf(" > Motifs initialized!\n\n");
 #endif
 
     /* Allocate memory for populations: parent population, children population, and mixed population */
-    parent_pop = (population *)malloc(sizeof(population));
-    child_pop = (population *)malloc(sizeof(population));
-    mixed_pop = (population *)malloc(sizeof(population));
+    parent_pop = (population *)calloc(1, sizeof(population));
+    child_pop = (population *)calloc(1, sizeof(population));
+    mixed_pop = (population *)calloc(1, sizeof(population));
 
 #ifdef DEBUG1
     printf(" > Allocating memory for populations...\n");
@@ -489,16 +500,19 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     printf(" > Memory allocated!\n\n");
 #endif
 
+    // randomize execution
+    randomize(nsga2Params->seed);
 
-    /* Initialize the initial population */
-    randomize(nsga2Params->seed); // randomize the execution
 
     // initialize the parent population
 #ifdef DEBUG1
     printf(" > Initializing first population...\n");
 #endif
 
+
+    /* Initialize the parent population */
     initialize_pop (nsga2Params,  parent_pop);
+
 
 #ifdef DEBUG1
     printf(" > First population initialized!\n\n");
@@ -612,15 +626,25 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 #ifdef DEBUG1
     printf(" > Evaluating parent population...\n");
 #endif 
+
     evaluate_pop (nsga2Params, parent_pop, inp, out);
-#ifdef DEBUG1
-    printf(" > Parent population evaluated!\n\n");
-#endif
 
 #ifdef DEBUG1
+    printf(" > Parent population evaluated!\n\n");
+
+    printf(" > Deallocating SNN structure...\n");
+#endif
+
+    deallocate_memory_pop_snn_only(nsga2Params, parent_pop, nsga2Params->popsize);
+
+#ifdef DEBUG1
+    printf(" > SNN structure deallocated!\n");
+    
     printf(" > Computing rank and crowding distance...\n");
 #endif
+
     assign_rank_and_crowding_distance (nsga2Params, parent_pop);
+
 #ifdef DEBUG1
     printf(" > Rank and crowding distance assigned!\n\n");
 #endif
@@ -641,6 +665,8 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     fflush(fpt4);
     fflush(fpt5);
 
+    exit(0);
+
     return;
 }
 
@@ -652,15 +678,11 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     int i, j, s;
     
     // NSGA2 simulation: loop over ngen generations
-
-    // deallocate memory of SNN structures for parent population (this is done to avoid problems later, SNN structure is not copied when individual is copied, and then the deallocate function raises errors)
-    deallocate_memory_pop_snn_only(nsga2Params, parent_pop, nsga2Params->popsize);
-
     for (i=2; i<=nsga2Params->ngen; i++)
     {
+        printf("\n= == === ===== === == = \n Computing Generation %d \n = == === ===== === == = \n", i);
 
     #ifdef DEBUG1
-        printf("\n= == === ===== === == = \n Computing Generation %d \n = == === ===== === == = \n", i);
 
         printf(" > Selecting individuals from parent population for child population...\n");
 
@@ -672,7 +694,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #ifdef DEBUG1
         printf(" > New population selected!\n\n");
 
-        #ifdef DEBUG3
+        /*#ifdef DEBUG3
             // print networks information
             for(j = 0; j<nsga2Params->popsize; j++){
                 printf(" > > Printing individual %d...\n", j);
@@ -701,9 +723,13 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
                 fflush(stdout);
             }
-        #endif
+        #endif*/
 
         printf(" > Mutating population...\n");
+
+        printf(" > Motif types: ");
+
+
 
         fflush(stdout);
     #endif
@@ -735,7 +761,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
                 int *result_matrix = (int *)calloc(child_pop->ind[j].n_neurons * child_pop->ind[j].n_neurons, sizeof(int));
                 get_complete_matrix_from_dynamic_list(result_matrix, child_pop->ind[j].connectivity_matrix, child_pop->ind[j].n_neurons);
 
-                print_synapses_dynamic_list(child_pop->ind[j].connectivity_matrix);
+                //print_synapses_dynamic_list(child_pop->ind[j].connectivity_matrix);
                 print_connectivity_matrix(result_matrix, child_pop->ind[j].n_neurons);
 
                 free(result_matrix);
@@ -763,7 +789,13 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
    #ifdef DEBUG1
         printf(" > Population evaluated!\n\n");
+    
+        printf(" > Deallocating SNN structure...\n");
+    #endif
 
+        deallocate_memory_pop_snn_only(nsga2Params, child_pop, nsga2Params->popsize);
+
+    #ifdef DEBUG1
         printf(" > Merging parent population and child population...\n");
 
         fflush(stdout);
@@ -809,7 +841,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
         fflush(stdout);
     #endif
-        decode_pop(nsga2Params, parent_pop);
+        //decode_pop(nsga2Params, parent_pop);
 
     #ifdef DEBUG1
         printf(" > Parent population decoded!\n\n");
@@ -869,6 +901,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         free (nsga2Params->max_binvar);
         free (nsga2Params->nbits);
     }
+
     deallocate_memory_pop (nsga2Params,  parent_pop, nsga2Params->popsize);
     deallocate_memory_pop (nsga2Params,  child_pop, nsga2Params->popsize);
     deallocate_memory_pop (nsga2Params,  mixed_pop, 2*nsga2Params->popsize);

@@ -27,7 +27,7 @@ typedef struct
 /* Routine to evaluate objective function values and constraints for a population */
 void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out)
 {
-    int i, mode, n_samples, n_repetitions;
+    int i, j, mode, n_samples, n_repetitions;
     selected_samples_info_t *selected_samples_info;
 
     // load info from struct
@@ -35,15 +35,13 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     n_samples = nsga2Params->n_samples;
     n_repetitions = nsga2Params->n_repetitions;
 
-    //printf(" Mode %d, number of repetitions %d and number of samples %d\n", mode, n_repetitions, n_samples);
-
     // allocate memory to store information of selected samples for each repetition
     selected_samples_info = (selected_samples_info_t *)malloc(nsga2Params->n_repetitions * sizeof(selected_samples_info_t));
     for(i = 0; i<n_repetitions; i++){
         //printf(" > Selecting samples for repetition %d\n", i);
-        selected_samples_info[i].sample_indexes = (int *)malloc(n_samples * sizeof(int));
-        selected_samples_info[i].labels = (int *)calloc(n_samples, sizeof(int));
-        selected_samples_info[i].n_selected_samples_per_class = (int *)calloc(n_samples, sizeof(int));
+        //selected_samples_info[i].sample_indexes = (int *)malloc(n_samples * sizeof(int));
+        //selected_samples_info[i].labels = (int *)calloc(n_samples, sizeof(int));
+        //selected_samples_info[i].n_selected_samples_per_class = (int *)calloc(n_samples, sizeof(int));
 
         // select samples to simulate on this repetition
         select_samples(&(selected_samples_info[i]), n_samples, mode, NULL); 
@@ -55,6 +53,19 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
         //printf(" > Individual %d evaluated!\n", i);
     }
+
+    // free memory of selected samples
+    for(i = 0; i<n_repetitions; i++){
+        free(selected_samples_info[i].sample_indexes);
+        free(selected_samples_info[i].labels);
+        free(selected_samples_info[i].n_selected_samples_per_class);
+        for(j = 0; j<image_dataset.n_classes; j++){
+            free(selected_samples_info[i].sample_indexes_per_class[j]);
+        }
+        free(selected_samples_info[i].sample_indexes_per_class);
+    }
+    free(selected_samples_info);
+
     return;
 }
 
@@ -69,7 +80,7 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 
     // provisional 
     
-    /*test_problem (ind->xreal, ind->xbin, ind->gene, ind->obj, ind->constr);
+    //test_problem (ind->xreal, ind->xbin, ind->gene, ind->obj, ind->constr);
     
     if (nsga2Params->ncon==0)
     {
@@ -85,7 +96,7 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
                 ind->constr_violation += ind->constr[j];
             }
         }
-    }*/
+    }
 
     return;
 }
@@ -210,8 +221,8 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
 
 
-          // =========================== //
-         // Compute objective functions //
+        // =========================== //
+        // Compute objective functions //
         // =========================== //
 
         // TODO: First objective: probably should be moved to a function for Modularity
@@ -227,7 +238,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         for(i = 0; i<n_samples - 1; i++)
             for(j = i + 1; j<n_samples; j++)
                 distance_matrix[i * n_samples + j] = 
-                    compute_manhattan_distance(spike_amount_per_neurons_per_sample[i], spike_amount_per_neurons_per_sample[j], nsga2Params->bins);
+                    compute_manhattan_distance(spike_amount_per_neurons_per_sample[i], spike_amount_per_neurons_per_sample[j], n_neurons);//nsga2Params->bins);
         
         //print_double_matrix(distance_matrix, n_samples);
 
@@ -280,6 +291,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
                 }   
             }
         }
+
         //printf("\n");
         // compute the distances between the centroids of each class // TODO: I am using a full matrix, but this should be simplified to only the upper triangle
         n_inter_class_distances = 0;
