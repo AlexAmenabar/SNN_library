@@ -32,6 +32,10 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
 {
     int i;
     
+    // if memory for the SNN structure is not allocated, allocate
+    if(!ind->snn)
+        ind->snn = (spiking_nn_t *)calloc(1, sizeof(spiking_nn_t));
+
     // do some general initialization
     spiking_nn_t *snn = ind->snn; 
     snn->neuron_type = nsga2Params->neuron_type; // set the neuron type

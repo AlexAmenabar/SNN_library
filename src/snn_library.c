@@ -210,6 +210,7 @@ void connect_neurons_and_synapses(spiking_nn_t *snn, int **synaptic_connections)
 
 /* Function to initialize pointers to functions that are used during the simulation */
 void initialize_network_function_pointers(spiking_nn_t *snn){
+    snn->neuron_type = 0;
     switch (snn->neuron_type)
     { 
         case 0: // LIF neuron
@@ -220,10 +221,18 @@ void initialize_network_function_pointers(spiking_nn_t *snn){
             snn->output_step = &lif_neuron_compute_output_synapses;
 
             // allocate memory for neurons
-            snn->lif_neurons = (lif_neuron_t *)malloc(snn->n_neurons * sizeof(lif_neuron_t));
+            snn->lif_neurons = (lif_neuron_t *)calloc(snn->n_neurons, sizeof(lif_neuron_t));
 
             break;
         default:
+            snn->complete_step = &lif_neuron_step;
+            snn->neuron_initializer = &initialize_lif_neuron;
+            snn->neuron_re_initializer = &re_initialize_lif_neuron;
+            snn->input_step = &lif_neuron_compute_input_synapses;
+            snn->output_step = &lif_neuron_compute_output_synapses;
+
+            // allocate memory for neurons
+            snn->lif_neurons = (lif_neuron_t *)calloc(snn->n_neurons, sizeof(lif_neuron_t));
             break;
     }
 }

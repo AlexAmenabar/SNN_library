@@ -12,7 +12,7 @@
 void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size)
 {
     int i;
-    pop->ind = (individual *)malloc(size*sizeof(individual));
+    pop->ind = (individual *)calloc(size, sizeof(individual));
     for (i=0; i<size; i++)
     {
         #ifdef DEBUG2
@@ -79,11 +79,13 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
 
-    motif_node = ind->motifs_new;
-    while(motif_node){
-        old_motif_node = motif_node;
-        motif_node = motif_node->next_motif;
-        free(old_motif_node);
+    if(ind->motifs_new){
+        motif_node = ind->motifs_new;
+        while(motif_node){
+            old_motif_node = motif_node;
+            motif_node = motif_node->next_motif;
+            free(old_motif_node);
+        }
     }
     ind->motifs_new = NULL;
 
@@ -103,11 +105,13 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
 
-    neuron_node = ind->neurons;
-    while(neuron_node){
-        old_neuron_node = neuron_node;
-        neuron_node = neuron_node->next_neuron;
-        free(old_neuron_node);
+    if(ind->neurons){
+        neuron_node = ind->neurons;
+        while(neuron_node){
+            old_neuron_node = neuron_node;
+            neuron_node = neuron_node->next_neuron;
+            free(old_neuron_node);
+        }
     }
     ind->neurons = NULL;
 
@@ -116,11 +120,14 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
 
-    matrix_node = ind->connectivity_matrix;
-    while(matrix_node){
-        old_matrix_node = matrix_node;
-        matrix_node = matrix_node->next_element;
-        free(old_matrix_node);
+    if(ind->connectivity_matrix){
+        matrix_node = ind->connectivity_matrix;
+        while(matrix_node){
+            old_matrix_node = matrix_node;
+            matrix_node = matrix_node->next_element;
+
+            deallocate_sparse_matrix_node(old_matrix_node);
+        }
     }
     ind->connectivity_matrix = NULL;
    
@@ -129,11 +136,14 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
 
-    matrix_node = ind->input_synapses;
-    while(matrix_node){
-        old_matrix_node = matrix_node;
-        matrix_node = matrix_node->next_element;
-        free(old_matrix_node);
+    if(ind->input_synapses){
+        matrix_node = ind->input_synapses;
+        while(matrix_node){
+            old_matrix_node = matrix_node;
+            matrix_node = matrix_node->next_element;
+
+            deallocate_sparse_matrix_node(old_matrix_node);
+        }
     }
     ind->input_synapses = NULL;
 
@@ -146,7 +156,7 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
 
         // input
         int_node = ind->connectivity_info.in_connections[i].first_node;
-        if(int_node){
+        while(int_node){
             tmp_node = int_node;
             int_node = int_node->next;
 
@@ -157,7 +167,7 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
 
         // output
         int_node = ind->connectivity_info.out_connections[i].first_node;
-        if(int_node){
+        while(int_node){
             tmp_node = int_node;
             int_node = int_node->next;
 
@@ -166,8 +176,11 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
         ind->connectivity_info.out_connections[i].first_node = NULL;
         ind->connectivity_info.out_connections[i].n_nodes = 0;
     }
-    free(ind->connectivity_info.in_connections);
-    free(ind->connectivity_info.out_connections);
+    if(ind->connectivity_info.in_connections)
+        free(ind->connectivity_info.in_connections);
+    if(ind->connectivity_info.out_connections)
+        free(ind->connectivity_info.out_connections);
+
     ind->connectivity_info.in_connections = NULL;
     ind->connectivity_info.out_connections = NULL;
 
@@ -182,9 +195,10 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
 
     ind->obj = NULL;
 
+    // deallocate SNN structure memory too 
     if(ind->snn)
         deallocate_memory_snn_only(nsga2Params, ind);
-        
+
 
     #ifdef DEBUG3
     printf(" > > > > Individual deallocated!\n");
@@ -193,30 +207,6 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     return;
 }
 
-
-
-/* Function to deallocate memory to a population */
-void deallocate_memory_pop_snn_included (NSGA2Type *nsga2Params, population *pop, int size)
-{
-    int i;
-    for (i=0; i<size; i++)
-    {
-        #ifdef DEBUG2
-            printf(" > > Deallocating memory for individual %d and SNN structure...\n", i);
-            fflush(stdout);
-        #endif
-
-        deallocate_memory_ind_snn_included (nsga2Params, &(pop->ind[i]));
-
-        #ifdef DEBUG2
-            printf(" > > Memory deallocated %d and SNN structure...\n", i);
-            fflush(stdout);
-        #endif
-    }
-    free (pop->ind);
-
-    return;
-}
 
 /* Function to deallocate memory of the snn structure for a population */
 void deallocate_memory_pop_snn_only (NSGA2Type *nsga2Params, population *pop, int size)
@@ -257,25 +247,43 @@ void allocate_int_array(int_array_t *int_array, int n){
     int_array->array = (int *)calloc(n, sizeof(int));
 }
 
-void allocate_list_int_array(list_int_array_t *list_int_array, int n){
+/* Function to deallocate an int_array that only contains one int_array */
+void deallocate_int_array(int_array_t *int_array){
+    free(int_array->array);
+    //free(int_array);
+}
+
+/* Function to deallocate a set of int_arrays in the pointer */
+void deallocate_int_arrays(int_array_t *int_arrays, int n){
     int i;
+
+    for(i = 0; i<n; i++){
+        deallocate_int_array(&(int_arrays[i]));
+    }
+    free(int_arrays);
+    int_arrays = NULL;
+}
+
+
+// ACTUALLY NOT USED, BUT THESE FUNCTIONS SHOULD BE USED IN THE FUTURE 
+
+void allocate_list_int_array(int_array_list_t *list_int_array, int n){
     list_int_array->n = n;
     list_int_array->int_array = (int_array_t *)calloc(n, sizeof(int_array_t)); // allocate memory for various int_array_t structs
 }
 
-
-void deallocate_int_array(int_array_t *int_array){
-    free(int_array->array);
-    free(int_array);
-    
-    int_array = NULL;
-}
-
-void deallocate_list_int_array(list_int_array_t *list_int_array, int n){
+void deallocate_list_int_array(int_array_list_t *list_int_array, int n){
     int i;
     for(i = 0; i<list_int_array->n; i++){
         deallocate_int_array(&(list_int_array->int_array[i]));
     }
     free(list_int_array);
     list_int_array = NULL;
+}
+
+void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node){
+    free(sparse_matrix_node->latency);
+    free(sparse_matrix_node->learning_rule);
+    free(sparse_matrix_node->weight);
+    free(sparse_matrix_node);
 }

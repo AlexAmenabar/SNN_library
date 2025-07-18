@@ -67,7 +67,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
 ///
 ///
 void general_initialization(NSGA2Type *nsga2Params, individual *ind){
-    // initialize number of neurons
+    // initialize number of neurons    
     ind->n_neurons = 0;
     ind->n_input_neurons = nsga2Params->image_size; // this depends on the input // TODO: this approach is temporal
 
@@ -104,7 +104,7 @@ void initialize_ind_motifs(individual *ind){
     // initialize dynamic list of motifs
 
     // allocate memory for the first motif
-    ind->motifs_new = (new_motif_t *)malloc(sizeof(new_motif_t));
+    ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
     motif_node = ind->motifs_new;
 
     // initialize first motif node
@@ -135,7 +135,7 @@ void initialize_ind_motifs(individual *ind){
 /* Function to allocate memory for new motifs and initialize them */
 new_motif_t* initialize_and_allocate_motif(new_motif_t *motif_node, int motif_id, individual *ind){
         // allocate memory
-        motif_node->next_motif = (new_motif_t *)malloc(sizeof(new_motif_t));
+        motif_node->next_motif = (new_motif_t *)calloc(1, sizeof(new_motif_t));
         motif_node = motif_node->next_motif; // move to the allocated motif 
         
         // initialize
@@ -164,7 +164,7 @@ void initialize_ind_motifs_from_types(individual *ind, int *motif_types){
     // initialize dynamic list of motifs
 
     // allocate memory for the first motif
-    ind->motifs_new = (new_motif_t *)malloc(sizeof(new_motif_t));
+    ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
     motif_node = ind->motifs_new;
 
     // initialize first motif node
@@ -178,7 +178,7 @@ void initialize_ind_motifs_from_types(individual *ind, int *motif_types){
 /* Function to allocate memory for new motifs and initialize them */
 new_motif_t* initialize_and_allocate_motif_from_type(new_motif_t *motif_node, int motif_id, individual *ind, int type){
         // allocate memory
-        motif_node->next_motif = (new_motif_t *)malloc(sizeof(new_motif_t));
+        motif_node->next_motif = (new_motif_t *)calloc(1, sizeof(new_motif_t));
         motif_node = motif_node->next_motif; // move to the allocated motif 
         
         // initialize
@@ -210,7 +210,7 @@ void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind){
     neuron_node_t *neuron_node;
 
     // allocate memory for the first element of the neurons list
-    ind->neurons = (neuron_node_t *)malloc(sizeof(neuron_node_t));
+    ind->neurons = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
 
     // initialize first neuron
     neuron_node = ind->neurons;
@@ -224,7 +224,7 @@ void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind){
 /* Function to allocate memory for the next neuron node and initialize it */
 neuron_node_t* initialize_and_allocate_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node){
     // allocate memory for next neuron
-    neuron_node->next_neuron = (neuron_node_t *)malloc(sizeof(neuron_node_t));
+    neuron_node->next_neuron = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
     neuron_node = neuron_node->next_neuron;
 
     // initialize neuron
@@ -239,9 +239,32 @@ void initialize_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node){
     neuron_node->refract_time = rnd(nsga2Params->min_refracttime, nsga2Params->max_refracttime);
     neuron_node->v_rest = rndreal(nsga2Params->min_vrest, nsga2Params->max_vrest);
     neuron_node->r = rnd(nsga2Params->min_R, nsga2Params->max_R);
+
     neuron_node->next_neuron = NULL; // the next element is not initialized yet
 }
 
+/* Function to allocate memory for the next neuron node and initialize it */
+neuron_node_t* initialize_and_allocate_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav){
+    // allocate memory for next neuron
+    neuron_node->next_neuron = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
+    neuron_node = neuron_node->next_neuron;
+
+    // initialize neuron
+    initialize_neuron_node_and_behaviour(nsga2Params, neuron_node, behav);
+
+    return neuron_node;
+}
+
+/* Function to initialize neuron nodes */
+void initialize_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav){
+    neuron_node->threshold = rndreal(nsga2Params->min_vthres, nsga2Params->max_vthres);
+    neuron_node->refract_time = rnd(nsga2Params->min_refracttime, nsga2Params->max_refracttime);
+    neuron_node->v_rest = rndreal(nsga2Params->min_vrest, nsga2Params->max_vrest);
+    neuron_node->r = rnd(nsga2Params->min_R, nsga2Params->max_R);
+    neuron_node->behaviour = behav;
+
+    neuron_node->next_neuron = NULL; // the next element is not initialized yet
+}
 
 /* Function to set the behaviour (excitatory or inhibitory) of the neurons */
 void set_neurons_behaviour(individual *ind){
@@ -355,7 +378,6 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
 
     selected_input_motifs = (int_array_t *)malloc(ind->n_motifs * sizeof(int_array_t));
     selected_output_motifs = (int_array_t *)malloc(ind->n_motifs * sizeof(int_array_t));
-
 
 
     /* set the maximum number of input and output connections per each motif */
@@ -629,8 +651,8 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
 
 
     /* free memory allocated by lists */
-    deallocate_int_array(selected_input_motifs, ind->n_motifs);
-    deallocate_int_array(selected_output_motifs, ind->n_motifs);
+    deallocate_int_arrays(selected_input_motifs, ind->n_motifs); // not only the global structure is deallocated, but all the arrays inside too
+    deallocate_int_arrays(selected_output_motifs, ind->n_motifs);
     
     for(i = 0; i<ind->n_motifs; i++){
         free(selected_input_motifs_per_motif[i]);
@@ -664,7 +686,7 @@ void initialize_int_node(int_node_t *int_node, int value, int_node_t *prev, int_
 
 
 int_node_t* initialize_and_allocate_int_node(int value, int_node_t *prev, int_node_t *next){
-    int_node_t *int_node = (int_node_t *)malloc(sizeof(int_node_t));
+    int_node_t *int_node = (int_node_t *)calloc(1, sizeof(int_node_t));
     initialize_int_node(int_node, value, prev, next);
     return int_node;
 }
@@ -694,7 +716,7 @@ void construct_sparse_matrix(individual *ind, int *n_selected_input_motifs_per_m
     tmp_motif_node = motif_node;
 
     // initialize first sparse matrix node (memory not allocated)
-    tmp_first_matrix_node = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t)); // this is only used 
+    tmp_first_matrix_node = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t)); // this is only used 
     matrix_node = tmp_first_matrix_node;
 
     // allocate memory for aux lists and initialize
@@ -799,87 +821,6 @@ void construct_sparse_matrix(individual *ind, int *n_selected_input_motifs_per_m
     free(motifs_neurons_global_index_list);
 }
 
-/*sparse_matrix_node_t* construct_sparse_matrix_motif_columns(individual *ind, new_motif_t *motif1, new_motif_t *motif2, sparse_matrix_node_t matrix_node, int n_selected_input_motifs, int *selected_input_motifs){
-
-    int i, j, s, k, s;
-    int motif1_type, motif2_type, motif1_first_neuron_global_index, motif2_first_neuron_global_index;
-
-    // Loop over the neurons of the motif (j is used as the local index of the neuron inside the motif)
-    for(j = 0; j<motif_info->n_neurons; j++){ 
-        neuron_index = first_neuron_global_index + j; // get the global index of the neuron being computed
-        actual_motif_processed = 0; // the actual motif internal structure data has not been added to the sparse matrix
-
-        //Loop over the motifs connected to the actual one to construct it column by column 
-        for(k = 0; k<n_selected_input_motifs_per_motif[i]; k++){
-            // Get the information about this motif
-            tmp_motif_index = selected_input_motifs_per_motif[i][k]; // get temp motif index in the motif list
-            tmp_motif_type = motifs_types_list[tmp_motif_index];
-            tmp_motif_info = &(motifs_data[tmp_motif_type]);
-            tmp_first_neuron_global_index = motifs_neurons_global_index_list[tmp_motif_index];
-            
-            // count how much times this motif is connected to the one being computed
-            counter = 1;
-            while(k < n_selected_input_motifs_per_motif[i] - 1 && 
-                selected_input_motifs_per_motif[i][k] == selected_input_motifs_per_motif[i][k+1]){ // if we are in the last it can no be repited
-                    counter ++; // there is a repetition
-                    k++; // move forward in k
-            }
-
-            // As the temporal motif index in the list of motifs is higher than the one being computed, and the actual motif information
-            // has not been added to the matrix, add it now
-            if(tmp_motif_index > i && actual_motif_processed == 0){
-                matrix_node = build_motif_internal_structure_column_by_input(ind,matrix_node, motif_type, first_neuron_global_index, j);
-                actual_motif_processed = 1; // actual motif has been processed
-            }
-
-            // the motif is connected with itself, so add internal and external connections at the same time
-            if(tmp_motif_index == i){ // actual_motif_processed == 0
-                actual_motif_processed = 1;
-
-                // process the motif internal structure and the connections between motifs at the same time (motif connected with itself)
-                // loop over the actual neuron column looking for connections
-                for(s = 0; s<motif_info->n_neurons; s++){
-                    value = motif_info->connectivity_matrix[s * motif_info->n_neurons + j]; // check if there is a connection in the internal structure
-
-                    // check if the actual one is the input neuron and the other an output neurons
-                    if(check_if_neuron_is_input(motif_type, j) == 1 && check_if_neuron_is_output(tmp_motif_type, s) == 1){
-                        if(value < 0) value -= counter;
-                        else if (value > 0) value += counter;
-                        else value = counter;
-                    }
-
-                    // if there is any connection, add to the list
-                    if(value != 0){
-                        row = first_neuron_global_index + s;
-                        col = first_neuron_global_index + j;
-                        matrix_node = initialize_sparse_matrix_node(ind, matrix_node, value, row, col);
-                    }
-                }
-            }
-            // Process the connection between motif tmp and the actual one
-            else{
-                // check if the actual neuron is an input neuron
-                if(check_if_neuron_is_input(motif_type, j) == 1){
-                    // loop over tmp motif neurons and check if they are output
-                    for(s = 0; s<tmp_motif_info->n_neurons; s++){
-                        if(check_if_neuron_is_output(tmp_motif_type, s) == 1){
-                            value = counter;
-                            row = tmp_first_neuron_global_index + s;
-                            col = first_neuron_global_index + j;
-                            matrix_node = initialize_sparse_matrix_node(ind, matrix_node, value, row, col);
-                        }
-                    }
-                }
-            }
-        }
-
-        // actual motif has not been processed yet, so dot it now
-        if(actual_motif_processed == 0)
-            matrix_node = build_motif_internal_structure_column_by_input(ind, matrix_node, motif_type, first_neuron_global_index, j);
-    }
-}
-*/
-
 
 /* New functions to construct the sparse matrix */
 
@@ -907,7 +848,7 @@ void new_construct_sparse_matrix(individual *ind, int_array_t *selected_input_mo
     }
 
     // initialize first sparse matrix node (memory not allocated)
-    first_synapse_node = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t)); // this is only used to store the pointer of the first synapse node of the matrix, then, the first is ignored as the real matrix starts in the next elemnet
+    first_synapse_node = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t)); // this is only used to store the pointer of the first synapse node of the matrix, then, the first is ignored as the real matrix starts in the next elemnet
     synapse_node = first_synapse_node;
 
     // loop over motifs to construct motif columns iteratively
@@ -1129,7 +1070,7 @@ sparse_matrix_node_t* build_motif_internal_structure_and_connection(individual *
 /* Function to allocate memory for the new sparse matrix node and initialize it */
 sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
     // allocate memory for the synapse
-    matrix_node->next_element = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));
+    matrix_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     matrix_node = matrix_node->next_element; // move to the next synapse
 
     //printf(" > > > > > > > > Initializing node value %d, row %d, col %d\n", value, row, col);
@@ -1148,9 +1089,9 @@ void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *m
     matrix_node->row = row;
     matrix_node->col = col;
 
-    matrix_node->latency = (int8_t *)malloc(abs(value) * sizeof(int8_t));
-    matrix_node->weight = (double *)malloc(abs(value) * sizeof(double));
-    matrix_node->learning_rule = (int8_t *)malloc(abs(value) * sizeof(int8_t));
+    matrix_node->latency = (int8_t *)calloc(abs(value), sizeof(int8_t));
+    matrix_node->weight = (double *)calloc(abs(value), sizeof(double));
+    matrix_node->learning_rule = (int8_t *)calloc(abs(value), sizeof(int8_t));
 
     for(i = 0; i<abs(value); i++){
         matrix_node->latency[i] = 3; // TODO: This must be a random value following an exponential distribution
@@ -1322,6 +1263,13 @@ void construct_semi_sparse_matrix(individual *ind, int n_new_motifs, int_array_t
         motif_info = &(motifs_data[motif_type]); // get the structure with the motif information
         first_neuron_global_index = motifs_neurons_global_index_list[i]; // get the global index of the first neuron of the motif
     }
+
+    // deallocate memory
+    deallocate_int_arrays(pre_motifs_new_input, n_motifs-n_new_motifs);
+    free(motifs_types_list);
+    free(motifs_neurons_global_index_list);
+    free(new_motifs_types_list);
+    free(new_motifs_neurons_initial_global_indexes);
 }
 
 /* Function to add the nodes representing the motif internal structure to the dynamic list */
@@ -1352,7 +1300,7 @@ void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind){
     sparse_matrix_node_t *input_synapse;
 
     // allocate memory for the first input synapse
-    ind->input_synapses = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));
+    ind->input_synapses = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
 
     // initialize the first synapse
     input_synapse = ind->input_synapses;

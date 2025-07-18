@@ -329,3 +329,18 @@ int check_if_neuron_is_output(int motif_type, int neuron_index){
 
     return is_output; // 0 if is not input, 1 else
 }
+
+
+void deallocate_motifs_data(){
+    int i;
+
+    for(i = 0; i<n_motifs; i++){
+        free(motifs_data[i].neuron_behaviour);
+        free(motifs_data[i].connectivity_matrix);
+        free(motifs_data[i].input_neurons);
+        free(motifs_data[i].output_neurons);
+        free(motifs_data[i].n_input_synapses_per_neuron);
+        free(motifs_data[i].n_output_synapses_per_neuron);
+    }
+    free(motifs_data);
+}

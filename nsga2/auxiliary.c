@@ -213,7 +213,7 @@ void copy_synapse_nodes(individual *ind1, individual *ind2){
     // copy the first one
     copy_synapse_node(original_synapse, copied_synapse);
 
-    while(original_synapse->next_element != NULL){
+    while(original_synapse->next_element){
         original_synapse = original_synapse->next_element;
 
         copied_synapse->next_element = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));

@@ -119,8 +119,9 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
                 // refresh last spike index
                 synapse->last_spike = (synapse->last_spike + 1) % synapse->max_spikes;//synapse->max_spikes;
 
-                if(synapse->max_spikes == 20 && synapse->last_spike == 20)
-                    printf("Raro raro\n");
+                //printf(" max_spikes = %d, last spike = %d\n", synapse->max_spikes, synapse_last_spike);
+                //if(synapse->max_spikes == 20 && synapse->last_spike == 20)
+                    //printf("Raro raro\n");
                 // register spike time on output synapses
                 //synapse->t_last_pre_spike = t; // neuron is pre synaptic neuron for output synapses
             }
@@ -515,7 +516,7 @@ void add_input_synapse_to_lif_neuron(lif_neuron_t *neuron, synapse_t* synapse, i
     neuron->next_input_synapse += 1;
 
     // add neuron to synapse
-    synapse->post_synaptic_lif_neuron = malloc(sizeof(lif_neuron_t));
+    //synapse->post_synaptic_lif_neuron = malloc(sizeof(lif_neuron_t));
     synapse->post_synaptic_lif_neuron = neuron;
 }
 
@@ -524,6 +525,6 @@ void add_output_synapse_to_lif_neuron(lif_neuron_t *neuron, synapse_t *synapse, 
     neuron->output_synapse_indexes[neuron->next_output_synapse] = synapse_index;
     neuron->next_output_synapse += 1;
 
-    synapse->pre_synaptic_lif_neuron = malloc(sizeof(lif_neuron_t));
+    //synapse->pre_synaptic_lif_neuron = malloc(sizeof(lif_neuron_t));
     synapse->pre_synaptic_lif_neuron = neuron;
 }

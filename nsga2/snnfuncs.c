@@ -33,6 +33,8 @@ void initialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind, in
         lif_neuron->v_rest = neuron_node->v_rest;
         lif_neuron->r_time = neuron_node->refract_time;
         lif_neuron->r = neuron_node->r;
+        lif_neuron->r_time_rest = 0; // this is 0 as the neuron is not active yet // TODO: revise, I am not sure about this
+        lif_neuron->v = 0;
 
         // store if the neuron is excitatory or inhibitory
         lif_neuron->excitatory = neuron_node->behaviour;
@@ -79,6 +81,8 @@ void reinitialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind){
         lif_neuron->v_rest = neuron_node->v_rest;
         lif_neuron->r_time = neuron_node->refract_time;
         lif_neuron->r = neuron_node->r;
+        lif_neuron->r_time_rest = 0; // this is 0 as the neuron is not active yet // TODO: revise, I am not sure about this
+        lif_neuron->v = 0;
 
         // set initial values for some control variables
         lif_neuron->next_input_synapse = 0;
@@ -100,7 +104,7 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
     // allocate memory for synaptic connections
-    snn->synapses = (synapse_t *)malloc(snn->n_synapses * sizeof(synapse_t));
+    snn->synapses = (synapse_t *)calloc(snn->n_synapses, sizeof(synapse_t));
 
     /* initialize input synapses */
     synapse_node = ind->input_synapses;

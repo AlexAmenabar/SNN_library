@@ -38,7 +38,7 @@ typedef struct
     int_array_t *int_array; // array of int_arrays
     int n;
 }
-list_int_array_t;
+int_array_list_t;
 
 
 // In this struct the internal structure of each motif type is stored <-- ONLY INTERNAL STRUCTURE INFORMATION
@@ -322,14 +322,14 @@ void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size);
 void allocate_memory_ind (NSGA2Type *nsga2Params, individual *ind);
 void deallocate_memory_pop (NSGA2Type *nsga2Params, population *pop, int size);
 void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind);
-void deallocate_memory_pop_snn_included (NSGA2Type *nsga2Params, population *pop, int size);
-void deallocate_memory_ind_snn_included (NSGA2Type *nsga2Params, individual *ind);
 void deallocate_memory_pop_snn_only (NSGA2Type *nsga2Params, population *pop, int size);
 void deallocate_memory_snn_only (NSGA2Type *nsga2Params, individual *ind);
 void allocate_int_array(int_array_t *int_array, int n);
-void allocate_list_int_array(list_int_array_t *list_int_array, int n);
+void allocate_int_array_list(int_array_list_t *list_int_array, int n);
 void deallocate_int_array(int_array_t *int_array);
-void deallocate_list_int_array(list_int_array_t *list_int_array, int n);
+void deallocate_int_arrays(int_array_t *int_arrays, int n);
+void deallocate_int_array_list(int_array_list_t *list_int_array, int n);
+void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node);
 
 double maximum (double a, double b);
 double minimum (double a, double b);
@@ -385,6 +385,8 @@ void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind);
 void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind);
 neuron_node_t* initialize_and_allocate_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
 void initialize_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
+neuron_node_t* initialize_and_allocate_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav);
+void initialize_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav);
 void set_neurons_behaviour(individual *ind);
 void connect_motifs_and_neurons(individual *ind);
 void connect_motifs(NSGA2Type *nsga2Params, individual *ind);
@@ -468,6 +470,7 @@ void initialize_RCE(motif_t *motif);
 void initialize_RCI(motif_t *motif);
 void initialize_LTI(motif_t *motif);
 void initialize_CPG(motif_t *motif);
+void deallocate_motifs_data();
 
 void initialize_motif(motif_t *motif);
 void initialize_motifs();

@@ -3,12 +3,16 @@
 # include "nsga2.h"
 # include "rand.h"
 
+# define N_MOTIF_TYPES 7
+
 FILE *fpt1;
 FILE *fpt2;
 FILE *fpt3;
 FILE *fpt4;
 FILE *fpt5;
 FILE *gp;
+FILE *f_train;
+FILE *f_train_labels;
 population *parent_pop;
 population *child_pop;
 population *mixed_pop;
@@ -344,7 +348,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
     // DEBUG levels are used to manage what messages will be printed
 
-#ifdef DEBUG1
+//#ifdef DEBUG1
 
     printf("\n\n = == === ===== === == = \n Printing input parameters...\n = == === ===== === == = \n");
     printf(" > Population size: %d\n", nsga2Params.popsize);
@@ -392,7 +396,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
     printf("\n = == === ===== === == = \n Input parameters printed!\n = == === ===== === == = \n");
 
-#endif
+//#endif
 
 
     return nsga2Params;
@@ -594,14 +598,14 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     }
 
     // load input spike trains
-    FILE *f = fopen(nsga2Params->train_dataset_dir, "r");
-    if(f == NULL){ 
+    FILE *f_train = fopen(nsga2Params->train_dataset_dir, "r");
+    if(f_train == NULL){ 
         printf(" > Error opening the file\n\n");
         exit(1);
     }
 
-    FILE *f_labels = fopen(nsga2Params->train_labels_dir, "r");
-    if(f_labels == NULL){
+    FILE *f_train_labels = fopen(nsga2Params->train_labels_dir, "r");
+    if(f_train_labels == NULL){
         printf(" > Error opening the labels file\n");
         exit(1);
     }
@@ -610,11 +614,11 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     printf(" > Reading input spike trains and labels...\n");
 #endif
     for(i=0; i<image_dataset.n_images; i++){
-        fscanf(f_labels, "%d", &(image_dataset.labels[i]));
+        fscanf(f_train_labels, "%d", &(image_dataset.labels[i]));
         for(j=0; j<image_dataset.image_size; j++){
-            fscanf(f, "%d", &(image_dataset.images[i].image[j][0]));
+            fscanf(f_train, "%d", &(image_dataset.images[i].image[j][0]));
             for(l = 1; l<image_dataset.images[i].image[j][0]; l++){
-                fscanf(f, "%d", &(image_dataset.images[i].image[j][l]));
+                fscanf(f_train, "%d", &(image_dataset.images[i].image[j][l]));
             }
         }
     }
@@ -665,7 +669,10 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     fflush(fpt4);
     fflush(fpt5);
 
-    exit(0);
+    fclose(f_train);
+    fclose(f_train_labels);
+
+    //exit(0);
 
     return;
 }
@@ -801,6 +808,8 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         fflush(stdout);
     #endif
 
+        deallocate_memory_pop(nsga2Params, mixed_pop, 2*nsga2Params->popsize);
+        allocate_memory_pop(nsga2Params, mixed_pop, 2*nsga2Params->popsize);
         merge (nsga2Params,  parent_pop, child_pop, mixed_pop);
 
     #ifdef DEBUG1
@@ -812,6 +821,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif
 
         deallocate_memory_pop(nsga2Params, parent_pop, nsga2Params->popsize);
+        deallocate_memory_pop(nsga2Params, child_pop, nsga2Params->popsize);
 
     #ifdef DEBUG1
         printf(" > Parent population deallocated!\n\n");
@@ -822,6 +832,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif 
 
         allocate_memory_pop(nsga2Params, parent_pop, nsga2Params->popsize);
+        allocate_memory_pop(nsga2Params, child_pop, nsga2Params->popsize);
 
     #ifdef DEBUG1
         printf(" > Parent population allocated!\n\n");
@@ -902,12 +913,25 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         free (nsga2Params->nbits);
     }
 
+    // delloacte populations
     deallocate_memory_pop (nsga2Params,  parent_pop, nsga2Params->popsize);
     deallocate_memory_pop (nsga2Params,  child_pop, nsga2Params->popsize);
     deallocate_memory_pop (nsga2Params,  mixed_pop, 2*nsga2Params->popsize);
     free (parent_pop);
     free (child_pop);
     free (mixed_pop);
+
+    // deallocate motif types
+    deallocate_motifs_data();
+
+    // deallocate dataset structs
+    for(i = 0; i<image_dataset.n_images; i++){
+        for(j=0; j<image_dataset.image_size; j++)
+            free(image_dataset.images[i].image[j]);
+        free(image_dataset.images[i].image);
+    }
+    free(image_dataset.images);
+    free(image_dataset.labels);
 
 
     printf("\n Routine successfully exited \n");
