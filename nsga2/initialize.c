@@ -67,28 +67,42 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
 }
 
 /* Function to initialize an individual without randomization */
-void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int *motif_types)
+void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int n_motifs, int *motif_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs)
 {
     // initialize general parameters (number of motifs, neurons...)
-    general_initialization(nsga2Params, ind);
+    general_initialization_not_random_motifs(nsga2Params, ind, n_motifs);
+    printf(" General initializations done\n");
+    fflush(stdout);
 
     // initialize motifs (dynamic list of motifs)
-    initialize_ind_motifs(ind);
+    initialize_ind_motifs_from_types(ind, motif_types);
+    printf(" Motifs initialized\n");
+    fflush(stdout);
 
     // initialize neurons (dynamic list of neurons)
     initialize_neuron_nodes(nsga2Params, ind);
+    printf(" Neuron initialized\n");
+    fflush(stdout);
 
     // set the behaviour for neurons (excitatory or inhibitory)
     set_neurons_behaviour(ind);
+    printf(" Neurons behaviours initialized\n");
+    fflush(stdout);
 
     // Connect motifs and its neurons: connect each motif to its first neuron in the neuron list
     connect_motifs_and_neurons(ind);
+    printf(" Motifs connected to neurons\n");
+    fflush(stdout);
 
     // select to which motifs each motif is connected and build the sparse matrix that contains the information of the synaptic connections
-    connect_motifs(nsga2Params, ind);
+    connect_motifs_from_arrays(nsga2Params, ind, selected_input_motifs, selected_output_motifs);
+    printf(" Motifs connected!\n");
+    fflush(stdout);
 
     // initialize input synaptic connections (not included in the sparse matrix)
     initialize_input_synapses(nsga2Params, ind);
+    printf(" Input synapses initialzied\n");
+    fflush(stdout);
 
     return;
 }
@@ -294,6 +308,7 @@ void initialize_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t 
     neuron_node->next_neuron = NULL; // the next element is not initialized yet
 }
 
+
 /* Function to set the behaviour (excitatory or inhibitory) of all the neurons in the individual */
 void set_neurons_behaviour(individual *ind){
     int i;
@@ -459,7 +474,7 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
     // build the sparse matrix of synapses
     build_sparse_matrix(ind, selected_input_motifs);
 
-    
+
     /* free memory allocated by lists */
     deallocate_int_arrays(selected_input_motifs, ind->n_motifs); // not only the global structure is deallocated, but all the arrays inside too
     deallocate_int_arrays(selected_output_motifs, ind->n_motifs);
@@ -469,6 +484,81 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
 
     free(n_input_connections_per_motif);
     free(n_output_connections_per_motif);
+}
+
+/* Function to connect motifs and initialize structs to store the information */
+void connect_motifs_from_arrays(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs){
+    
+    int i, j, tmp_motif, valid, max_connect_per_motif, min_val, max_val;
+    new_motif_t *motif;
+    int_node_t *int_node;
+
+    // store the information of the input and output motifs for each motifs in the individual struct
+    initialize_lists_of_connectivity(ind, selected_input_motifs, selected_output_motifs);
+    printf(" Connectivity initialized\n");
+    fflush(stdout);
+
+    // print information
+    #ifdef DEBUG3
+        printf(" > > > Input motifs for each motif: \n");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > Motif %d: ", i);
+            for(j = 0; j<selected_input_motifs[i].n; j++){
+                printf("%d ", selected_input_motifs[i].array[j]);
+            }
+            printf("\n");
+        }
+        fflush(stdout);
+
+        printf(" > > > Output motifs for each motif: \n");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > Motif %d: ", i);
+            for(j = 0; j<selected_output_motifs[i].n; j++){
+                printf("%d ", selected_output_motifs[i].array[j]);
+            }
+            printf("\n");
+        }
+        fflush(stdout);
+
+            #ifdef DEBUG3
+        printf(" > > > > > Printing input motifs from dynamic list:\n");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > > > Motif %d (%d): ", i, ind->connectivity_info.in_connections[i].n_nodes);
+            if(ind->connectivity_info.in_connections[i].n_nodes > 0){
+                int_node_t *int_node = ind->connectivity_info.in_connections[i].first_node;
+
+                while(int_node){
+                    printf("%d ", int_node->value);
+                    int_node = int_node->next;
+                }
+            }
+            printf("\n");
+        }
+
+        printf(" > > > > > Printing output motifs from dynamic list:");
+        for(i = 0; i<ind->n_motifs; i++){
+            printf(" > > > > > > Motif %d (%d): ", i, ind->connectivity_info.out_connections[i].n_nodes);
+            if(ind->connectivity_info.out_connections[i].n_nodes > 0){
+                int_node_t *int_node = ind->connectivity_info.out_connections[i].first_node;
+
+                while(int_node){
+                    printf("%d ", int_node->value);
+                    int_node = int_node->next;
+                }
+            }
+            printf("\n");
+        }
+
+        printf("\n > > > > Updating dynamic lists...\n");
+        fflush(stdout);
+
+    #endif
+    #endif
+
+    // build the sparse matrix of synapses
+    build_sparse_matrix(ind, selected_input_motifs);
+    printf(" Sparse matrix built\n");
+    fflush(stdout);
 }
 
 /* Function to set to how much input or output motifs is connected each motif */
@@ -572,7 +662,7 @@ void initialize_lists_of_connectivity(individual *ind, int_array_t *selected_inp
     
     int i, j;
     int_node_t *int_node;
-    
+
     // use the information of the selected input and output motifs for each motif to initialize the dynamic lists that will store this information
                                                 
     // allocate memory for dynamic lists to store motif connectivity information. Larger lists than neccessary are allocated as network will raise
@@ -580,7 +670,7 @@ void initialize_lists_of_connectivity(individual *ind, int_array_t *selected_inp
     ind->connectivity_info.out_connections = (int_dynamic_list_t *)calloc(ind->n_motifs * 10, sizeof(int_dynamic_list_t));
     ind->connectivity_info.n_max_motifs = ind->n_motifs * 10; 
 
-    // loop and initialize all int nodes (THIS CAN BE MOVED TO A FUNCTION???)
+    // loop and initialize all int nodes
     for(i = 0; i<ind->n_motifs; i++){
 
         // copy number of input and output nodes (motifs) for each motif

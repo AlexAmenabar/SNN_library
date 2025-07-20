@@ -385,6 +385,7 @@ void crowding_fill (NSGA2Type *nsga2Params,  population *mixed_pop, population *
 // general initialization
 void initialize_pop (NSGA2Type *nsga2Params, population *pop);
 void initialize_ind (NSGA2Type *nsga2Params, individual *ind);
+void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int n_motifs, int *motif_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 void general_initialization(NSGA2Type *nsga2Params, individual *ind);
 void general_initialization_not_random_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs);
 // motif nodes
@@ -405,6 +406,7 @@ void set_neurons_behaviour(individual *ind);
 void connect_motifs_and_neurons(individual *ind);
 // connect motifs
 void connect_motifs(NSGA2Type *nsga2Params, individual *ind);
+void connect_motifs_from_arrays(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 void set_number_of_connections(individual *ind, int *n_connection_per_motif, int *n_connection_per_motif_done, int max_connect_per_motif);
 void randomize_motif_connections(individual *ind, int *n_connections_per_motif);
 void select_input_and_output_motifs_per_motif(individual *ind, int_array_t *selected_input_motifs_per_motif, int_array_t *selected_output_motifs_per_motif, int *n_input_connections_per_motif_done, int *n_output_connections_per_motif_done);
@@ -447,7 +449,7 @@ int_array_t* select_neurons_to_change(individual *ind); // TODO: not here...
 void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
 int_array_t* select_synapses_to_change(individual *ind); // TODO: not here...
 // add motifs
-void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs);
+void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types);
 void add_new_input_motifs_to_connectivity_lists(individual *ind, int_dynamic_list_t *connections, int_array_t *selected_motifs);
 void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);

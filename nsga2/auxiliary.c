@@ -302,8 +302,8 @@ void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_n
     int i,j;
 
     while(matrix_node != NULL){
-        printf(" matrix_node->row = %d, col = %d\n", matrix_node->row, matrix_node->col);
-        fflush(stdout);
+        //printf(" matrix_node->row = %d, col = %d\n", matrix_node->row, matrix_node->col);
+        //fflush(stdout);
         complete_matrix[matrix_node->row * n_neurons + matrix_node->col] = matrix_node->value;
         matrix_node = matrix_node->next_element;
     }

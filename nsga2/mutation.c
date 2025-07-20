@@ -68,7 +68,7 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
             break;
         case 2: // add motif mutation
             mutation_parameter =  rnd(1, 5); // TODO: n_motifs, this should not be a fixed value
-            add_motif_mutation(nsga2Params, ind, mutation_parameter);
+            add_motif_mutation(nsga2Params, ind, mutation_parameter, NULL, NULL, NULL);
             break;
         case 3: // remove motif mutation
             mutation_parameter =  rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
@@ -219,20 +219,25 @@ int_array_t* select_synapses_to_change(individual *ind){
  */
 
 /* This mutation adds a new motif (or more than one) to the network (with random connections) */
-void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs){
+/* new_motifs_types, selected_input_motifs and selected_output_motifs can be provided as parameter, but it is better to be NULL as 
+   input values are used for testing */
+void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs){
     int i = 0, j, s;
 
     int last_motif_id; // vairables to store the number of new motifs that are added to the genotype and the id of the last processed motif
     new_motif_t *motif_node; // motif nodes to store the new motifs and to loop over the dynamic list of motifs
     neuron_node_t *neuron_node; // neuron node to loop over the dynamic list of neurons and to add new ones
     int min_connected_motifs, max_connected_motifs;
-    int_array_t *selected_input_motifs, *selected_output_motifs; // lists to store the selected input and output motifs for the new motif
     int_array_t *all_selected_output_motifs, *all_selected_input_motifs;
 
 
-    // Pointer for debuging (it is used to print the selected types for the new motifs)
-    int *new_motifs_types = (int *)malloc(n_new_motifs * sizeof(int));
-
+    // select the types of the new motifs
+    if(!new_motifs_types){ // if motifs are not provided in the input, allocate memory and choose types
+        new_motifs_types = (int *)malloc(n_new_motifs * sizeof(int));
+        for(i = 0; i<n_new_motifs; i++){
+            new_motifs_types[i] = rnd(0, n_motifs-1);
+        }
+    }
 
     // Print dynamic lists before mutation
 #ifdef DEBUG3
@@ -279,8 +284,11 @@ void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motif
     /* Select input and output motifs for each new motif, and then map all to input connections */
     min_connected_motifs = 1; // TODO: randomization and network dependency
     max_connected_motifs = 3; // TODO: randomization and network dependency
-    selected_input_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs ,max_connected_motifs); // select input motifs for each new motif
-    selected_output_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs, max_connected_motifs); // selected output motifs for each new motif
+        
+    if(!selected_input_motifs || !selected_output_motifs){
+        selected_input_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs ,max_connected_motifs); // select input motifs for each new motif
+        selected_output_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs, max_connected_motifs); // selected output motifs for each new motif
+    }
 
     // map from input and output list received in this function to only a input list TODO: get directly this list instead of mapping, optimization
     all_selected_input_motifs = map_IO_motifs_to_input(ind, n_new_motifs, selected_input_motifs, selected_output_motifs); // map
@@ -648,9 +656,9 @@ void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual 
         last_motif_id ++;
 
         // allocate memory for the next motif (the new one)
-        motif_node = initialize_and_allocate_motif(motif_node, last_motif_id, ind);
+        motif_node = initialize_and_allocate_motif_from_type(motif_node, last_motif_id, ind, new_motifs_types[i]);
 
-        new_motifs_types[i] = motif_node->motif_type;
+        //new_motifs_types[i] = motif_node->motif_type;
 
         // add motif neurons to the dynamic list of neurons
         for(j = 0; j<motifs_data[motif_node->motif_type].n_neurons; j++){
@@ -958,7 +966,8 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
         #endif
 
         update_sparse_matrix_remove_motifs(ind, selected_motifs_to_remove);
-
+        printf( "Sparse matrix updated!\n");
+        fflush(stdout);
         #ifdef DEBUG3
             rmatrix = (int *)calloc(ind->n_neurons * ind->n_neurons, sizeof(int));
             get_complete_matrix_from_dynamic_list(rmatrix, ind->connectivity_matrix, ind->n_neurons);
@@ -1016,11 +1025,15 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
 
 
         new_selected_motifs_to_remove = remove_motifs_from_dynamic_list(ind, selected_motifs_to_remove);
+        printf(" Dynamic lists updated!\n");
+        fflush(stdout);
 
         // reorder array as now some motifs have been removed // Remove the selected motifs?
         j = 0;
         int s;        
         for(i = 0; i<ind->n_motifs; i++){
+            printf(" Processing motif %d\n", i);
+            fflush(stdout);
             if(j < n_remove_motifs && i == selected_motifs_to_remove->array[j]){
                 
                 // free the dynamic lists of this motif
@@ -1047,7 +1060,8 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
                     ind->connectivity_info.out_connections[i].n_nodes = 0;
                 }
 
-
+                printf("Reordering...\n");
+                fflush(stdout);
                 // now move the rest motifs 
                 for(s = i; s<ind->n_motifs-1; s++){
                     ind->connectivity_info.in_connections[s].first_node = ind->connectivity_info.in_connections[s+1].first_node;
@@ -1055,23 +1069,27 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
                     ind->connectivity_info.out_connections[s].first_node = ind->connectivity_info.out_connections[s+1].first_node;
                     ind->connectivity_info.out_connections[s].n_nodes = ind->connectivity_info.out_connections[s+1].n_nodes;
                 }
-
+                //i--;
                 j++;
             }
         }
+        printf(" Reordered\n");
+        fflush(stdout);
         for(i = ind->n_motifs - n_remove_motifs; i<ind->n_motifs; i++){
             ind->connectivity_info.in_connections[i].first_node = NULL;
             ind->connectivity_info.in_connections[i].n_nodes = 0;
             ind->connectivity_info.out_connections[i].first_node = NULL;
             ind->connectivity_info.out_connections[i].n_nodes = 0;
         }
-
+        printf(" Reordered\n");
+        fflush(stdout);
 
         ind->n_motifs -= n_remove_motifs; // update amount of motifs in the individual
 
         // remove deleted motifs, and for each motif, its neurons, from the dynamic lists
         motif_node = ind->motifs_new;
         neuron_node = ind->neurons;
+
 
 
         #ifdef DEBUG3
@@ -1267,6 +1285,8 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
 
             fflush(stdout);
         #endif
+        printf(" Iteration finished, more to remove %d\n", n_remove_motifs);
+        fflush(stdout);
     }
 
     deallocate_int_arrays(selected_motifs_to_remove, 1);
