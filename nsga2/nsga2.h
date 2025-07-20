@@ -317,6 +317,7 @@ extern image_dataset_t image_dataset;
 
 /**
  *  allocate.c
+ * Function related to memory allocation and deallocation of struct
  */
 void allocate_memory_pop (NSGA2Type *nsga2Params,  population *pop, int size);
 void allocate_memory_ind (NSGA2Type *nsga2Params, individual *ind);
@@ -331,6 +332,10 @@ void deallocate_int_arrays(int_array_t *int_arrays, int n);
 void deallocate_int_array_list(int_array_list_t *list_int_array, int n);
 void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node);
 
+/**
+ * 
+ * 
+ */
 double maximum (double a, double b);
 double minimum (double a, double b);
 void print_double_matrix(double *matrix, int n);
@@ -372,40 +377,55 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 void fill_nondominated_sort (NSGA2Type *nsga2Params,  population *mixed_pop, population *new_pop);
 void crowding_fill (NSGA2Type *nsga2Params,  population *mixed_pop, population *new_pop, int count, int front_size, list *cur);
 
-/* Initialization functions */
+/**
+ * initialize.c
+ * Functions for initialization TODO: I think some functions are not correctly located here. Probably those related to dynamic lists
+ * management should be moved to another place
+ */
+// general initialization
 void initialize_pop (NSGA2Type *nsga2Params, population *pop);
 void initialize_ind (NSGA2Type *nsga2Params, individual *ind);
 void general_initialization(NSGA2Type *nsga2Params, individual *ind);
+void general_initialization_not_random_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs);
+// motif nodes
 void initialize_ind_motifs(individual *ind);
 void initialize_ind_motifs_from_types(individual *ind, int *motif_types);
-new_motif_t* initialize_and_allocate_motif_from_type(new_motif_t *motif_node, int motif_id, individual *ind, int type);
-void initialize_motif_node_from_type(new_motif_t *motif, int motif_id, individual *ind, int type);
 new_motif_t* initialize_and_allocate_motif(new_motif_t *motif_node, int motif_id, individual *ind);
 void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind);
+new_motif_t* initialize_and_allocate_motif_from_type(new_motif_t *motif_node, int motif_id, individual *ind, int type);
+void initialize_motif_node_from_type(new_motif_t *motif, int motif_id, individual *ind, int type);
+// neuron nodes
 void initialize_neuron_nodes(NSGA2Type *nsga2Params, individual *ind);
 neuron_node_t* initialize_and_allocate_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
 void initialize_neuron_node(NSGA2Type *nsga2Params, neuron_node_t *neuron_node);
 neuron_node_t* initialize_and_allocate_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav);
 void initialize_neuron_node_and_behaviour(NSGA2Type *nsga2Params, neuron_node_t *neuron_node, int behav);
 void set_neurons_behaviour(individual *ind);
+// connections: motifs x neurons & motifs x motifs
 void connect_motifs_and_neurons(individual *ind);
+// connect motifs
 void connect_motifs(NSGA2Type *nsga2Params, individual *ind);
-void construct_sparse_matrix(individual *ind, int *n_selected_input_motifs_per_motif, int **selected_input_motifs_per_motif);
-void new_construct_sparse_matrix(individual *ind, int_array_t *selected_input_motifs);
-sparse_matrix_node_t* construct_motif_sparse_matrix_columns(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* construct_neuron_sparse_matrix_column(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
+void set_number_of_connections(individual *ind, int *n_connection_per_motif, int *n_connection_per_motif_done, int max_connect_per_motif);
+void randomize_motif_connections(individual *ind, int *n_connections_per_motif);
+void select_input_and_output_motifs_per_motif(individual *ind, int_array_t *selected_input_motifs_per_motif, int_array_t *selected_output_motifs_per_motif, int *n_input_connections_per_motif_done, int *n_output_connections_per_motif_done);
+void initialize_lists_of_connectivity(individual *ind, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
+// sparse matrix
+void build_sparse_matrix(individual *ind, int_array_t *selected_input_motifs);
+sparse_matrix_node_t* build_motif_sparse_matrix_columns(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* build_neuron_sparse_matrix_column(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
 sparse_matrix_node_t* add_neuron_to_motif_connections(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
 sparse_matrix_node_t* build_motif_internal_structure(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
 sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
 sparse_matrix_node_t* build_motif_internal_structure_and_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
-void construct_semi_sparse_matrix(individual *ind, int n_new_motifs, int_array_t *new_motifs_output_motifs);
 sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
 void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
-sparse_matrix_node_t* build_motif_internal_structure_column_by_input(individual *ind, sparse_matrix_node_t *matrix_node, int motif_type, int global_neuron_index, int neuron_local_index);
+// input synapses
 void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind);
 void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind);
+// int nodes
 void initialize_int_node(int_node_t *int_node, int value, int_node_t *prev, int_node_t *next);
 int_node_t* initialize_and_allocate_int_node(int value, int_node_t *prev, int_node_t *next);
+
 
 void insert (list *node, int x);
 list* del (list *node);
@@ -413,22 +433,40 @@ list* del (list *node);
 void merge(NSGA2Type *nsga2Params, population *pop1, population *pop2, population *pop3);
 void copy_ind (NSGA2Type *nsga2Params, individual *ind1, individual *ind2);
 
+/**
+ * mutation.c 
+ * Function related to individual mutations
+ */
+// general
 void mutation_pop (NSGA2Type *nsga2Params, population *pop);
 void mutation_ind (NSGA2Type *nsga2Params, individual *ind);
+// neurons
 void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
+int_array_t* select_neurons_to_change(individual *ind); // TODO: not here...
+// synapses
 void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
+int_array_t* select_synapses_to_change(individual *ind); // TODO: not here...
+// add motifs
 void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs);
+void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types);
+void add_new_input_motifs_to_connectivity_lists(individual *ind, int_dynamic_list_t *connections, int_array_t *selected_motifs);
+void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);
+int_array_t* select_motifs(individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs); // here...
+int_array_t* select_motifs_to_connect_with_new_motifs(individual *ind, int n_motifs, int n_new_motifs, int min_connected_motifs, int max_connected_motifs); // TODO
+// remove motifs
 void remove_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_remove_motifs);
 void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_motifs_to_remove);
-void add_connection_mutation(NSGA2Type *nsga2Params, individual *ind, int n_connections);
-void remove_connection_mutation(NSGA2Type *nsga2Params, individual *ind, int n_connections);
-void bin_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
-void real_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
-int_array_t* map_IO_motifs_to_input(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
-void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);
+int_array_t* remove_motifs_from_dynamic_list(individual *ind, int_array_t *selected_motifs_to_remove);
+int_array_t* select_motifs_to_be_removed(individual *ind, int n_motifs);
 void update_sparse_matrix_remove_motifs(individual *ind, int_array_t *selected_motifs);
 sparse_matrix_node_t* remove_all_motif_synapses(individual *ind, sparse_matrix_build_info_t *SMBI, sparse_matrix_node_t *synapse_node);
 sparse_matrix_node_t* remove_selected_synapses(individual *ind, sparse_matrix_build_info_t *SMBI, int_array_t *selected_motifs, sparse_matrix_node_t *synapse_node);
+// helpers
+int_array_t* map_IO_motifs_to_input(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
+int_array_t *map_from_input_motifs_to_output(individual *ind, int n_motifs, int n_new_motifs, int max_connected_motifs, int_array_t *all_selected_input_motifs);
+// not used
+void bin_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
+void real_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
 
 
 void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info); 
