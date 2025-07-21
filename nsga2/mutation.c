@@ -1029,9 +1029,57 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
         fflush(stdout);
 
         // reorder array as now some motifs have been removed // Remove the selected motifs?
-        j = 0;
-        int s;        
-        for(i = 0; i<ind->n_motifs; i++){
+        i = 0; // index of the motif that must be processed
+        j = 0; // counter of how much motifs have been processed
+        int s; // helper index       
+        int_node_t *int_node, *tmp_node;
+        int tmp_n_motifs = ind->n_motifs;
+        // loop until all selected motifs are removed
+        while(j < n_remove_motifs){
+            if(i + j == selected_motifs_to_remove->array[j]){
+
+                // free the dynamic lists of this motif
+                if(ind->connectivity_info.in_connections[i].n_nodes > 0){
+                    int_node = ind->connectivity_info.in_connections[i].first_node;
+                    tmp_node;
+                    while(int_node){
+                        tmp_node = int_node;
+                        int_node = int_node->next;
+                        free(tmp_node);
+                    }
+                    ind->connectivity_info.in_connections[i].first_node = NULL;
+                    ind->connectivity_info.in_connections[i].n_nodes = 0;
+                }
+                if(ind->connectivity_info.out_connections[i].n_nodes > 0){
+                    int_node = ind->connectivity_info.out_connections[i].first_node;
+                    tmp_node;
+                    while(int_node){
+                        tmp_node = int_node;
+                        int_node = int_node->next;
+                        free(tmp_node);
+                    }
+                    ind->connectivity_info.out_connections[i].first_node = NULL;
+                    ind->connectivity_info.out_connections[i].n_nodes = 0;
+                }
+
+                printf("Reordering...\n");
+                fflush(stdout);
+                // now move the rest motifs 
+                for(s = i; s<tmp_n_motifs-1; s++){
+                    ind->connectivity_info.in_connections[s].first_node = ind->connectivity_info.in_connections[s+1].first_node;
+                    ind->connectivity_info.in_connections[s].n_nodes = ind->connectivity_info.in_connections[s+1].n_nodes;
+                    ind->connectivity_info.out_connections[s].first_node = ind->connectivity_info.out_connections[s+1].first_node;
+                    ind->connectivity_info.out_connections[s].n_nodes = ind->connectivity_info.out_connections[s+1].n_nodes;
+                }
+                i--;
+                j++;
+                tmp_n_motifs --;
+            }
+            // move to the next motif
+            i++;
+        }
+
+        /*for(i = 0; i<ind->n_motifs; i++){
             printf(" Processing motif %d\n", i);
             fflush(stdout);
             if(j < n_remove_motifs && i == selected_motifs_to_remove->array[j]){
@@ -1072,7 +1120,7 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
                 //i--;
                 j++;
             }
-        }
+        }*/
         printf(" Reordered\n");
         fflush(stdout);
         for(i = ind->n_motifs - n_remove_motifs; i<ind->n_motifs; i++){

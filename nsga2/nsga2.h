@@ -353,6 +353,9 @@ void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_n
 void print_matrix_from_dynamic_list(sparse_matrix_node_t *matrix_node, int n_neurons);
 void print_connectivity_matrix(int *matrix, int n);
 void print_synapses_dynamic_list(sparse_matrix_node_t *matrix_node);
+void load_individual_from_file(FILE *f, individual *ind);
+void store_individual_in_file(FILE *f, individual *ind);
+
 
 void crossover (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);
 void realcross (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);

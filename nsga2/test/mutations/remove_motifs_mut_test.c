@@ -143,114 +143,48 @@ int test1(){
     selected_motifs_to_remove->array[2] = 4;
     selected_motifs_to_remove->array[3] = 5;
 
-    printf(" Removing motifs!\n");
-    fflush(stdout);
     remove_selected_motifs_mutation(nsga2Params, ind, selected_motifs_to_remove);
-    printf(" Motifs removed!\n");
-    fflush(stdout);
 
     // sparse matrix
     result_matrix = (int *)calloc(ind->n_neurons * ind->n_neurons, sizeof(int));
-    /*target_matrix = (int *)calloc(ind->n_neurons * ind->n_neurons, sizeof(int));
+    target_matrix = (int *)calloc(ind->n_neurons * ind->n_neurons, sizeof(int));
 
     target_matrix[1] = 1;
-    target_matrix[22] = 1;
+    target_matrix[3] = 1;
+    target_matrix[4] = 1;
+    target_matrix[5] = 1;
+    target_matrix[8] = -1;
+    target_matrix[15] = 1;
+    target_matrix[16] = 1;
+    target_matrix[17] = 1;
+
+    target_matrix[18] = 1;
+    target_matrix[20] = 1;
+    target_matrix[21] = 2;
+    target_matrix[22] = 3;
+    target_matrix[23] = 3;
     target_matrix[24] = 1;
+    target_matrix[26] = 1;
+    target_matrix[27] = 3;
     target_matrix[28] = 2;
-
-    target_matrix[37] = 1;
-    target_matrix[55] = 1;
-    target_matrix[68] = 2;
-    target_matrix[70] = -1;
-    target_matrix[73] = 1;
-    target_matrix[75] = 1;
-
-    target_matrix[87] = 1;
-    target_matrix[91] = 1;
-    target_matrix[93] = 1;
-    target_matrix[94] = 1;
-    target_matrix[95] = 1;
-    target_matrix[96] = 1;
-    target_matrix[109] = -1;
-    target_matrix[121] = 1;
-    target_matrix[127] = 1;
-    target_matrix[128] = 1;
-    target_matrix[129] = 1;
-    target_matrix[130] = 1;
-
-    target_matrix[136] = 1;
-    target_matrix[141] = 1;
-    target_matrix[143] = 1;
-    target_matrix[144] = 2;
-    target_matrix[145] = 3;
-    target_matrix[146] = 3;
-    target_matrix[149] = 1;
-    target_matrix[150] = 1;
-    target_matrix[151] = 1;
-    target_matrix[152] = 1;
-    target_matrix[153] = 1;
-    target_matrix[158] = 1;
-    target_matrix[160] = 1;
-    target_matrix[161] = 3;
-    target_matrix[162] = 2;
-    target_matrix[163] = 3;
-    target_matrix[166] = 1;
-    target_matrix[167] = 1;
-    target_matrix[168] = 1;
-    target_matrix[169] = 1;
-    target_matrix[170] = 1;
-    target_matrix[175] = 1;
-    target_matrix[177] = 1;
-    target_matrix[178] = 3;
-    target_matrix[179] = 3;
-    target_matrix[180] = 2;
-    target_matrix[183] = 1;
-    target_matrix[184] = 1;
-    target_matrix[185] = 1;
-    target_matrix[186] = 1;
-
-    target_matrix[199] = 1;
-    target_matrix[209] = 1;
-    target_matrix[211] = 1;
-    target_matrix[212] = 1;
-    target_matrix[213] = 1;
-    target_matrix[214] = 1;
-    target_matrix[215] = 1;
-    target_matrix[217] = 1;
-    target_matrix[218] = 1;
-    target_matrix[219] = 1;
-    target_matrix[220] = 1;
-
-    target_matrix[221] = 2;
-    target_matrix[234] = 2;
-    target_matrix[235] = -3;
-    target_matrix[236] = 2;
-    target_matrix[237] = 2;
-    target_matrix[238] = 2;
-    target_matrix[251] = 2;
-    target_matrix[252] = 2;
-    target_matrix[253] = -3;
-    target_matrix[254] = 2;
-    target_matrix[255] = 2;
-    target_matrix[268] = 2;
-    target_matrix[269] = 2;
-    target_matrix[270] = 2;
-    target_matrix[271] = -3;
-    target_matrix[272] = 2;
-    target_matrix[285] = -3;
-    target_matrix[286] = 2;
-    target_matrix[287] = 2;
-    target_matrix[288] = 2;*/
+    target_matrix[29] = 3;
+    target_matrix[30] = 1;
+    target_matrix[32] = 1;
+    target_matrix[33] = 3;
+    target_matrix[34] = 3;
+    target_matrix[35] = 2;
+    
+    
 
     // get sparse matrix
     get_complete_matrix_from_dynamic_list(result_matrix, ind->connectivity_matrix, ind->n_neurons);
 
     // compare if the sparse matrix is correctly constructed
-    //equals = compare_target_and_obtained_matrix(result_matrix, target_matrix, ind->n_neurons);
+    equals = compare_target_and_obtained_matrix(result_matrix, target_matrix, ind->n_neurons);
 
 # ifdef DEBUG
     print_synapses_dynamic_list(ind->connectivity_matrix);
-    //print_connectivity_matrix(target_matrix, ind->n_neurons);
+    print_connectivity_matrix(target_matrix, ind->n_neurons);
     print_connectivity_matrix(result_matrix, ind->n_neurons);
 # endif
 
@@ -263,19 +197,15 @@ int test1(){
 
         // check if values in the linked list of motifs are correct
         motif_node = ind->motifs_new;
-        if(motif_node->motif_type != 0 && motif_node->initial_global_index != 0
-            || motif_node->next_motif->motif_type != 2 && motif_node->next_motif->initial_global_index != 2 
-            || motif_node->next_motif->next_motif->motif_type != 5 && motif_node->next_motif->next_motif->initial_global_index != 5
-            || motif_node->next_motif->next_motif->next_motif->motif_type != 6 && motif_node->next_motif->next_motif->next_motif->initial_global_index != 8 
-            || motif_node->next_motif->next_motif->next_motif->next_motif->motif_type != 0 && motif_node->next_motif->next_motif->next_motif->next_motif->initial_global_index != 11
-            || motif_node->next_motif->next_motif->next_motif->next_motif->next_motif->motif_type != 4 && motif_node->next_motif->next_motif->next_motif->next_motif->next_motif->initial_global_index != 13
-            || motif_node->next_motif->next_motif->next_motif->next_motif->next_motif->next_motif != NULL){
+        if(motif_node->motif_type != 5 && motif_node->initial_global_index != 0
+            || motif_node->next_motif->motif_type != 6 && motif_node->next_motif->initial_global_index != 3 
+            || motif_node->next_motif->next_motif != NULL){
             equals = 0;
         }
 
-
-        if(ind->n_motifs != 6 || ind->n_neurons != 17 || ind->n_synapses - ind->n_input_synapses != 124)
+        if(ind->n_motifs != 2 || ind->n_neurons != 6 || ind->n_synapses - ind->n_input_synapses != 38)
             equals = 0;
+
 
         // count neurons too
         int n_neurons = 0;
@@ -288,55 +218,24 @@ int test1(){
         if(ind->n_neurons != n_neurons)
             equals = 0;
 
-
         // check linked lists of connections
-        if(ind->connectivity_info.in_connections[0].n_nodes != 5 || ind->connectivity_info.in_connections[1].n_nodes != 1 ||
-            ind->connectivity_info.in_connections[2].n_nodes != 4 || ind->connectivity_info.in_connections[3].n_nodes != 4 ||
-            ind->connectivity_info.in_connections[4].n_nodes != 4 || ind->connectivity_info.in_connections[5].n_nodes != 4)
+        if(ind->connectivity_info.in_connections[0].n_nodes != 1 || ind->connectivity_info.in_connections[1].n_nodes != 3)
             equals = 0;
 
-        if(ind->connectivity_info.out_connections[0].n_nodes != 3 || ind->connectivity_info.out_connections[1].n_nodes != 3 ||
-            ind->connectivity_info.out_connections[2].n_nodes != 3 || ind->connectivity_info.out_connections[3].n_nodes != 5 ||
-            ind->connectivity_info.out_connections[4].n_nodes != 4 || ind->connectivity_info.out_connections[5].n_nodes != 4)
+        if(ind->connectivity_info.out_connections[0].n_nodes != 1 || ind->connectivity_info.out_connections[1].n_nodes != 3)
             equals = 0;
 
-
-        if(ind->connectivity_info.in_connections[0].first_node->value != 1 || ind->connectivity_info.in_connections[0].first_node->next->value != 1 ||
-            ind->connectivity_info.in_connections[0].first_node->next->next->value != 3 || ind->connectivity_info.in_connections[0].first_node->next->next->next->value != 5 ||
-            ind->connectivity_info.in_connections[0].first_node->next->next->next->next->value != 5 || 
-            ind->connectivity_info.in_connections[0].first_node->next->next->next->next->next != NULL ||
-            ind->connectivity_info.in_connections[1].first_node->value != 2 || ind->connectivity_info.in_connections[1].first_node->next != NULL ||
-            ind->connectivity_info.in_connections[2].first_node->value != 0 || ind->connectivity_info.in_connections[2].first_node->next->value != 1 ||
-            ind->connectivity_info.in_connections[2].first_node->next->next->value != 3 || ind->connectivity_info.in_connections[2].first_node->next->next->next->value != 4 ||
-            ind->connectivity_info.in_connections[2].first_node->next->next->next->next != NULL ||
-            ind->connectivity_info.in_connections[3].first_node->value != 2 || ind->connectivity_info.in_connections[3].first_node->next->value != 3 ||
-            ind->connectivity_info.in_connections[3].first_node->next->next->value != 3 || ind->connectivity_info.in_connections[3].first_node->next->next->next->value != 4 || 
-            ind->connectivity_info.in_connections[3].first_node->next->next->next->next != NULL ||
-            ind->connectivity_info.in_connections[4].first_node->value != 0 || ind->connectivity_info.in_connections[4].first_node->next->value != 0 ||
-            ind->connectivity_info.in_connections[4].first_node->next->next->value != 2 || ind->connectivity_info.in_connections[4].first_node->next->next->next->value != 4 ||
-            ind->connectivity_info.in_connections[4].first_node->next->next->next->next != 0 ||
-            ind->connectivity_info.in_connections[5].first_node->value != 3 || ind->connectivity_info.in_connections[5].first_node->next->value != 4 || 
-            ind->connectivity_info.in_connections[5].first_node->next->next->value != 5 || ind->connectivity_info.in_connections[5].first_node->next->next->next->value != 5 ||
-            ind->connectivity_info.in_connections[5].first_node->next->next->next->next != NULL)
+        
+        if(ind->connectivity_info.in_connections[0].first_node->value != 1 || ind->connectivity_info.in_connections[0].first_node->next != NULL ||
+            ind->connectivity_info.in_connections[1].first_node->value != 0 || ind->connectivity_info.in_connections[1].first_node->next->value != 1 ||
+            ind->connectivity_info.in_connections[1].first_node->next->next->value != 1 || ind->connectivity_info.in_connections[1].first_node->next->next->next != NULL)
            equals = 0;
 
-        if(ind->connectivity_info.out_connections[0].first_node->value != 2 || ind->connectivity_info.out_connections[0].first_node->next->value != 4 ||
-            ind->connectivity_info.out_connections[0].first_node->next->next->value != 4 || ind->connectivity_info.out_connections[0].first_node->next->next->next != NULL || 
-            ind->connectivity_info.out_connections[1].first_node->value != 0 || ind->connectivity_info.out_connections[1].first_node->next->value != 0 || 
-            ind->connectivity_info.out_connections[1].first_node->next->next->value != 2 || ind->connectivity_info.out_connections[1].first_node->next->next->next != NULL || 
-            ind->connectivity_info.out_connections[2].first_node->value != 1 || ind->connectivity_info.out_connections[2].first_node->next->value != 3 || 
-            ind->connectivity_info.out_connections[2].first_node->next->next->value != 4 || ind->connectivity_info.out_connections[2].first_node->next->next->next != NULL ||
-            ind->connectivity_info.out_connections[3].first_node->value != 0 || ind->connectivity_info.out_connections[3].first_node->next->value != 2 ||
-            ind->connectivity_info.out_connections[3].first_node->next->next->value != 3 || ind->connectivity_info.out_connections[3].first_node->next->next->next->value != 3 ||
-            ind->connectivity_info.out_connections[3].first_node->next->next->next->next->value != 5 || ind->connectivity_info.out_connections[3].first_node->next->next->next->next->next != NULL ||
-            ind->connectivity_info.out_connections[4].first_node->value != 2 || ind->connectivity_info.out_connections[4].first_node->next->value != 3 ||
-            ind->connectivity_info.out_connections[4].first_node->next->next->value != 4 || ind->connectivity_info.out_connections[4].first_node->next->next->next->value != 5 ||
-            ind->connectivity_info.out_connections[4].first_node->next->next->next->next != NULL ||
-            ind->connectivity_info.out_connections[5].first_node->value != 0 || ind->connectivity_info.out_connections[5].first_node->next->value != 0 ||
-            ind->connectivity_info.out_connections[5].first_node->next->next->value != 5 ||
-            ind->connectivity_info.out_connections[5].first_node->next->next->next->value != 5 ||
-            ind->connectivity_info.out_connections[5].first_node->next->next->next->next != NULL)
+        if(ind->connectivity_info.out_connections[0].first_node->value != 1 || ind->connectivity_info.out_connections[0].first_node->next != NULL ||
+            ind->connectivity_info.out_connections[1].first_node->value != 0 || ind->connectivity_info.out_connections[1].first_node->next->value != 1 || 
+            ind->connectivity_info.out_connections[1].first_node->next->next->value != 1 || ind->connectivity_info.out_connections[1].first_node->next->next->next != NULL)
            equals = 0;
+
     }
 
 

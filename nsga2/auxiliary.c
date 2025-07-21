@@ -298,6 +298,273 @@ void copy_connectivity(individual *ind1, individual *ind2){
 }
 
 
+/**
+ * Storage
+ */
+
+void load_individual_from_file(FILE *f, individual *ind){
+    
+    int i, j;
+
+    // load general information
+    fscanf(f, "%d", &(ind->n_motifs));
+    fscanf(f, "%d", &(ind->n_neurons));
+    fscanf(f, "%d", &(ind->n_input_neurons));
+    fscanf(f, "%d", &(ind->n_synapses));
+    fscanf(f, "%d", &(ind->n_input_synapses));
+    
+    // load motifs
+    ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
+    new_motif_t *motif_node = ind->motifs_new;
+
+    fscanf(f, "%d", &(motif_node->motif_type));
+    fscanf(f, "%d", &(motif_node->initial_global_index));
+    motif_node->next_motif = NULL;
+
+    for(i = 1; i<ind->n_motifs; i++){
+        motif_node->next_motif = (new_motif_t *)calloc(1, sizeof(new_motif_t));
+        motif_node = motif_node->next_motif;
+
+        fscanf(f, "%d", &(motif_node->motif_type));
+        fscanf(f, "%d", &(motif_node->initial_global_index));
+
+        motif_node->next_motif = NULL;
+    }
+
+    // load neurons
+    ind->neurons = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
+    neuron_node_t *neuron_node = ind->neurons;
+
+    fscanf(f, "%lf", &(neuron_node->threshold));
+    fscanf(f, "%lf", &(neuron_node->v_rest));
+    fscanf(f, "%d", &(neuron_node->refract_time));
+    fscanf(f, "%d", &(neuron_node->r));
+    fscanf(f, "%d", &(neuron_node->behaviour));
+    neuron_node->next_neuron = NULL;
+
+    for(i = 1; i<ind->n_motifs; i++){
+        neuron_node->next_neuron = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
+        neuron_node = neuron_node->next_neuron;
+
+        fscanf(f, "%lf", &(neuron_node->threshold));
+        fscanf(f, "%lf", &(neuron_node->v_rest));
+        fscanf(f, "%d", &(neuron_node->refract_time));
+        fscanf(f, "%d", &(neuron_node->r));
+        fscanf(f, "%d", &(neuron_node->behaviour));
+        
+        neuron_node->next_neuron = NULL;
+    }
+
+    // connect the motifs and the neurons
+    connect_motifs_and_neurons(ind);
+
+
+    // load dynamic lists of connectivity
+    int_node_t *int_node, *prev_int_node;
+    for(i = 0; i<ind->n_motifs; i++){
+        fscanf(f, "%d", &(ind->connectivity_info.in_connections[i].n_nodes));
+        fscanf(f, "%d", &(ind->connectivity_info.out_connections[i].n_nodes));
+    
+        // load input nodes
+        ind->connectivity_info.in_connections[i].first_node = (int_node_t *)calloc(1, sizeof(int_node_t));
+        int_node = ind->connectivity_info.in_connections[i].first_node;
+
+        fscanf(f, "%d", &(int_node->value));
+        int_node->prev = NULL;
+        int_node->next = NULL;
+        
+        for(j = 1; j<ind->connectivity_info.in_connections[i].n_nodes; j++){
+            prev_int_node = int_node;
+            int_node->next = (int_node_t *)calloc(1, sizeof(int_node_t));
+            int_node = int_node->next;
+            int_node->next = NULL;
+            int_node->prev = prev_int_node;
+
+            fscanf(f, "%d", &(int_node->value));
+        }
+
+        // load output nodes
+        ind->connectivity_info.out_connections[i].first_node = (int_node_t *)calloc(1, sizeof(int_node_t));
+        int_node = ind->connectivity_info.out_connections[i].first_node;
+
+        fscanf(f, "%d", &(int_node->value));
+        int_node->prev = NULL;
+        int_node->next = NULL;
+        
+        for(j = 1; j<ind->connectivity_info.out_connections[i].n_nodes; j++){
+            prev_int_node = int_node;
+            int_node->next = (int_node_t *)calloc(1, sizeof(int_node_t));
+            int_node = int_node->next;
+            int_node->next = NULL;
+            int_node->prev = prev_int_node;
+
+            fscanf(f, "%d", &(int_node->value));
+        }
+    }
+
+    // load synapses
+    ind->connectivity_matrix = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
+    sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
+
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%d", &(synapse_node->value));
+    for(i = 0; i<abs(synapse_node->value); i++){
+        fscanf(f, "%lf", &(synapse_node->weight[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
+    }
+    synapse_node->next_element = NULL;
+
+    for(i = 1; i<ind->n_synapses-ind->n_input_synapses; i++){
+        synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
+        synapse_node = synapse_node->next_element;
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
+        for(j = 0; j<abs(synapse_node->value); j++){
+            fscanf(f, "%lf", &(synapse_node->weight[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
+        }
+        synapse_node->next_element = NULL;
+    }
+
+    // load input synapses
+    ind->input_synapses = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
+    synapse_node = ind->input_synapses;
+
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%lf", &(synapse_node->value));
+    for(i = 0; i<abs(synapse_node->value); i++){
+        fscanf(f, "%d", &(synapse_node->weight[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
+    }
+    synapse_node->next_element = NULL;
+
+    for(i = 1; i<ind->n_input_synapses; i++){
+        synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
+        synapse_node = synapse_node->next_element;
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
+        for(j = 0; j<abs(synapse_node->value); j++){
+            fscanf(f, "%lf", &(synapse_node->weight[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
+        }
+        synapse_node->next_element = NULL;
+    }
+}
+
+
+void store_individual_in_file(FILE *f, individual *ind){
+    
+    int i, j;
+
+    // store general information
+    fprintf(f, "%d\n", ind->n_motifs);
+    fprintf(f, "%d\n", ind->n_neurons);
+    fprintf(f, "%d\n", ind->n_input_neurons);
+    fprintf(f, "%d\n", ind->n_synapses);
+    fprintf(f, "%d\n", ind->n_input_synapses);
+    fprintf(f, "\n");
+
+    printf("General information stored\n");
+
+    // store motifs
+    new_motif_t *motif_node = ind->motifs_new;
+    while(motif_node){
+        fprintf(f, "%d ", motif_node->motif_type);
+        fprintf(f, "%d ", motif_node->initial_global_index);
+        fprintf(f, "\n");
+        motif_node = motif_node->next_motif;
+    }
+    fprintf(f, "\n");
+    printf("Motifs stored\n");
+
+    // store neurons
+    neuron_node_t *neuron_node = ind->neurons;
+    while(neuron_node){
+        fprintf(f, "%f ", neuron_node->threshold);
+        fprintf(f, "%f ", neuron_node->v_rest);
+        fprintf(f, "%d ", neuron_node->refract_time);
+        fprintf(f, "%f ", neuron_node->r);
+        fprintf(f, "%d ", neuron_node->behaviour);
+        fprintf(f , "\n");
+        neuron_node = neuron_node->next_neuron;
+    }
+    fprintf(f, "\n");
+    printf("Neurons stored\n");
+
+    // store dynamic lists of connectivity
+    int_node_t *int_node;
+    for(i = 0; i<ind->n_motifs; i++){
+        fprintf(f, "%d ", ind->connectivity_info.in_connections[i].n_nodes);
+        fprintf(f, "%d\n", ind->connectivity_info.out_connections[i].n_nodes);
+    
+        // store input nodes
+        int_node = ind->connectivity_info.in_connections[i].first_node;
+
+        while(int_node){
+            fprintf(f, "%d ", int_node->value);
+            int_node = int_node->next;
+        }
+        fprintf(f, "\n");
+
+        int_node = ind->connectivity_info.out_connections[i].first_node;
+
+        while(int_node){
+            fprintf(f, "%d ", int_node->value);
+            int_node = int_node->next;
+        }
+        fprintf(f, "\n\n");
+    }
+    printf("Connectivity stored\n");
+
+    // store synapses
+    sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
+
+    while(synapse_node){
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
+        for(i = 0; i<abs(synapse_node->value); i++){
+            fscanf(f, "%f ", synapse_node->weight[i]);
+            fscanf(f, "%d ", synapse_node->latency[i]);
+            fscanf(f, "%d ", synapse_node->learning_rule[i]);
+        }
+        fprintf(f, "\n");
+        synapse_node = synapse_node->next_element;
+    }
+    fprintf(f, "\n");
+    printf("Synapses stored\n");
+
+    // store input synapses
+    synapse_node = ind->input_synapses;
+
+    while(synapse_node){
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
+        for(i = 0; i<abs(synapse_node->value); i++){
+            fscanf(f, "%f ", synapse_node->weight[i]);
+            fscanf(f, "%d ", synapse_node->latency[i]);
+            fscanf(f, "%d ", synapse_node->learning_rule[i]);
+        }
+        fprintf(f, "\n");
+        synapse_node = synapse_node->next_element;
+    }
+    fprintf(f, "\n");
+    printf("Input synapses stored\n");
+}
+
+
+/**
+ * Helpers
+ */
 void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_node_t *matrix_node, int n_neurons){
     int i,j;
 
