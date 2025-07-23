@@ -4,3 +4,4 @@
 #./test_rm_sparse_matrix
 ./test_rm_motifs
 ./test_store_network
+./test_load_network

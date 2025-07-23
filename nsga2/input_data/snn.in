@@ -1,5 +1,5 @@
-16
-10
+4
+3
 2
 0
 
@@ -54,3 +54,7 @@
 1
 3
 50
+
+../experiments/objvalues.txt
+../experiments/classification.txt
+../experiments/individual

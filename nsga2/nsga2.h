@@ -12,6 +12,7 @@
 # include <math.h>
 # include <unistd.h>
 # include <stdint.h> // uint8_t
+# include <string.h>
 
 # include "snn_library.h"
 # include "encoders/image_encoders.h"
@@ -299,6 +300,10 @@ typedef struct NSGA2Type
     int mode;
     int n_samples;
     int n_repetitions;
+
+    char obj_values_dir[500];
+    char classification_dir[500];
+    char **individuals_dir; // [n_individuals x 500]
 } NSGA2Type;
 
 // Global 
@@ -314,6 +319,12 @@ extern population *mixed_pop;
 extern motif_t *motifs_data; // list of motifs
 extern int n_motifs; // number of motifs that can be used
 extern image_dataset_t image_dataset;
+
+
+extern FILE **findividuals; // file to store the individuals
+extern FILE *fobj; // file to store the objective function values during the simulation
+extern FILE *fclass; // file to store the classification obtained for the samples
+extern int currentGeneration;
 
 /**
  *  allocate.c

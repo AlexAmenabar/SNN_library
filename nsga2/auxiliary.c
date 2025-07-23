@@ -312,7 +312,9 @@ void load_individual_from_file(FILE *f, individual *ind){
     fscanf(f, "%d", &(ind->n_input_neurons));
     fscanf(f, "%d", &(ind->n_synapses));
     fscanf(f, "%d", &(ind->n_input_synapses));
-    
+    printf("General information loaded\n");
+    fflush(stdout);
+
     // load motifs
     ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
     new_motif_t *motif_node = ind->motifs_new;
@@ -330,6 +332,8 @@ void load_individual_from_file(FILE *f, individual *ind){
 
         motif_node->next_motif = NULL;
     }
+    printf("Motifs loaded\n");
+    fflush(stdout);
 
     // load neurons
     ind->neurons = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
@@ -338,30 +342,37 @@ void load_individual_from_file(FILE *f, individual *ind){
     fscanf(f, "%lf", &(neuron_node->threshold));
     fscanf(f, "%lf", &(neuron_node->v_rest));
     fscanf(f, "%d", &(neuron_node->refract_time));
-    fscanf(f, "%d", &(neuron_node->r));
+    fscanf(f, "%lf", &(neuron_node->r));
     fscanf(f, "%d", &(neuron_node->behaviour));
     neuron_node->next_neuron = NULL;
 
-    for(i = 1; i<ind->n_motifs; i++){
+    for(i = 1; i<ind->n_neurons; i++){
         neuron_node->next_neuron = (neuron_node_t *)calloc(1, sizeof(neuron_node_t));
         neuron_node = neuron_node->next_neuron;
 
         fscanf(f, "%lf", &(neuron_node->threshold));
         fscanf(f, "%lf", &(neuron_node->v_rest));
         fscanf(f, "%d", &(neuron_node->refract_time));
-        fscanf(f, "%d", &(neuron_node->r));
+        fscanf(f, "%lf", &(neuron_node->r));
         fscanf(f, "%d", &(neuron_node->behaviour));
         
         neuron_node->next_neuron = NULL;
     }
-
+    printf("Neurons loaded\n");
+    fflush(stdout);
     // connect the motifs and the neurons
     connect_motifs_and_neurons(ind);
-
+    printf("Neurons and motifs connected\n");
+    fflush(stdout);
 
     // load dynamic lists of connectivity
     int_node_t *int_node, *prev_int_node;
+
+    ind->connectivity_info.in_connections = (int_dynamic_list_t *)calloc(ind->n_motifs, sizeof(int_dynamic_list_t));
+    ind->connectivity_info.out_connections = (int_dynamic_list_t *)calloc(ind->n_motifs, sizeof(int_dynamic_list_t));
+
     for(i = 0; i<ind->n_motifs; i++){
+        printf(" In motif %d\n", i);
         fscanf(f, "%d", &(ind->connectivity_info.in_connections[i].n_nodes));
         fscanf(f, "%d", &(ind->connectivity_info.out_connections[i].n_nodes));
     
@@ -401,7 +412,8 @@ void load_individual_from_file(FILE *f, individual *ind){
             fscanf(f, "%d", &(int_node->value));
         }
     }
-
+    printf("Connectivity loaded\n");
+    fflush(stdout);
     // load synapses
     ind->connectivity_matrix = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
@@ -409,54 +421,81 @@ void load_individual_from_file(FILE *f, individual *ind){
     fscanf(f, "%d", &(synapse_node->row));
     fscanf(f, "%d", &(synapse_node->col));
     fscanf(f, "%d", &(synapse_node->value));
-    for(i = 0; i<abs(synapse_node->value); i++){
+
+    synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
+    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+
+    i = 0;
+    while(i < abs(synapse_node->value)){
         fscanf(f, "%lf", &(synapse_node->weight[i]));
         fscanf(f, "%d", &(synapse_node->latency[i]));
         fscanf(f, "%d", &(synapse_node->learning_rule[i]));
+        i++;
     }
     synapse_node->next_element = NULL;
 
-    for(i = 1; i<ind->n_synapses-ind->n_input_synapses; i++){
+    while(i<ind->n_synapses-ind->n_input_synapses){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
         fscanf(f, "%d", &(synapse_node->row));
         fscanf(f, "%d", &(synapse_node->col));
         fscanf(f, "%d", &(synapse_node->value));
+        
+        synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
+        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
         for(j = 0; j<abs(synapse_node->value); j++){
             fscanf(f, "%lf", &(synapse_node->weight[j]));
             fscanf(f, "%d", &(synapse_node->latency[j]));
             fscanf(f, "%d", &(synapse_node->learning_rule[j]));
+            i++;
         }
         synapse_node->next_element = NULL;
     }
-
+    printf("Synapses loaded\n");
+    fflush(stdout);
     // load input synapses
     ind->input_synapses = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     synapse_node = ind->input_synapses;
 
     fscanf(f, "%d", &(synapse_node->row));
     fscanf(f, "%d", &(synapse_node->col));
-    fscanf(f, "%lf", &(synapse_node->value));
-    for(i = 0; i<abs(synapse_node->value); i++){
-        fscanf(f, "%d", &(synapse_node->weight[i]));
+    fscanf(f, "%d", &(synapse_node->value));
+    
+    synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
+    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+
+    i = 0;
+    while(i < abs(synapse_node->value)){
+        fscanf(f, "%lf", &(synapse_node->weight[i]));
         fscanf(f, "%d", &(synapse_node->latency[i]));
         fscanf(f, "%d", &(synapse_node->learning_rule[i]));
+        i++;
     }
     synapse_node->next_element = NULL;
 
-    for(i = 1; i<ind->n_input_synapses; i++){
+    while(i<ind->n_input_synapses){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
         fscanf(f, "%d", &(synapse_node->row));
         fscanf(f, "%d", &(synapse_node->col));
         fscanf(f, "%d", &(synapse_node->value));
+        
+        synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
+        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
         for(j = 0; j<abs(synapse_node->value); j++){
             fscanf(f, "%lf", &(synapse_node->weight[j]));
             fscanf(f, "%d", &(synapse_node->latency[j]));
             fscanf(f, "%d", &(synapse_node->learning_rule[j]));
+            i++;
         }
         synapse_node->next_element = NULL;
     }
+    printf("Input synapses loaded\n");
+    fflush(stdout);
 }
 
 
@@ -488,10 +527,10 @@ void store_individual_in_file(FILE *f, individual *ind){
     // store neurons
     neuron_node_t *neuron_node = ind->neurons;
     while(neuron_node){
-        fprintf(f, "%f ", neuron_node->threshold);
-        fprintf(f, "%f ", neuron_node->v_rest);
+        fprintf(f, "%lf ", neuron_node->threshold);
+        fprintf(f, "%lf ", neuron_node->v_rest);
         fprintf(f, "%d ", neuron_node->refract_time);
-        fprintf(f, "%f ", neuron_node->r);
+        fprintf(f, "%lf ", neuron_node->r);
         fprintf(f, "%d ", neuron_node->behaviour);
         fprintf(f , "\n");
         neuron_node = neuron_node->next_neuron;
@@ -532,9 +571,9 @@ void store_individual_in_file(FILE *f, individual *ind){
         fprintf(f, "%d ", synapse_node->col);
         fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
-            fscanf(f, "%f ", synapse_node->weight[i]);
-            fscanf(f, "%d ", synapse_node->latency[i]);
-            fscanf(f, "%d ", synapse_node->learning_rule[i]);
+            fprintf(f, "%lf ", synapse_node->weight[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -550,9 +589,9 @@ void store_individual_in_file(FILE *f, individual *ind){
         fprintf(f, "%d ", synapse_node->col);
         fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
-            fscanf(f, "%f ", synapse_node->weight[i]);
-            fscanf(f, "%d ", synapse_node->latency[i]);
-            fscanf(f, "%d ", synapse_node->learning_rule[i]);
+            fprintf(f, "%lf ", synapse_node->weight[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;

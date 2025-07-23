@@ -19,6 +19,11 @@ population *mixed_pop;
 motif_t *motifs_data; // list of motifs
 int n_motifs; // number of motifs that can be used
 
+FILE **findividuals; // file to store the individuals
+FILE *fobj; // file to store the objective function values during the simulation
+FILE *fclass; // file to store the classification obtained for the samples
+int currentGeneration;
+
 // dataset // TODO: This is only temporal
 image_dataset_t image_dataset;
 
@@ -345,6 +350,22 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.n_repetitions);
     scanf("%d",&nsga2Params.n_samples);
     
+    // file names
+    scanf("%s",&nsga2Params.obj_values_dir);
+    scanf("%s",&nsga2Params.classification_dir);
+
+    nsga2Params.individuals_dir = (char **)malloc(nsga2Params.popsize * sizeof(char *));
+    char tmp_file_name[500];
+    char s_number[500];
+    scanf("%s",&tmp_file_name);
+        
+    for(i = 0; i<nsga2Params.popsize; i++){
+        nsga2Params.individuals_dir[i] = (char *)calloc(500, sizeof(char));
+        strcat(nsga2Params.individuals_dir[i], tmp_file_name);
+        sprintf(s_number, "%d", i); 
+        strcat(nsga2Params.individuals_dir[i], s_number);
+    }
+    
 
     // DEBUG levels are used to manage what messages will be printed
 
@@ -393,6 +414,11 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Mode: %d\n", nsga2Params.mode);
     printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
     printf(" > N samples: %d\n", nsga2Params.n_samples);
+
+    printf(" > Obj. function values file dir: %s\n", nsga2Params.obj_values_dir);
+    printf(" > Classification file dir: %s\n", nsga2Params.classification_dir);
+    for(i=0; i<nsga2Params.popsize; i++)
+        printf(" > Directories for files to store individuals: %s\n", nsga2Params.individuals_dir[i]);
 
     printf("\n = == === ===== === == = \n Input parameters printed!\n = == === ===== === == = \n");
 
@@ -687,6 +713,9 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // NSGA2 simulation: loop over ngen generations
     for (i=2; i<=nsga2Params->ngen; i++)
     {
+
+        currentGeneration = i; // global variable
+
         printf("\n= == === ===== === == = \n Computing Generation %d \n = == === ===== === == = \n", i);
 
     #ifdef DEBUG1
@@ -933,6 +962,11 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     free(image_dataset.images);
     free(image_dataset.labels);
 
+
+    for(i = 0; i<nsga2Params->popsize; i++){
+        free(nsga2Params->individuals_dir[i]);
+    }
+    free(nsga2Params->individuals_dir);
 
     printf("\n Routine successfully exited \n");
     return (0);

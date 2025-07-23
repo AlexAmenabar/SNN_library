@@ -30,6 +30,11 @@ int test1(){
     motif_types = (int *)calloc(4, sizeof(int));
 
     // initialize input (synapses and neurons) paramter
+    nsga2Params->max_vthres = nsga2Params->min_vthres = 150.0;
+    nsga2Params->max_vrest = nsga2Params->min_vrest = 10.0;
+    nsga2Params->max_refracttime = nsga2Params->min_refracttime = 3;
+    nsga2Params->max_latency = nsga2Params->min_latency = 1;
+    nsga2Params->max_R = nsga2Params->min_R = 10.0;
     nsga2Params->image_size = 2;
 
 
