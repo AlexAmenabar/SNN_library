@@ -344,12 +344,21 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.image_size);
     scanf("%d",&nsga2Params.bins);
 
-
     // simulations repetitions and number of samples configuration
     scanf("%d",&nsga2Params.mode);
     scanf("%d",&nsga2Params.n_repetitions);
     scanf("%d",&nsga2Params.n_samples);
-    
+
+    // mutations info
+    scanf("%lf",&nsga2Params.max_neurons);
+    scanf("%lf",&nsga2Params.min_neurons);
+    scanf("%lf",&nsga2Params.max_synapses);
+    scanf("%lf",&nsga2Params.min_synapses);
+    scanf("%lf",&nsga2Params.max_motifs_add);
+    scanf("%lf",&nsga2Params.min_motifs_add);
+    scanf("%lf",&nsga2Params.max_motifs_remove);
+    scanf("%lf",&nsga2Params.min_motifs_remove);
+
     // file names
     scanf("%s",&nsga2Params.obj_values_dir);
     scanf("%s",&nsga2Params.classification_dir);
@@ -415,6 +424,15 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
     printf(" > N samples: %d\n", nsga2Params.n_samples);
 
+    printf("> Max neurons to change (percentage): %lf\n",&nsga2Params.max_neurons);
+    printf("> Min neurons to change (percentage): %lf\n",&nsga2Params.min_neurons);
+    printf("> Max synapses to change (percentage): %lf\n",&nsga2Params.max_synapses);
+    printf("> Min synapses to change (percentage): %lf\n",&nsga2Params.min_synapses);
+    printf("> Max motifs to add (percentage): %lf\n",&nsga2Params.max_motifs_add);
+    printf("> Min motifs to add (percentage): %lf\n",&nsga2Params.min_motifs_add);
+    printf("> Max motifs to remove (percentage): %lf\n",&nsga2Params.max_motifs_remove);
+    printf("> Min motifs to remove (percentage): %lf\n",&nsga2Params.min_motifs_remove);
+
     printf(" > Obj. function values file dir: %s\n", nsga2Params.obj_values_dir);
     printf(" > Classification file dir: %s\n", nsga2Params.classification_dir);
     for(i=0; i<nsga2Params.popsize; i++)
@@ -423,7 +441,6 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf("\n = == === ===== === == = \n Input parameters printed!\n = == === ===== === == = \n");
 
 //#endif
-
 
     return nsga2Params;
 }
@@ -503,6 +520,12 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // == MY CHANGES START HERE == //
     //  =========================  //
 
+    /* Open the files to store the results */
+    fobj = fopen(nsga2Params->obj_values_dir, "w"); // file to store the objective function values during the simulation
+    fclass = fopen(nsga2Params->classification_dir, "w"); // file to store the classification obtained for the samples
+    findividuals = (FILE **)calloc(nsga2Params->popsize, sizeof(FILE *));
+    for(i = 0; i<nsga2Params->popsize; i++)
+        findividuals[i] = fopen(nsga2Params->individuals_dir[i], "w");
 
     /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
     initialize_motifs();
@@ -697,6 +720,8 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
     fclose(f_train);
     fclose(f_train_labels);
+
+
 
     //exit(0);
 
@@ -941,6 +966,15 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         free (nsga2Params->max_binvar);
         free (nsga2Params->nbits);
     }
+
+
+    fclose(fobj); // file to store the objective function values during the simulation 
+    fclose(fclass); // file to store the classification obtained for the samples
+    for(i = 0; i<nsga2Params->popsize; i++){
+        fclose(findividuals[i]);
+    }
+    free(findividuals);
+    
 
     // delloacte populations
     deallocate_memory_pop (nsga2Params,  parent_pop, nsga2Params->popsize);

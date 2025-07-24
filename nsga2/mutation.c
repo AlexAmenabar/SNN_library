@@ -49,7 +49,7 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
     // this should be refactorized
 
 
-    if(mutation_code == 3 && ind->n_motifs < 8) 
+    if(mutation_code == 3 && ind->n_motifs < 10) // when very few motifs are in the network, network can dissappear, this is used to avoid that
         mutation_code = 2; // This is temporal for testing
 
     #ifdef DEBUG2
@@ -91,7 +91,7 @@ void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutatio
     int i, j = 0;
 
     // select neuron to do the changes
-    int_array_t *selected_neurons = select_neurons_to_change(ind);
+    int_array_t *selected_neurons = select_neurons_to_change(nsga2Params, ind);
     
     int mutation_parameter = rnd(0, 2); // the code indicates what mutation will be done
 
@@ -129,12 +129,17 @@ void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutatio
 }
 
 /* Select randomly what neurons will be mutated */
-int_array_t* select_neurons_to_change(individual *ind){
+int_array_t* select_neurons_to_change(NSGA2Type *nsga2Params, individual *ind){
     int i;
 
     int_array_t *selected_neurons;
+
+    int min, max;
+    min = (int)(ind->n_motifs * nsga2Params->min_neurons);
+    max = (int)(ind->n_motifs * nsga2Params->max_neurons);
+
     selected_neurons = (int_array_t *)malloc(sizeof(int_array_t));
-    selected_neurons->n = rnd(1, 1); // for now only one
+    selected_neurons->n = rnd(min, max); // for now only one
     selected_neurons->array = malloc(selected_neurons->n * sizeof(int));
 
     // select neurons to change values
@@ -159,7 +164,7 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
     int i, j = 0, s = 0;
 
     // select neuron to do the changes
-    int_array_t *selected_synapses = select_synapses_to_change(ind);
+    int_array_t *selected_synapses = select_synapses_to_change(nsga2Params, ind);
     
     int mutation_parameter = rnd(0, 2); // the code indicates what mutation will be done
 
@@ -193,17 +198,22 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
 }
 
 /* Select randomly what synapses will be mutated */
-int_array_t* select_synapses_to_change(individual *ind){
+int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
     int i;
 
     int_array_t *selected_synapses;
+
+    int min, max;
+    min = (int)(ind->n_motifs * nsga2Params->min_synapses);
+    max = (int)(ind->n_motifs * nsga2Params->max_synapses);
+
     selected_synapses = (int_array_t *)malloc(sizeof(int_array_t));
-    selected_synapses->n = rnd(1, 1); // for now only one
+    selected_synapses->n = rnd(min, max); // for now only one
     selected_synapses->array = malloc(selected_synapses->n * sizeof(int));
 
     // select neurons to change values
     for(i = 0; i<selected_synapses->n; i++)
-        selected_synapses->array[i] = rnd(0, ind->n_neurons - 1);
+        selected_synapses->array[i] = rnd(0, ind->n_neurons - 1); // TODO: revise this
 
     // order the list
     insertion_sort(selected_synapses->array, selected_synapses->n);
@@ -966,8 +976,6 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
         #endif
 
         update_sparse_matrix_remove_motifs(ind, selected_motifs_to_remove);
-        printf( "Sparse matrix updated!\n");
-        fflush(stdout);
         #ifdef DEBUG3
             rmatrix = (int *)calloc(ind->n_neurons * ind->n_neurons, sizeof(int));
             get_complete_matrix_from_dynamic_list(rmatrix, ind->connectivity_matrix, ind->n_neurons);
@@ -1025,8 +1033,6 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
 
 
         new_selected_motifs_to_remove = remove_motifs_from_dynamic_list(ind, selected_motifs_to_remove);
-        printf(" Dynamic lists updated!\n");
-        fflush(stdout);
 
         // reorder array as now some motifs have been removed // Remove the selected motifs?
         i = 0; // index of the motif that must be processed
@@ -1062,8 +1068,6 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
                     ind->connectivity_info.out_connections[i].n_nodes = 0;
                 }
 
-                printf("Reordering...\n");
-                fflush(stdout);
                 // now move the rest motifs 
                 for(s = i; s<tmp_n_motifs-1; s++){
                     ind->connectivity_info.in_connections[s].first_node = ind->connectivity_info.in_connections[s+1].first_node;
@@ -1121,7 +1125,7 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
                 j++;
             }
         }*/
-        printf(" Reordered\n");
+        //printf(" Reordered\n");
         fflush(stdout);
         for(i = ind->n_motifs - n_remove_motifs; i<ind->n_motifs; i++){
             ind->connectivity_info.in_connections[i].first_node = NULL;
@@ -1129,8 +1133,8 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
             ind->connectivity_info.out_connections[i].first_node = NULL;
             ind->connectivity_info.out_connections[i].n_nodes = 0;
         }
-        printf(" Reordered\n");
-        fflush(stdout);
+        //printf(" Reordered\n");
+        //fflush(stdout);
 
         ind->n_motifs -= n_remove_motifs; // update amount of motifs in the individual
 
@@ -1333,8 +1337,6 @@ void remove_selected_motifs_mutation(NSGA2Type *nsga2Params, individual *ind, in
 
             fflush(stdout);
         #endif
-        printf(" Iteration finished, more to remove %d\n", n_remove_motifs);
-        fflush(stdout);
     }
 
     deallocate_int_arrays(selected_motifs_to_remove, 1);

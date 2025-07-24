@@ -390,10 +390,10 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
 
 
     // set the number of input and output motifs for each motif in the individual
-    min_val = (int)(ind->n_motifs * 0.25);
-    max_val = (int)(ind->n_motifs * 0.50);
-    min_val = 2;
-    max_val = 5;
+    min_val = (int)(ind->n_motifs * 0.05);
+    max_val = (int)(ind->n_motifs * 0.25);
+    //min_val = 2;
+    //max_val = 5;
     max_connect_per_motif = rnd(min_val, max_val); // this is the maximum number of connections that a motif can contain as input or output //rnd(2, 5);
     set_number_of_connections(ind, n_input_connections_per_motif, n_input_connections_per_motif_done, max_connect_per_motif);
     set_number_of_connections(ind, n_output_connections_per_motif, n_output_connections_per_motif_done, max_connect_per_motif);
@@ -960,6 +960,12 @@ sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matr
     return matrix_node;
 }
 
+int exp_distribution(double lambda){
+    double u = (double)rand() / RAND_MAX;
+    int value = (int)(-log(1-u) / lambda); //% max_delay;
+    return value;  
+}
+
 /* Function to initialize a matrix node (synapse) */
 void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
     int i;
@@ -975,7 +981,7 @@ void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *m
 
     // initialize the values in the list // TODO
     for(i = 0; i<abs(value); i++){
-        matrix_node->latency[i] = 3; // TODO: This must be a random value following an exponential distribution
+        matrix_node->latency[i] = exp_distribution(1.0);//3; // TODO: This must be a random value following an exponential distribution
         matrix_node->weight[i] = 0; // TODO: In this moment weight is not used inside the evolutionary algorithm, it is here for future purposes
         matrix_node->learning_rule[i] = 0; // TODO: Learning rule is not initialized in the first phase of the evolutionary algorithm
     }

@@ -1,0 +1,61 @@
+- Population size
+- n generations
+- n objective functions
+
+-- OTHERS
+
+- Neuron type
+- n max motifs
+- n min motifs
+- max multiple connections (between two motifs)
+- min multiple connections (between two motifs)
+- p cross
+- p mut
+
+- max threshold value
+- min threshold value
+- max v rest
+- min v rest
+- max refractary time
+- min refractary time
+- max resistance
+- min resistance
+
+- max latency
+- min latency
+- max learning rule
+- min learning rule
+- max weight
+- min weight
+
+- dataset type
+- directory to the train dataset
+- directory to the labels of the train dataset
+- directory to the test dataset
+- directory to the labels of the test dataset
+- n train samples
+- n test samples
+- n classes in the dataset
+- image size (n x n)
+- bins
+
+- mode
+- number of repetitions
+- number of samples taken into account
+
+- percentage of max neuron to change
+- percentage of min neuron to change
+
+- percentage max synapses to change
+- percentage min synapses to change
+
+- perentage of max motifs to add
+- percentage of min motifs to add
+
+- perentage of max motifs to remove
+- percentage of min motifs to remove
+
+- directory of the file to store the objetive values
+- directory of the file to store the classification info (distance matrix)
+- directory to store the best individuals
+

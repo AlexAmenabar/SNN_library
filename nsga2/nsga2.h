@@ -301,6 +301,11 @@ typedef struct NSGA2Type
     int n_samples;
     int n_repetitions;
 
+    double max_neurons, min_neurons;
+    double max_synapses, min_synapses;
+    double max_motifs_add, min_motifs_add;
+    double max_motifs_remove, min_motifs_remove;
+
     char obj_values_dir[500];
     char classification_dir[500];
     char **individuals_dir; // [n_individuals x 500]
@@ -458,10 +463,10 @@ void mutation_pop (NSGA2Type *nsga2Params, population *pop);
 void mutation_ind (NSGA2Type *nsga2Params, individual *ind);
 // neurons
 void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
-int_array_t* select_neurons_to_change(individual *ind); // TODO: not here...
+int_array_t* select_neurons_to_change(NSGA2Type *nsga2Params, individual *ind); // TODO: not here...
 // synapses
 void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code);
-int_array_t* select_synapses_to_change(individual *ind); // TODO: not here...
+int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind); // TODO: not here...
 // add motifs
 void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types);

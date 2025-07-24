@@ -66,6 +66,15 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     }
     free(selected_samples_info);
 
+
+    // write the results in the results file
+    for(i = 0; i<nsga2Params->popsize; i++){
+        for(j = 0; j<nsga2Params->nobj; j++)
+            fprintf(fobj, "%lf ", pop->ind[i].obj[j]); // all obj function values of an individual in the same row
+        fprintf(fobj, "\n"); // each individual one row
+    }
+    fprintf(fobj, "\n"); // let a line for the next generation
+
     return;
 }
 
@@ -244,16 +253,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
             }
         }
 
-        // print
-        for(i = 0; i<n_samples; i++){
-            for(j = 0; j<n_samples; j++){
-                printf("%lf ", distance_matrix[i * n_samples + j]);
-            }
-            printf("\n");
-        }
-        printf("\n");
-
-
 
         // Find centroids and fill neccessary data of "clusters"
         // First reinitialize values
@@ -334,7 +333,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
             }
         }
         obj[0][rep] /= n_inter_class_distances;        
-
+        
         // TODO: Second objective: probably should be moved to a function for Modularity
         for(i = 0; i<n_samples; i++){
             for(j = 0; j<ind->snn->n_neurons; j++){
@@ -365,6 +364,8 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         }
         ind->obj[i] /= n_repetitions;
     }
+
+    ind->obj[0] = -ind->obj[0];
 
     // write the results in a file
 
