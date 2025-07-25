@@ -598,6 +598,8 @@ void store_individual_in_file(FILE *f, individual *ind){
     }
     fprintf(f, "\n");
     printf("Input synapses stored\n");
+
+    fflush(f);
 }
 
 

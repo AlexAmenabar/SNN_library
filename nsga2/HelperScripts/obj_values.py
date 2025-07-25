@@ -57,7 +57,7 @@ def plot_objectives(best1, worst1, best2, worst2):
     plt.show()
 
 # === Main Execution ===
-file_path = './experiments/objvalues.txt'  # Replace with your actual filename
+file_path = './experiments/objvalues_par.txt'  # Replace with your actual filename
 generations = read_generations(file_path)
 best1, worst1, best2, worst2 = compute_best_worst(generations)
 plot_objectives(best1, worst1, best2, worst2)

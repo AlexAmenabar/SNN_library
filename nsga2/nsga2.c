@@ -710,18 +710,18 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     //report_pop (nsga2Params, parent_pop, fpt1);
     //printf(" > Report population\n");
     
-    fprintf(fpt4,"# gen = 1\n");
+    //fprintf(fpt4,"# gen = 1\n");
     //report_pop(nsga2Params, parent_pop,fpt4);
     //printf("\n -- Generation 1 --");
     
     //if (nsga2Params->choice!=0)    
     //    onthefly_display (nsga2Params, parent_pop,gp,1);
 
-    fflush(fpt1);
+    /*fflush(fpt1);
     fflush(fpt2);
     fflush(fpt3);
     fflush(fpt4);
-    fflush(fpt5);
+    fflush(fpt5);*/
 
     fclose(f_train);
     fclose(f_train_labels);

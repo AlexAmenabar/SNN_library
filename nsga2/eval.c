@@ -36,13 +36,8 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     n_repetitions = nsga2Params->n_repetitions;
 
     // allocate memory to store information of selected samples for each repetition
-    selected_samples_info = (selected_samples_info_t *)malloc(nsga2Params->n_repetitions * sizeof(selected_samples_info_t));
+    selected_samples_info = (selected_samples_info_t *)calloc(nsga2Params->n_repetitions, sizeof(selected_samples_info_t));
     for(i = 0; i<n_repetitions; i++){
-        //printf(" > Selecting samples for repetition %d\n", i);
-        //selected_samples_info[i].sample_indexes = (int *)malloc(n_samples * sizeof(int));
-        //selected_samples_info[i].labels = (int *)calloc(n_samples, sizeof(int));
-        //selected_samples_info[i].n_selected_samples_per_class = (int *)calloc(n_samples, sizeof(int));
-
         // select samples to simulate on this repetition
         select_samples(&(selected_samples_info[i]), n_samples, mode, NULL); 
     }
@@ -187,9 +182,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     // ========================================================= //
     
     for(rep = 0; rep<n_repetitions; rep++){
-        printf(" > > In repetition %d\n", rep);
-        fflush(stdout);
-
+        
         // get information about the samples that will be computed in this repetition 
         sample_indexes = selected_samples_info[rep].sample_indexes; // store the indexes of the selected samples
         labels = selected_samples_info[rep].labels; // store the labels of the selected samples
@@ -197,7 +190,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         sample_indexes_per_class = selected_samples_info[rep].sample_indexes_per_class; // store the indexes of the samples for each class
 
         // reinitialize lists for this repetition
-        #pragma omp parallel for num_threads(8)
+        #pragma omp parallel for num_threads(8) private(i)
         for(i=0; i<n_samples; i++){
             mean_distance_per_sample[i] = 0;
             max_distance_per_sample_index[i] = 0;
@@ -231,15 +224,10 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // initialize weights for this repetition randomly
         initialize_synapse_weights(nsga2Params, ind);
-        printf(" > > Weights initialized\n");
-        fflush(stdout);
-
+        
         // simulate the network // TODO: generalize dataset management
         simulate_by_samples_enas(ind->snn, nsga2Params, ind, &results, n_samples, sample_indexes, &image_dataset);
-        printf(" > > Simulating samples in SNN\n");
-        fflush(stdout);
-
-
+        
         // =========================== //
         // Compute objective functions //
         // =========================== //
@@ -247,7 +235,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         // TODO: First objective: probably should be moved to a function for Modularity
 
         // copy the amount of spikes from the results struct // TODO: Move this to a function
-        #pragma omp parallel for num_threads(8)
+        #pragma omp parallel for num_threads(8) private(i, j)
         for(i = 0; i<n_samples; i++)
             for(j = 0; j<ind->snn->n_neurons; j++)
                 spike_amount_per_neurons_per_sample[i][j] = results.results_per_sample[i].n_spikes_per_neuron[j];
@@ -255,7 +243,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // TODO: This should be moved to a function and gneeralized to allow the use of more distance metrics
         // compute the distance matrix for this repetition // Paralelize????
-        #pragma omp parallel for num_threads(8) schedule(guided, 10)
+        #pragma omp parallel for num_threads(8) schedule(guided, 10) private(i, j)
         for(i = 0; i<n_samples - 1; i++){
             for(j = i + 1; j<n_samples; j++){
                 distance_matrix[i * n_samples + j] = 
@@ -263,9 +251,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
                 distance_matrix[j * n_samples + i] = distance_matrix[i * n_samples + j];
             }
         }
-        printf(" > > Distance matrix computed\n");
-        fflush(stdout);
-
+        
 
         // Find centroids and fill neccessary data of "clusters"
         // First reinitialize values
@@ -347,13 +333,16 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         }
         obj[0][rep] /= n_inter_class_distances;        
         
-        // TODO: Second objective: probably should be moved to a function for Modularity
+        // TODO: Second objective: probably should be moved to a function for Modularity and paralelized
+        int sum = 0;
+        #pragma omp parallel for num_threads(8) private(i, j) reduction(+:sum)
         for(i = 0; i<n_samples; i++){
             for(j = 0; j<ind->snn->n_neurons; j++){
-                obj[1][rep] += spike_amount_per_neurons_per_sample[i][j];
+                sum += spike_amount_per_neurons_per_sample[i][j];
             }
         }
         // compute the mean for all samples
+        obj[1][rep] = sum;
         obj[1][rep] /= n_samples;
     }
 
@@ -377,7 +366,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     // ======================== //
     // free all the memory used //
     // ======================== //
-
+    
     for(i = 0; i<n_obj; i++)
         free(obj[i]);
     free(obj);
@@ -387,7 +376,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     free(max_distance_per_sample_index);
     free(centroid_info);
     free(distance_matrix);
-
+    
     for(i=0; i<n_samples; i++)
         free(spike_amount_per_neurons_per_sample[i]);
     free(spike_amount_per_neurons_per_sample);
@@ -415,8 +404,8 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
 
     // loop over selected samples
     for(i = 0; i<n_selected_samples; i++){
-        printf(" > > > In sample %d\n", i);
-        fflush(stdout);
+        //printf(" > > > In sample %d\n", i);
+        //fflush(stdout);
         // get results struct
         results_per_sample = &(results->results_per_sample[i]);
 
@@ -486,8 +475,8 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
 
 
         // run the simulation
-        printf(" > > > Simulating sample...\n");
-        fflush(stdout);
+        //printf(" > > > Simulating sample...\n");
+        //fflush(stdout);
         for(j=0; j<dataset->bins * 10; j++){ 
 
             clock_gettime(CLOCK_MONOTONIC, &start_bin);

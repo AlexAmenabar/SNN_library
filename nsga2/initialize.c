@@ -981,7 +981,8 @@ void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *m
 
     // initialize the values in the list // TODO
     for(i = 0; i<abs(value); i++){
-        matrix_node->latency[i] = exp_distribution(1.0);//3; // TODO: This must be a random value following an exponential distribution
+        matrix_node->latency[i] = exp_distribution(0.75);//3; 
+        if(matrix_node->latency[i] <= 0) matrix_node->latency[i] = 1; // latency must be bigger than 0
         matrix_node->weight[i] = 0; // TODO: In this moment weight is not used inside the evolutionary algorithm, it is here for future purposes
         matrix_node->learning_rule[i] = 0; // TODO: Learning rule is not initialized in the first phase of the evolutionary algorithm
     }

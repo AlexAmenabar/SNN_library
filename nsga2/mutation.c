@@ -50,7 +50,7 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
     // this should be refactorized
 
 
-    if(mutation_code == 3 && ind->n_motifs < 10) // when very few motifs are in the network, network can dissappear, this is used to avoid that
+    if(mutation_code == 3 && ind->n_motifs < nsga2Params->min_motifs) // when very few motifs are in the network, network can dissappear, this is used to avoid that
         mutation_code = 2; // This is temporal for testing
 
     #ifdef DEBUG2

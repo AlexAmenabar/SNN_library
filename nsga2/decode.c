@@ -17,7 +17,7 @@ void decode_pop (NSGA2Type *nsga2Params, population *pop)
     int i;
     for (i=0; i<nsga2Params->popsize; i++)
     {
-        #ifdef DEBUG2
+        #ifdef DEBUG1
         printf(" > > Decoding individual %d...\n", i);
         fflush(stdout);
         #endif
@@ -103,13 +103,22 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
         // get next synapse node
         synapse_node = synapse_node->next_element;
     }
-
+    #ifdef DEBUG1
+        printf(" Middle synapses finished, staring with input synapses\n");
+        fflush(stdout);
+    #endif
     
-    // count input synapses
+    // count input synapsesneurons_input_synapses
     synapse_node = ind->input_synapses;
-    while(synapse_node != NULL){
-        i++;
+    while(synapse_node){
+
+        #ifdef DEBUG3
+            printf(" Synapse_node.col = %d (%d / %d)\n", synapse_node->col, counter + abs(synapse_node->value), ind->n_synapses);
+            fflush(stdout);
+        #endif
+        
         neurons_input_synapses[synapse_node->col] += abs(synapse_node->value); // add input synapses to input neurons
+        counter+= abs(synapse_node->value);
 
         snn->n_synapses += abs(synapse_node->value); // this should be counted when creating the dynamic list
         snn->n_input_synapses += abs(synapse_node->value); // this should be counted when creating the dynamic list
@@ -122,12 +131,24 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
     snn->n_input = ind->n_input_neurons = snn->n_input_synapses;
 
     /* initialize network neurons */
+    #ifdef DEBUG1
+    printf(" > > > Initialising neurons from genotype... (%d)\n", ind->n_neurons);
+    fflush(stdout);
+    #endif
     initialize_neurons_from_genotype(snn, ind, neurons_input_synapses, neurons_output_synapses, nsga2Params);
-
+    
     // initialize network synapses
+    #ifdef DEBUG1
+    printf(" > > > Initialising synapses from genotype... (%d)\n", ind->n_synapses);
+    fflush(stdout);
+    #endif
     initialize_synapses_from_genotype(snn, ind, nsga2Params);
 
     // connect neurons and synapses
+    #ifdef DEBUG1
+    printf(" > > > Connecting neurons and synapses...\n");
+    fflush(stdout);
+    #endif
     connect_neurons_by_synapses_from_genotype(snn, ind, nsga2Params);
 
     // free memory
