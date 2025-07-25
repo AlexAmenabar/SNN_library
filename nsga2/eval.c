@@ -187,7 +187,9 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     // ========================================================= //
     
     for(rep = 0; rep<n_repetitions; rep++){
-        
+        printf(" > > In repetition %d\n", rep);
+        fflush(stdout);
+
         // get information about the samples that will be computed in this repetition 
         sample_indexes = selected_samples_info[rep].sample_indexes; // store the indexes of the selected samples
         labels = selected_samples_info[rep].labels; // store the labels of the selected samples
@@ -195,6 +197,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         sample_indexes_per_class = selected_samples_info[rep].sample_indexes_per_class; // store the indexes of the samples for each class
 
         // reinitialize lists for this repetition
+        #pragma omp parallel for num_threads(8)
         for(i=0; i<n_samples; i++){
             mean_distance_per_sample[i] = 0;
             max_distance_per_sample_index[i] = 0;
@@ -228,10 +231,13 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // initialize weights for this repetition randomly
         initialize_synapse_weights(nsga2Params, ind);
+        printf(" > > Weights initialized\n");
+        fflush(stdout);
 
         // simulate the network // TODO: generalize dataset management
         simulate_by_samples_enas(ind->snn, nsga2Params, ind, &results, n_samples, sample_indexes, &image_dataset);
-
+        printf(" > > Simulating samples in SNN\n");
+        fflush(stdout);
 
 
         // =========================== //
@@ -241,6 +247,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         // TODO: First objective: probably should be moved to a function for Modularity
 
         // copy the amount of spikes from the results struct // TODO: Move this to a function
+        #pragma omp parallel for num_threads(8)
         for(i = 0; i<n_samples; i++)
             for(j = 0; j<ind->snn->n_neurons; j++)
                 spike_amount_per_neurons_per_sample[i][j] = results.results_per_sample[i].n_spikes_per_neuron[j];
@@ -248,13 +255,16 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // TODO: This should be moved to a function and gneeralized to allow the use of more distance metrics
         // compute the distance matrix for this repetition // Paralelize????
+        #pragma omp parallel for num_threads(8) schedule(guided, 10)
         for(i = 0; i<n_samples - 1; i++){
             for(j = i + 1; j<n_samples; j++){
                 distance_matrix[i * n_samples + j] = 
                     compute_manhattan_distance(spike_amount_per_neurons_per_sample[i], spike_amount_per_neurons_per_sample[j], n_neurons);//nsga2Params->bins);
-                distance_matrix[j * n_samples + i] += distance_matrix[i * n_samples + j];
+                distance_matrix[j * n_samples + i] = distance_matrix[i * n_samples + j];
             }
         }
+        printf(" > > Distance matrix computed\n");
+        fflush(stdout);
 
 
         // Find centroids and fill neccessary data of "clusters"
@@ -405,7 +415,8 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
 
     // loop over selected samples
     for(i = 0; i<n_selected_samples; i++){
-        //printf(" >>>>>>>> In sample %d\n", i);
+        printf(" > > > In sample %d\n", i);
+        fflush(stdout);
         // get results struct
         results_per_sample = &(results->results_per_sample[i]);
 
@@ -475,13 +486,15 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
 
 
         // run the simulation
+        printf(" > > > Simulating sample...\n");
+        fflush(stdout);
         for(j=0; j<dataset->bins * 10; j++){ 
-            //printf(" >>>>>>>>>>>>> In bin %d\n", j);
+
             clock_gettime(CLOCK_MONOTONIC, &start_bin);
 
             // process training sample
             //printf("processing bin %d\n", j);
-            #pragma omp parallel num_threads(n_process)
+            #pragma omp parallel num_threads(8)
             {
                 clock_gettime(CLOCK_MONOTONIC, &start_neurons);
                 #pragma omp for schedule(dynamic, 10) private(l) 
