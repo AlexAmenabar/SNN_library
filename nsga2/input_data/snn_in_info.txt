@@ -7,6 +7,8 @@
 - Neuron type
 - n max motifs
 - n min motifs
+- Maximum percentage of connectivity for a motif
+- Minimum percentage of connectivity for a motif
 - max multiple connections (between two motifs)
 - min multiple connections (between two motifs)
 - p cross

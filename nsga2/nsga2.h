@@ -301,6 +301,7 @@ typedef struct NSGA2Type
     int n_samples;
     int n_repetitions;
 
+    double max_percentage_connectivity, min_percentage_connectivity;
     double max_neurons, min_neurons;
     double max_synapses, min_synapses;
     double max_motifs_add, min_motifs_add;
@@ -472,7 +473,7 @@ void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motif
 void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types);
 void add_new_input_motifs_to_connectivity_lists(individual *ind, int_dynamic_list_t *connections, int_array_t *selected_motifs);
 void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);
-int_array_t* select_motifs(individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs); // here...
+int_array_t* select_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs); // here...
 int_array_t* select_motifs_to_connect_with_new_motifs(individual *ind, int n_motifs, int n_new_motifs, int min_connected_motifs, int max_connected_motifs); // TODO
 // remove motifs
 void remove_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_remove_motifs);

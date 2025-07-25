@@ -49,9 +49,11 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
 
     for (i=0; i<nsga2Params->popsize; i++)
     {
-        //printf(" > Evaluating individual %d...\n", i);
+        printf(" > Evaluating individual %d...\n", i);
+        fflush(stdout);
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
-        //printf(" > Individual %d evaluated!\n", i);
+        printf(" > Individual %d evaluated!\n", i);
+        fflush(stdout);
     }
 
     // free memory of selected samples
@@ -74,6 +76,7 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
         fprintf(fobj, "\n"); // each individual one row
     }
     fprintf(fobj, "\n"); // let a line for the next generation
+    fflush(fobj);
 
     return;
 }
@@ -117,7 +120,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     int i, j, l, n_samples, n_neurons, n_classes, time_steps, n_repetitions, rep, mode, n_obj;
     int *sample_indexes, *labels, *n_selected_samples_per_class, **sample_indexes_per_class;
     int **spike_amount_per_neurons_per_sample, *max_distance_per_sample_index;
-    double *distance_matrix, *distance_matrix_mean, *mean_distance_per_sample, *max_distance_per_sample, *inter_class_distance_matrix, **obj;
+    double *distance_matrix, *mean_distance_per_sample, *max_distance_per_sample, *inter_class_distance_matrix, **obj;
     int temp_label, temp_mean, temp_global_index, temp_local_index, temp_global_index2, temp_local_index2;
     centroid_info_t *centroid_info;
     int n_inter_class_distances;
@@ -156,8 +159,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
     // distance matrix to store distances between spike trains generated for different samples [n_repetitions x n_samples x n_samples]
     distance_matrix = (double *)calloc(n_samples * n_samples, sizeof(double));
-    distance_matrix_mean = (double *)calloc(n_samples * n_samples, sizeof(double));
-
 
     // array to store information of clusters: the centroid of each class cluster, the mean distance from the centroid to the rest of samples, and the distance to the sample that is farther
     centroid_info = (centroid_info_t *)calloc(n_classes, sizeof(centroid_info_t));
@@ -177,6 +178,8 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     for(i = 0; i<nsga2Params->nobj; i++)
         obj[i] = (double *)calloc(n_repetitions, sizeof(double));
 
+
+    // print in the file the information to visualize results
 
 
     // ========================================================= //
@@ -249,7 +252,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
             for(j = i + 1; j<n_samples; j++){
                 distance_matrix[i * n_samples + j] = 
                     compute_manhattan_distance(spike_amount_per_neurons_per_sample[i], spike_amount_per_neurons_per_sample[j], n_neurons);//nsga2Params->bins);
-                distance_matrix_mean[i * n_samples + j] += distance_matrix[i * n_samples + j];
+                distance_matrix[j * n_samples + i] += distance_matrix[i * n_samples + j];
             }
         }
 
@@ -345,14 +348,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     }
 
 
-    // compute the mean of the distance matrix
-    for(i = 0; i<n_samples - 1; i++){
-        for(j = i + 1; j<n_samples; j++){
-            distance_matrix_mean[i * n_samples + j] /= n_repetitions; // compute the mean
-            distance_matrix_mean[j * n_samples + i] = distance_matrix_mean[i * n_samples + j]; // copy to empty positions
-        }
-    }
-
     // =========================================== //
     // compute the mean of the objective functions //
     // =========================================== //
@@ -382,7 +377,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     free(max_distance_per_sample_index);
     free(centroid_info);
     free(distance_matrix);
-    free(distance_matrix_mean);
 
     for(i=0; i<n_samples; i++)
         free(spike_amount_per_neurons_per_sample[i]);
@@ -549,13 +543,8 @@ void select_samples(selected_samples_info_t *selected_samples_info, int n_sample
     selected_samples_info->n_selected_samples_per_class = (int *)calloc(image_dataset.n_classes, sizeof(int));
     selected_samples_info->sample_indexes_per_class = (int **)calloc(image_dataset.n_classes, sizeof(int *));
 
-
-    for(i=0; i<n_samples; i++){
-        selected_samples_info->sample_indexes[i] = 0; 
-    }
-
-    for(i=0; i<image_dataset.n_classes; i++){
-        selected_samples_info->n_selected_samples_per_class[i] = 0;
+    for(i = 0; i<n_samples; i++){
+        selected_samples_info->sample_indexes[i] = -1;
     }
 
     // in case amount of samples per class should be balanced, calculate the number of samples for each class
@@ -604,7 +593,7 @@ void select_samples(selected_samples_info_t *selected_samples_info, int n_sample
     int *next_index_class = (int *)calloc(image_dataset.n_classes, sizeof(int));
     int temp_class;
     for(i = 0; i<image_dataset.n_classes; i++)
-        selected_samples_info->sample_indexes_per_class[i] = (int *)malloc(selected_samples_info->n_selected_samples_per_class[i] * sizeof(int));
+        selected_samples_info->sample_indexes_per_class[i] = (int *)calloc(selected_samples_info->n_selected_samples_per_class[i], sizeof(int));
 
     // loop over all selected samples and add each one to the corresponding list
     for(i = 0; i<n_samples; i++){

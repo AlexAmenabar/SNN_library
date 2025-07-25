@@ -30,6 +30,7 @@ void mutation_pop (NSGA2Type *nsga2Params,  population *pop)
 /* Function to perform mutation of an individual */
 void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
+    int min,max;
     /*
     Existing mutations:
         - Add motif(s)
@@ -67,11 +68,20 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
             synapse_change_mutation(nsga2Params, ind, mutation_code);
             break;
         case 2: // add motif mutation
-            mutation_parameter =  rnd(1, 5); // TODO: n_motifs, this should not be a fixed value
+            min = (int)(ind->n_motifs * nsga2Params->min_motifs_add);
+            max = (int)(ind->n_motifs * nsga2Params->max_motifs_add);
+            mutation_parameter =  rnd(min, max);//rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
+                
+            //mutation_parameter =  rnd(1, 5); // TODO: n_motifs, this should not be a fixed value
             add_motif_mutation(nsga2Params, ind, mutation_parameter, NULL, NULL, NULL);
             break;
         case 3: // remove motif mutation
-            mutation_parameter =  rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
+            min = (int)(ind->n_motifs * nsga2Params->min_motifs_remove);
+            max = (int)(ind->n_motifs * nsga2Params->max_motifs_remove);
+            mutation_parameter =  rnd(min, max);//rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
+            #ifdef DEBUG2
+            printf(" > > > > N motifs: %d / %d\n", mutation_parameter, ind->n_motifs);
+            #endif
             remove_motif_mutation(nsga2Params, ind, mutation_parameter);
             break;
     }
@@ -134,9 +144,12 @@ int_array_t* select_neurons_to_change(NSGA2Type *nsga2Params, individual *ind){
 
     int_array_t *selected_neurons;
 
-    int min, max;
+    int min, max; // select the amount of neurons to mutate
     min = (int)(ind->n_motifs * nsga2Params->min_neurons);
     max = (int)(ind->n_motifs * nsga2Params->max_neurons);
+
+    if(max > ind->n_neurons)
+        max = ind->n_neurons;
 
     selected_neurons = (int_array_t *)malloc(sizeof(int_array_t));
     selected_neurons->n = rnd(min, max); // for now only one
@@ -166,8 +179,6 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
     // select neuron to do the changes
     int_array_t *selected_synapses = select_synapses_to_change(nsga2Params, ind);
     
-    int mutation_parameter = rnd(0, 2); // the code indicates what mutation will be done
-
     // loop over dynamic list of neurons to find the selected ones and change them
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
@@ -206,6 +217,8 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
     int min, max;
     min = (int)(ind->n_motifs * nsga2Params->min_synapses);
     max = (int)(ind->n_motifs * nsga2Params->max_synapses);
+    if(max > ind->n_synapses)
+        max = ind->n_synapses;
 
     selected_synapses = (int_array_t *)malloc(sizeof(int_array_t));
     selected_synapses->n = rnd(min, max); // for now only one
@@ -292,12 +305,14 @@ void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motif
 
 
     /* Select input and output motifs for each new motif, and then map all to input connections */
-    min_connected_motifs = 1; // TODO: randomization and network dependency
-    max_connected_motifs = 3; // TODO: randomization and network dependency
-        
+    //min_connected_motifs = 1; // TODO: randomization and network dependency
+    //max_connected_motifs = 3; // TODO: randomization and network dependency
+    min_connected_motifs = (int)(ind->n_motifs * nsga2Params->min_percentage_connectivity);
+    max_connected_motifs = (int)(ind->n_motifs * nsga2Params->max_percentage_connectivity);  
+    
     if(!selected_input_motifs || !selected_output_motifs){
-        selected_input_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs ,max_connected_motifs); // select input motifs for each new motif
-        selected_output_motifs = select_motifs(ind, n_new_motifs, min_connected_motifs, max_connected_motifs); // selected output motifs for each new motif
+        selected_input_motifs = select_motifs(nsga2Params, ind, n_new_motifs, min_connected_motifs ,max_connected_motifs); // select input motifs for each new motif
+        selected_output_motifs = select_motifs(nsga2Params, ind, n_new_motifs, min_connected_motifs, max_connected_motifs); // selected output motifs for each new motif
     }
 
     // map from input and output list received in this function to only a input list TODO: get directly this list instead of mapping, optimization
@@ -756,13 +771,12 @@ void add_new_input_motifs_to_connectivity_lists(individual *ind, int_dynamic_lis
 }
 
 /* Function to select input or output motifs for new motifs */
-int_array_t* select_motifs(individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs){
+int_array_t* select_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs){
     int i, j;
 
     int_array_t *selected_motifs;
     selected_motifs = (int_array_t *)malloc(n_motifs * sizeof(int_array_t)); // selected input/output motifs per each new motif
     
-
     // per each new motif, select input or output motifs
     for(i = 0; i<n_motifs; i++){
         // select amount of motifs and allocate memory
@@ -1496,12 +1510,11 @@ int_array_t* remove_motifs_from_dynamic_list(individual *ind, int_array_t *selec
 
 /* Select randomly which motifs will be removed */
 int_array_t* select_motifs_to_be_removed(individual *ind, int n_motifs){
-    int i, j, selected = 0, eq = 1;
+    int i, j, selected = 0, eq = 1, min, max;
 
     int_array_t *selected_motifs;
     selected_motifs = (int_array_t *)malloc(sizeof(int_array_t)); // selected input/output motifs per each new motif
     
-
     // select motifs to be removed. A motif can not be appear two times
     selected_motifs->n = n_motifs; // TODO: this should not be 1 always
     selected_motifs->array = malloc(selected_motifs->n * sizeof(int));
@@ -1857,7 +1870,7 @@ int_array_t* map_IO_motifs_to_input(individual *ind, int n_new_motifs, int_array
 
 /* Map from a int_array that contains input motif for a set of motifs, to output motifs */
 int_array_t *map_from_input_motifs_to_output(individual *ind, int n_motifs, int n_new_motifs, int max_connected_motifs, int_array_t *all_selected_input_motifs){
-    int i, j;
+    int i, j, tmp_motif_index;
 
     int_array_t *all_selected_output_motifs = (int_array_t *)calloc(ind->n_motifs, sizeof(int_array_t));
 
@@ -1866,7 +1879,7 @@ int_array_t *map_from_input_motifs_to_output(individual *ind, int n_motifs, int 
         // loop over input motifs of this motif
         for(j = 0; j<all_selected_input_motifs[i].n; j++){
 
-            int tmp_motif_index = all_selected_input_motifs[i].array[j];
+            tmp_motif_index = all_selected_input_motifs[i].array[j];
 
             if(!all_selected_output_motifs[tmp_motif_index].array){
                 all_selected_output_motifs[tmp_motif_index].n = 0;

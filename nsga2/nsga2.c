@@ -309,6 +309,9 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.neuron_type);    
     scanf("%d",&nsga2Params.max_motifs);
     scanf("%d",&nsga2Params.min_motifs);
+    scanf("%lf",&nsga2Params.max_percentage_connectivity);
+    scanf("%lf",&nsga2Params.min_percentage_connectivity);
+    scanf("%d",&nsga2Params.max_multiple_connections);
     scanf("%d",&nsga2Params.max_multiple_connections);
     scanf("%d",&nsga2Params.min_multiple_connections);
     scanf("%lf",&nsga2Params.pcross);
@@ -388,6 +391,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Neuron type: %d\n", nsga2Params.neuron_type);
     printf(" > Max motifs: %d\n", nsga2Params.max_motifs);
     printf(" > Min motifs: %d\n", nsga2Params.min_motifs);
+    printf(" > Max percentage of connectivity: %lf\n", nsga2Params.max_percentage_connectivity);
+    printf(" > Min percentage of connectivity: %lf\n", nsga2Params.min_percentage_connectivity);
     printf(" > Max multiple connections: %d\n", nsga2Params.max_multiple_connections);
     printf(" > Min multiple connections: %d\n", nsga2Params.min_multiple_connections);
     printf(" > P cross: %e\n", nsga2Params.pcross);
@@ -424,14 +429,14 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
     printf(" > N samples: %d\n", nsga2Params.n_samples);
 
-    printf("> Max neurons to change (percentage): %lf\n",&nsga2Params.max_neurons);
-    printf("> Min neurons to change (percentage): %lf\n",&nsga2Params.min_neurons);
-    printf("> Max synapses to change (percentage): %lf\n",&nsga2Params.max_synapses);
-    printf("> Min synapses to change (percentage): %lf\n",&nsga2Params.min_synapses);
-    printf("> Max motifs to add (percentage): %lf\n",&nsga2Params.max_motifs_add);
-    printf("> Min motifs to add (percentage): %lf\n",&nsga2Params.min_motifs_add);
-    printf("> Max motifs to remove (percentage): %lf\n",&nsga2Params.max_motifs_remove);
-    printf("> Min motifs to remove (percentage): %lf\n",&nsga2Params.min_motifs_remove);
+    printf("> Max neurons to change (percentage): %lf\n",nsga2Params.max_neurons);
+    printf("> Min neurons to change (percentage): %lf\n",nsga2Params.min_neurons);
+    printf("> Max synapses to change (percentage): %lf\n",nsga2Params.max_synapses);
+    printf("> Min synapses to change (percentage): %lf\n",nsga2Params.min_synapses);
+    printf("> Max motifs to add (percentage): %lf\n",nsga2Params.max_motifs_add);
+    printf("> Min motifs to add (percentage): %lf\n",nsga2Params.min_motifs_add);
+    printf("> Max motifs to remove (percentage): %lf\n",nsga2Params.max_motifs_remove);
+    printf("> Min motifs to remove (percentage): %lf\n",nsga2Params.min_motifs_remove);
 
     printf(" > Obj. function values file dir: %s\n", nsga2Params.obj_values_dir);
     printf(" > Classification file dir: %s\n", nsga2Params.classification_dir);
@@ -439,7 +444,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
         printf(" > Directories for files to store individuals: %s\n", nsga2Params.individuals_dir[i]);
 
     printf("\n = == === ===== === == = \n Input parameters printed!\n = == === ===== === == = \n");
-
+    fflush(stdout);
 //#endif
 
     return nsga2Params;
@@ -742,7 +747,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         currentGeneration = i; // global variable
 
         printf("\n= == === ===== === == = \n Computing Generation %d \n = == === ===== === == = \n", i);
-
+        fflush(stdout);
     #ifdef DEBUG1
 
         printf(" > Selecting individuals from parent population for child population...\n");

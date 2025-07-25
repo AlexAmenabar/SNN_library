@@ -390,8 +390,8 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
 
 
     // set the number of input and output motifs for each motif in the individual
-    min_val = (int)(ind->n_motifs * 0.05);
-    max_val = (int)(ind->n_motifs * 0.25);
+    min_val = (int)(ind->n_motifs * nsga2Params->min_percentage_connectivity);
+    max_val = (int)(ind->n_motifs * nsga2Params->max_percentage_connectivity);
     //min_val = 2;
     //max_val = 5;
     max_connect_per_motif = rnd(min_val, max_val); // this is the maximum number of connections that a motif can contain as input or output //rnd(2, 5);
@@ -495,7 +495,7 @@ void connect_motifs_from_arrays(NSGA2Type *nsga2Params, individual *ind, int_arr
 
     // store the information of the input and output motifs for each motifs in the individual struct
     initialize_lists_of_connectivity(ind, selected_input_motifs, selected_output_motifs);
-    printf(" Connectivity initialized\n");
+    //printf(" Connectivity initialized\n");
     fflush(stdout);
 
     // print information
@@ -557,8 +557,8 @@ void connect_motifs_from_arrays(NSGA2Type *nsga2Params, individual *ind, int_arr
 
     // build the sparse matrix of synapses
     build_sparse_matrix(ind, selected_input_motifs);
-    printf(" Sparse matrix built\n");
-    fflush(stdout);
+    //printf(" Sparse matrix built\n");
+    //fflush(stdout);
 }
 
 /* Function to set to how much input or output motifs is connected each motif */
