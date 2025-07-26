@@ -1,5 +1,5 @@
 32
-10
+100
 2
 0
 
@@ -18,17 +18,17 @@
 
 
 0
-150
 100
-0.3
-0.1
+75
+0.4
+0.2
 8
 0
 0.7
 0.25
 
-100
-50
+10
+1
 0
 0
 5
@@ -40,8 +40,8 @@
 1
 0
 0
-120
-25
+0.5
+0.05
 
 0
 ../data/HandwritenDigits/Spikes/train_images.txt
@@ -55,21 +55,22 @@
 16
 
 1
-8
-80
+10
+250
 
-0.15
+0.2
+0.05
+
+0.2
 0.05
 
 0.15
 0.05
 
-0.10
-0.025
-
-0.10
+0.1
 0.025
 
 ./experiments/objvalues_par.txt
 ./experiments/classification_par.txt
+./experiments/acc_par.txt
 ./experiments/individual_par

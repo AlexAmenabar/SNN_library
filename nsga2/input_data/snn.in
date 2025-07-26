@@ -1,4 +1,4 @@
-32
+4
 10
 2
 0
@@ -55,8 +55,8 @@
 16
 
 1
-8
-80
+10
+250
 
 0.15
 0.05
@@ -64,12 +64,13 @@
 0.15
 0.05
 
-0.10
+0.25
 0.025
 
 0.10
 0.025
 
-./experiments/objvalues.txt
-./experiments/classification.txt
-./experiments/individual
+./experiments/objvalues_prueba_acc.txt
+./experiments/classification_prueba_acc.txt
+./experiments/acc_prueba_acc.txt
+./experiments/individual_prueba_acc

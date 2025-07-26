@@ -13,10 +13,10 @@
 # include <unistd.h>
 # include <stdint.h> // uint8_t
 # include <string.h>
+# include <time.h>
 
 # include "snn_library.h"
 # include "encoders/image_encoders.h"
-
 
 # define INF 1.0e14
 # define EPS 1.0e-14
@@ -309,6 +309,7 @@ typedef struct NSGA2Type
 
     char obj_values_dir[500];
     char classification_dir[500];
+    char acc_file_dir[500];
     char **individuals_dir; // [n_individuals x 500]
 } NSGA2Type;
 
@@ -330,6 +331,7 @@ extern image_dataset_t image_dataset;
 extern FILE **findividuals; // file to store the individuals
 extern FILE *fobj; // file to store the objective function values during the simulation
 extern FILE *fclass; // file to store the classification obtained for the samples
+extern FILE *facc;
 extern int currentGeneration;
 
 /**
@@ -538,5 +540,5 @@ int check_if_neuron_is_input(int motif_type, int neuron_index);
 int check_if_neuron_is_output(int motif_type, int neuron_index);
 
 
-# endif
+#endif
 #endif

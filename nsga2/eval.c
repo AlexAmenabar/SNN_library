@@ -73,6 +73,9 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     fprintf(fobj, "\n"); // let a line for the next generation
     fflush(fobj);
 
+    fprintf(facc, "\n");
+    fflush(facc);
+
     return;
 }
 
@@ -112,10 +115,10 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 /* Problem for SNNs */
 void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info){
     // simulate samples 
-    int i, j, l, n_samples, n_neurons, n_classes, time_steps, n_repetitions, rep, mode, n_obj;
+    int i, j, l, n_samples, n_neurons, n_classes, time_steps, n_repetitions, rep, mode, n_obj, total, success;
     int *sample_indexes, *labels, *n_selected_samples_per_class, **sample_indexes_per_class;
     int **spike_amount_per_neurons_per_sample, *max_distance_per_sample_index;
-    double *distance_matrix, *mean_distance_per_sample, *max_distance_per_sample, *inter_class_distance_matrix, **obj;
+    double *distance_matrix, *mean_distance_per_sample, *max_distance_per_sample, *inter_class_distance_matrix, **obj, **acc_per_class, *acc, *final_acc_per_class, final_acc;
     int temp_label, temp_mean, temp_global_index, temp_local_index, temp_global_index2, temp_local_index2;
     centroid_info_t *centroid_info;
     int n_inter_class_distances;
@@ -166,6 +169,13 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     // matrix to store the distances between the classes (distances between the centroids of each class) [n_classes x n_classes]
     inter_class_distance_matrix = (double *)calloc(n_classes * n_classes, sizeof(double));
 
+    // allocate memory for list to store accuracies
+    acc = (double *)calloc(n_repetitions, sizeof(double));
+    acc_per_class = (double **)calloc(n_repetitions, sizeof(double *));
+    for(i = 0; i<n_classes; i++)
+        acc_per_class[i] = (double *)calloc(n_classes, sizeof(double));
+
+    final_acc_per_class = (double *)calloc(n_classes, sizeof(double));
 
     // lists to store the values of the objective functions of different repetitions
     obj = (double **)calloc(nsga2Params->nobj, sizeof(double *));
@@ -201,23 +211,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         reinitialize_results_struct(&results, &conf);
 
 
-        /*
-        printf(" >>>> In repetition %d!\n", rep);
-
-        printf(" >>>>>>>> Print samples labels: ");
-        for(i = 0; i<n_samples; i++){
-            printf("%d ", image_dataset.labels[sample_indexes[i]]);
-        }
-        printf("\n");
-
-        printf(" >>>>>>>> Print number of samples per class: ");
-        for(i = 0; i<image_dataset.n_classes; i++){
-            printf("%d ", n_selected_samples_per_class[i]);
-        }
-        printf("\n");
-        */
-
-
         // ================ //
         // Simulate network //
         // ================ //
@@ -234,7 +227,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // TODO: First objective: probably should be moved to a function for Modularity
 
-        // copy the amount of spikes from the results struct // TODO: Move this to a function
+        // copy the amount of spikes from the results struct // TODO: Move this to a function, is an objective function!
         #pragma omp parallel for num_threads(8) private(i, j)
         for(i = 0; i<n_samples; i++)
             for(j = 0; j<ind->snn->n_neurons; j++)
@@ -262,24 +255,29 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // TODO: This should be moved to a function
         // compute the mean distances to the rest of samples of the class for each class and the max distances [Computaitonal Cost n_samples * (n_samples / n_classes - 1)]
-        for(i = 0; i<image_dataset.n_classes; i++){
-            for(j=0; j<n_selected_samples_per_class[i]; j++){
-                temp_local_index = sample_indexes_per_class[i][j]; // get the index of the sample in the list of samples
+        for(i = 0; i<image_dataset.n_classes; i++){ // compute for each class
+            for(j=0; j<n_selected_samples_per_class[i]; j++){ // loop over all samples selected for this class
+                
+                temp_local_index = sample_indexes_per_class[i][j]; // get the index of the sample in the list of samples (local index)
                 temp_global_index = sample_indexes[temp_local_index]; // get the global index of the sample
 
-                // compute the mean distance with the rest of elements of the class
+                // compute the mean distance with the rest elements of the class
                 for(l=j+1; l<n_selected_samples_per_class[i]; l++){
                     temp_local_index2 = sample_indexes_per_class[i][l]; // get the index of the sample in the list of samples
                     temp_global_index2 = sample_indexes[temp_local_index2]; // get the global index of the sample
 
                     // sum distances
                     mean_distance_per_sample[temp_local_index] += distance_matrix[temp_local_index * n_samples + temp_local_index2];
+
+                    // check if these points are located farther of each other
                     if(distance_matrix[temp_local_index * n_samples + temp_local_index2] > max_distance_per_sample[temp_local_index]){
-                        max_distance_per_sample_index[temp_local_index] = temp_local_index2;
-                        max_distance_per_sample[temp_local_index] = distance_matrix[temp_local_index * n_samples + temp_local_index2];
+                        max_distance_per_sample_index[temp_local_index] = temp_local_index2; // update the index of the farthest sample
+                        max_distance_per_sample[temp_local_index] = distance_matrix[temp_local_index * n_samples + temp_local_index2]; // update the distance
                     }
 
+                    // same for this
                     mean_distance_per_sample[temp_local_index2] += distance_matrix[temp_local_index * n_samples + temp_local_index2];
+
                     if(distance_matrix[temp_local_index * n_samples + temp_local_index2] > max_distance_per_sample[temp_local_index2]){
                         max_distance_per_sample_index[temp_local_index2] = temp_local_index;
                         max_distance_per_sample[temp_local_index2] = distance_matrix[temp_local_index * n_samples + temp_local_index2];
@@ -289,20 +287,17 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
                 // compute the mean for the actual element
                 mean_distance_per_sample[temp_local_index] = mean_distance_per_sample[temp_local_index] / n_selected_samples_per_class[i];
 
-                // store the information if the mean distance is smaller
+                // store the information if the mean distance is smaller than the mean found so far (is the centroid)
                 if(mean_distance_per_sample[temp_local_index] < centroid_info[i].mean_distance){
                     centroid_info[i].mean_distance = mean_distance_per_sample[temp_local_index];
                     centroid_info[i].index = temp_local_index;
 
                     centroid_info[i].farthest_point_index = max_distance_per_sample_index[temp_local_index];
                     centroid_info[i].farthest_point_distance = max_distance_per_sample[temp_local_index];
-
-                    //printf(" >>>>>> Class %d, mean internal distance %lf, max distance %lf\n", i, centroid_info[i].mean_distance, centroid_info[i].farthest_point_distance);
                 }   
             }
         }
 
-        //printf("\n");
         // compute the distances between the centroids of each class // TODO: I am using a full matrix, but this should be simplified to only the upper triangle
         n_inter_class_distances = 0;
         for(i = 0; i<image_dataset.n_classes-1; i++){
@@ -317,13 +312,12 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
                 else
                     inter_class_distance_matrix[i * image_dataset.n_classes + j] = distance_matrix[temp_local_index2 * n_samples + temp_local_index];
 
-                //printf(" >>>>>>> Distance between %d and %d class centroids: %lf\n", i, j, inter_class_distance_matrix[i * image_dataset.n_classes + j]);
                 n_inter_class_distances ++;
             }
         }
 
 
-        // Now we have all the distances we need to compute the objective function
+        // Compute my metric objective function
         for(i=0; i<image_dataset.n_classes-1; i++){
             for(j=i+1; j<image_dataset.n_classes; j++){
                 obj[0][rep] += 
@@ -333,6 +327,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         }
         obj[0][rep] /= n_inter_class_distances;        
         
+
         // TODO: Second objective: probably should be moved to a function for Modularity and paralelized
         int sum = 0;
         #pragma omp parallel for num_threads(8) private(i, j) reduction(+:sum)
@@ -343,7 +338,75 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         }
         // compute the mean for all samples
         obj[1][rep] = sum;
-        obj[1][rep] /= n_samples;
+        obj[1][rep] = obj[1][rep] / n_samples;
+
+
+        // compute accuracy
+        success = 0;
+        int c_success = 0;
+
+        for(i = 0; i<n_classes; i++){ // compute for each class
+
+            c_success = 0;
+
+            for(j=0; j<n_selected_samples_per_class[i]; j++){ // loop over all samples selected for this class
+                
+                temp_local_index = sample_indexes_per_class[i][j]; // get the index of the sample in the list of samples (local index)
+                temp_local_index2 = centroid_info[i].index; // get the local index of the centroid
+
+                // get the distance
+                double tmp_distance = 0;
+                if(temp_local_index < temp_local_index2)
+                    tmp_distance = distance_matrix[temp_local_index * n_samples + temp_local_index2];
+                else
+                    tmp_distance = distance_matrix[temp_local_index2 * n_samples + temp_local_index];
+
+                // loop over all classes and check if the distance with its class is the minimum
+                l = 0;
+                int founded = 0;
+                while(l<n_classes && founded == 0){
+                    
+                    if(temp_local_index < centroid_info[l].index){
+                        if(distance_matrix[temp_local_index * n_samples + centroid_info[l].index] < tmp_distance)
+                            founded = 1;
+                    }
+                    else{
+                        if(distance_matrix[centroid_info[l].index * n_samples + temp_local_index] < tmp_distance)
+                            founded = 1;
+                    }
+
+                    l++;
+                }
+                
+                if(founded == 0){
+                    success ++;
+                    c_success ++;
+                }
+            }
+            acc_per_class[rep][i] = (double)(c_success / n_selected_samples_per_class[i]); 
+        }
+
+        acc[rep] = (double)(success / n_samples);
+
+
+        //if(&(child_pop->ind[0]) == ind){ // currentGeneration % 5 == 0
+            // print results in the file of classification
+        if(currentGeneration % 5){
+            fprintf(fclass, "%lf\n", obj[0][rep]);
+
+            for(i = 0; i<n_samples; i++){
+                fprintf(fclass, "%d ", labels[i]);
+            }
+            fprintf(fclass, "\n");
+
+            for(i = 0; i<n_samples; i++){
+                for(j = 0; j<n_samples; j++){
+                    fprintf(fclass, "%lf ", distance_matrix[i * n_samples + j]);
+                }
+                fprintf(fclass, "\n");
+            }
+            fflush(fclass);
+        }
     }
 
 
@@ -361,7 +424,23 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
     ind->obj[0] = -ind->obj[0];
 
+
+    // compute accuracy means
+    final_acc = 0;
+    for(i = 0; i<n_repetitions; i++){
+        final_acc += acc[i];
+        for(j = 0; j<n_classes; j++)
+            final_acc_per_class[j] += acc_per_class[i][j];
+    } 
+    final_acc = (double)(final_acc / n_repetitions);
+    for(i = 0; i<n_repetitions; i++)
+        final_acc_per_class[i] = (double)(final_acc_per_class[i] / n_repetitions);
+
     // write the results in a file
+    fprintf(facc, "%lf ", final_acc);
+    for(i = 0; i<n_classes; i++)
+        fprintf(facc, "%lf ", final_acc_per_class[i]);
+    fprintf(facc, "\n");
 
     // ======================== //
     // free all the memory used //
@@ -383,9 +462,29 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
     free_results_struct_memory(&results, &conf);
 
+
+    // REVISE ALL RELATED TO
+    free(acc);
+    for(i = 0; i<n_classes; i++)
+        free(acc_per_class[i]);
+    free(acc_per_class);
+    free(final_acc_per_class);
+
     return;
 }
 
+
+/* Some obj functions */
+
+double my_metric(){
+
+}
+
+double accuracy(){
+
+}
+
+/* SNN simulation functions */
 
 // The way to deal with datasets should be revised and generalized
 void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset){
@@ -564,7 +663,7 @@ void select_samples(selected_samples_info_t *selected_samples_info, int n_sample
         while(valid == 0){
             valid = 1;
 
-            temp_sample_index = rand() % image_dataset.n_images;
+            temp_sample_index = rand() % image_dataset.n_images; // get the index of the sample in the global list of samples
             
             // check if sample is already selected
             for(j = 0; j<i; j++){
@@ -576,8 +675,8 @@ void select_samples(selected_samples_info_t *selected_samples_info, int n_sample
 
             // if mode == 1, selected samples classes must be balanced
             if(mode == 1){
-                // get selected sample label
-                temp_label = image_dataset.labels[temp_sample_index];
+                
+                temp_label = image_dataset.labels[temp_sample_index]; // get selected sample label
 
                 // check if we can select more samples of this class
                 if(selected_samples_info->n_selected_samples_per_class[temp_label] >= n_samples_per_class)
@@ -587,21 +686,22 @@ void select_samples(selected_samples_info_t *selected_samples_info, int n_sample
 
         // store the selected sample and the label
         selected_samples_info->sample_indexes[i] = temp_sample_index;
-        selected_samples_info->n_selected_samples_per_class[temp_label] ++;
-        selected_samples_info->labels[i] = temp_label;
+        selected_samples_info->n_selected_samples_per_class[temp_label] ++; // indicate that one more sample of this class has been selected
+        selected_samples_info->labels[i] = temp_label; // store the label of the sample
     }
 
     // allocate memory for each class selected samples indexes
-    int *next_index_class = (int *)calloc(image_dataset.n_classes, sizeof(int));
+    int *next_index_class = (int *)calloc(image_dataset.n_classes, sizeof(int)); // list to know where the next sample of a class must be stored (the index)
     int temp_class;
+    // allocate memory to store the selected samples for each class
     for(i = 0; i<image_dataset.n_classes; i++)
         selected_samples_info->sample_indexes_per_class[i] = (int *)calloc(selected_samples_info->n_selected_samples_per_class[i], sizeof(int));
 
     // loop over all selected samples and add each one to the corresponding list
     for(i = 0; i<n_samples; i++){
         // add the selected i.th sample index to the corresponding class 
-        temp_class = selected_samples_info->labels[i];
-        selected_samples_info->sample_indexes_per_class[temp_class][next_index_class[temp_class]] = i;
+        temp_class = selected_samples_info->labels[i]; // get the label of the selected i.th sample (local index, not global)
+        selected_samples_info->sample_indexes_per_class[temp_class][next_index_class[temp_class]] = i; // store the local index of the sample
         next_index_class[temp_class] ++; // next index 
     }
 

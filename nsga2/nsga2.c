@@ -22,6 +22,7 @@ int n_motifs; // number of motifs that can be used
 FILE **findividuals; // file to store the individuals
 FILE *fobj; // file to store the objective function values during the simulation
 FILE *fclass; // file to store the classification obtained for the samples
+FILE *facc;
 int currentGeneration;
 
 // dataset // TODO: This is only temporal
@@ -365,6 +366,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     // file names
     scanf("%s",&nsga2Params.obj_values_dir);
     scanf("%s",&nsga2Params.classification_dir);
+    scanf("%s",&nsga2Params.acc_file_dir);
 
     nsga2Params.individuals_dir = (char **)malloc(nsga2Params.popsize * sizeof(char *));
     char tmp_file_name[500];
@@ -440,6 +442,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
     printf(" > Obj. function values file dir: %s\n", nsga2Params.obj_values_dir);
     printf(" > Classification file dir: %s\n", nsga2Params.classification_dir);
+    printf(" > Acc. file dir: %s\n", nsga2Params.acc_file_dir);
     for(i=0; i<nsga2Params.popsize; i++)
         printf(" > Directories for files to store individuals: %s\n", nsga2Params.individuals_dir[i]);
 
@@ -528,6 +531,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     /* Open the files to store the results */
     fobj = fopen(nsga2Params->obj_values_dir, "w"); // file to store the objective function values during the simulation
     fclass = fopen(nsga2Params->classification_dir, "w"); // file to store the classification obtained for the samples
+    facc = fopen(nsga2Params->acc_file_dir, "w");
     findividuals = (FILE **)calloc(nsga2Params->popsize, sizeof(FILE *));
     for(i = 0; i<nsga2Params->popsize; i++)
         findividuals[i] = fopen(nsga2Params->individuals_dir[i], "w");
@@ -684,6 +688,9 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 #ifdef DEBUG1
     printf(" > Evaluating parent population...\n");
 #endif 
+
+    fprintf(fclass, "%d\n%d\n%d\n", nsga2Params->popsize, nsga2Params->n_repetitions, nsga2Params->n_samples);
+    fflush(fclass);
 
     evaluate_pop (nsga2Params, parent_pop, inp, out);
 
@@ -903,6 +910,14 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
         fill_nondominated_sort (nsga2Params,  mixed_pop, parent_pop);
 
+        // store selected population in the last iteration
+        if(i == nsga2Params->ngen){
+            for(j = 0; j<nsga2Params->popsize; j++){
+                store_individual_in_file(findividuals[j], &(parent_pop->ind[j]));
+                fflush(findividuals[j]);
+            }
+        }
+
         // TODO: this is not optimal
     #ifdef DEBUG1
         printf(" > Parent population filled!\n\n");
@@ -975,6 +990,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
     fclose(fobj); // file to store the objective function values during the simulation 
     fclose(fclass); // file to store the classification obtained for the samples
+    fclose(facc);
     for(i = 0; i<nsga2Params->popsize; i++){
         fclose(findividuals[i]);
     }
