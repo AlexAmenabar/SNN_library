@@ -28,7 +28,7 @@ void reinitialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind);
 
 /// @brief
 /// @param
-void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2Type *nsga2Params);
+void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn, individual *ind);
 
 /// @brief
 /// @param

@@ -184,7 +184,6 @@ void copy_synapse_nodes(individual *ind1, individual *ind2){
     ind2->n_synapses = ind1->n_synapses;
     ind2->n_input_synapses = ind1->n_input_synapses;
 
-
     // allocate memory
     ind2->connectivity_matrix = (sparse_matrix_node_t *)malloc(sizeof(sparse_matrix_node_t));
 
@@ -223,6 +222,7 @@ void copy_synapse_nodes(individual *ind1, individual *ind2){
 }
 
 void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *synapse2){
+    
     synapse2->row = synapse1->row;
     synapse2->col = synapse1->col;
     synapse2->value = synapse1->value;
@@ -236,7 +236,7 @@ void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *syn
         synapse2->weight[i] = synapse1->weight[i];
         synapse2->learning_rule[i] = synapse1->learning_rule[i];
     }
-
+    
     synapse2->next_element = NULL;
 }
 

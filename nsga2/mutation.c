@@ -618,7 +618,7 @@ void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motif
     #endif
 
     // update sparse matrix
-    update_sparse_matrix_add_motifs(ind, n_new_motifs, all_selected_input_motifs);
+    update_sparse_matrix_add_motifs(nsga2Params, ind, n_new_motifs, all_selected_input_motifs);
 
 
     #ifdef DEBUG3
@@ -822,7 +822,7 @@ int_array_t* select_motifs_to_connect_with_new_motifs(individual *ind, int n_mot
 
 
 /* Update the sparse matrix adding the new connections */
-void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs){
+void update_sparse_matrix_add_motifs(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int_array_t *selected_input_motifs){
     int i, j;
 
     new_motif_t *motif_node, *tmp_motif_node;
@@ -878,7 +878,7 @@ void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_arra
 
                     // add new cells to complete the column if the neuron is an output neuron
                     if(check_if_neuron_is_input(SMBI.actual_motif_type, j) == 1){
-                        synapse_node = build_neuron_sparse_matrix_column(ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
+                        synapse_node = build_neuron_sparse_matrix_column(nsga2Params, ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
                     }
                     
                     // rconnect the last element newly added with the next column first element
@@ -910,7 +910,7 @@ void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_arra
         SMBI.actual_motif_info = &(motifs_data[SMBI.actual_motif_type]);
         
         // construct sparse matrix
-        synapse_node = build_motif_sparse_matrix_columns(ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
+        synapse_node = build_motif_sparse_matrix_columns(nsga2Params, ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
 
         // move to the next motif
         motif_node->next_motif;

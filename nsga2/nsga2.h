@@ -14,6 +14,10 @@
 # include <stdint.h> // uint8_t
 # include <string.h>
 # include <time.h>
+# include <errno.h>
+
+# include <sys/stat.h>
+# include <sys/types.h>
 
 # include "snn_library.h"
 # include "encoders/image_encoders.h"
@@ -221,13 +225,17 @@ typedef struct lists
 
 typedef struct selected_samples_info_t
 {
+    int n_samples;
     int *sample_indexes; // selected sample indexes in the global dataset
     int *labels; // selected samples labels
     int *n_selected_samples_per_class; // number of selected samples for each class
     int **sample_indexes_per_class; // indexes of selected samples for each class, in the sample_indexes
 } selected_samples_info_t;
 
+// Forward declare the struct for use in the function pointer type
+typedef struct obj_functions_t obj_functions_t;
 
+// General NSGA2Type
 typedef struct NSGA2Type
 {
     // general variables
@@ -283,6 +291,7 @@ typedef struct NSGA2Type
     // variables for synapes
     int max_latency, min_latency;
     int max_learning_rule, min_learning_rule;
+    int weights_included;
     double max_weight, min_weight;
 
     // dataset variables
@@ -307,11 +316,62 @@ typedef struct NSGA2Type
     double max_motifs_add, min_motifs_add;
     double max_motifs_remove, min_motifs_remove;
 
-    char obj_values_dir[500];
-    char classification_dir[500];
-    char acc_file_dir[500];
-    char **individuals_dir; // [n_individuals x 500]
+    // directories to files
+    char results_dir[500]; // folder to store the results of the simulation
+    char (*individuals_dirs)[500]; // array of directories to the files for storing the best individuals [n_individuals x 500]
+    char (*f_obj_dirs)[500]; // directories of the files to store the results of the objective functions, [n_f_files x 500]
+    char f_acc_dir[500], f_class_dir[500];
+
+    // variables to store objective functions info
+    obj_functions_t *obj_functions_info;
 } NSGA2Type;
+
+
+typedef struct
+{
+    int index; // index in tthe sample list, not in the global dataset list
+    double mean_distance;
+    int farthest_point_index;
+    double farthest_point_distance;
+} centroid_info_t;
+
+// Define the function pointer type
+typedef double (*obj_function_ptr_t)(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+
+// Define the struct
+struct obj_functions_t {
+
+    // obj values during repetitions [n_repetitions x n_obj]
+    double *obj_values;
+    int rep;
+
+    // array for distance matrix and if the distance matrix is required for computing any objective function
+    int distance_matrix_req;
+    double *distance_matrix;
+
+    // distance related
+    int *max_distance_per_sample_index;
+    double *mean_distance_per_sample, *max_distance_per_sample, *inter_class_distance_matrix;
+    int temp_label, temp_mean, temp_global_index, temp_local_index, temp_global_index2, temp_local_index2;
+    int n_inter_class_distances;
+    centroid_info_t *centroid_info;
+
+    // selected samples if it is neccessary
+    selected_samples_info_t *selected_samples_info;
+
+    // variables for number of spikes
+    int n_spikes_req;
+    int *n_spikes_per_neuron;
+    int *n_spikes_per_motif;
+    int *n_spikes_per_region;
+    int **spike_amount_per_neurons_per_sample; // generated spikes per each neuron per each sample
+    //char ***spikes_
+
+    // pointers to objective functions
+    obj_function_ptr_t *f_obj; // array of function pointers
+    int *f_indexes;
+    int *negative_required;
+};
 
 // Global 
 extern FILE *fpt1;
@@ -328,11 +388,12 @@ extern int n_motifs; // number of motifs that can be used
 extern image_dataset_t image_dataset;
 
 
-extern FILE **findividuals; // file to store the individuals
-extern FILE *fobj; // file to store the objective function values during the simulation
-extern FILE *fclass; // file to store the classification obtained for the samples
-extern FILE *facc;
+extern FILE **findividuals; // array of file pointers to store the individuals
+extern FILE **fobj; // array of file pointers to store the objective function values during the simulation
+extern FILE *fclass; // pointer to the file for storing the distance matrixes and classes
+extern FILE *facc; // pointer to the file for storing the accuracies
 extern int currentGeneration;
+
 
 /**
  *  allocate.c
@@ -350,6 +411,8 @@ void deallocate_int_array(int_array_t *int_array);
 void deallocate_int_arrays(int_array_t *int_arrays, int n);
 void deallocate_int_array_list(int_array_list_t *list_int_array, int n);
 void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node);
+//void allocate_objective_functions_context(obj_functions_t *ctx);
+//void deallocate_objective_functions_context(obj_functions_t *ctx);
 
 /**
  * 
@@ -434,15 +497,15 @@ void randomize_motif_connections(individual *ind, int *n_connections_per_motif);
 void select_input_and_output_motifs_per_motif(individual *ind, int_array_t *selected_input_motifs_per_motif, int_array_t *selected_output_motifs_per_motif, int *n_input_connections_per_motif_done, int *n_output_connections_per_motif_done);
 void initialize_lists_of_connectivity(individual *ind, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 // sparse matrix
-void build_sparse_matrix(individual *ind, int_array_t *selected_input_motifs);
-sparse_matrix_node_t* build_motif_sparse_matrix_columns(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* build_neuron_sparse_matrix_column(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* add_neuron_to_motif_connections(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* build_motif_internal_structure(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* build_motif_internal_structure_and_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
-sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
-void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
+void build_sparse_matrix(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_input_motifs);
+sparse_matrix_node_t* build_motif_sparse_matrix_columns(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* build_neuron_sparse_matrix_column(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* add_neuron_to_motif_connections(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* build_motif_internal_structure(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* build_connection(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* build_motif_internal_structure_and_connection(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI);
+sparse_matrix_node_t* initialize_sparse_matrix_node(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
+void initialize_sparse_matrix_node_only(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col);
 // input synapses
 void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind);
 void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind);
@@ -474,7 +537,7 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind);
 void add_motif_mutation(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types, int_array_t *selected_input_motifs, int_array_t *selected_output_motifs);
 void add_motifs_and_neurons_to_dynamic_lists(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int *new_motifs_types);
 void add_new_input_motifs_to_connectivity_lists(individual *ind, int_dynamic_list_t *connections, int_array_t *selected_motifs);
-void update_sparse_matrix_add_motifs(individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);
+void update_sparse_matrix_add_motifs(NSGA2Type *nsga2Params, individual *ind, int n_new_motifs, int_array_t *selected_input_motifs);
 int_array_t* select_motifs(NSGA2Type *nsga2Params, individual *ind, int n_motifs, int min_connected_motifs, int max_connected_motifs); // here...
 int_array_t* select_motifs_to_connect_with_new_motifs(individual *ind, int n_motifs, int n_new_motifs, int min_connected_motifs, int max_connected_motifs); // TODO
 // remove motifs
@@ -497,6 +560,19 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 void test_problem (double *xreal, double *xbin, int **gene, double *obj, double *constr);
 void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset);
 void select_samples(selected_samples_info_t *selected_samples_info, int n_samples, int mode, int *percentages);
+// objective functions
+void select_objective_functions(NSGA2Type *nsga2Params, obj_functions_t *ctx);
+double my_metric(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double in_class_distance(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double between_classes_distance(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double accuracy(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double count_spikes_per_neuron(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double count_spikes_per_motif(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double count_spikes_per_region(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+void compute_distance_matrix(double *distance_matrix, int n_samples, int **spike_amount_per_neurons_per_sample, int n_neurons);
+void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+
+
 
 void assign_rank_and_crowding_distance (NSGA2Type *nsga2Params, population *new_pop);
 

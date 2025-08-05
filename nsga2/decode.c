@@ -142,7 +142,7 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
     printf(" > > > Initialising synapses from genotype... (%d)\n", ind->n_synapses);
     fflush(stdout);
     #endif
-    initialize_synapses_from_genotype(snn, ind, nsga2Params);
+    initialize_synapses_from_genotype(nsga2Params, snn, ind);
 
     // connect neurons and synapses
     #ifdef DEBUG1

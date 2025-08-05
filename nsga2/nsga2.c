@@ -19,8 +19,8 @@ population *mixed_pop;
 motif_t *motifs_data; // list of motifs
 int n_motifs; // number of motifs that can be used
 
-FILE **findividuals; // file to store the individuals
-FILE *fobj; // file to store the objective function values during the simulation
+FILE **findividuals; // files to store the individuals
+FILE **fobj; // file to store the objective function values during the simulation
 FILE *fclass; // file to store the classification obtained for the samples
 FILE *facc;
 int currentGeneration;
@@ -28,10 +28,14 @@ int currentGeneration;
 // dataset // TODO: This is only temporal
 image_dataset_t image_dataset;
 
+
 NSGA2Type ReadParameters(int argc, char **argv){
     int i;
     NSGA2Type nsga2Params;
-    
+    struct stat st = {0};
+    char tmp_ind_dir[500], s_number[500], tmp_obj_dir[500];
+
+
 	printf("== Read input parameters == \n");
 
     if (argc<2)
@@ -306,8 +310,21 @@ NSGA2Type ReadParameters(int argc, char **argv){
         }
     }
 
+
+    // scan objective function indexes
+    nsga2Params.obj_functions_info = (obj_functions_t *)calloc(1, sizeof(obj_functions_t));
+    nsga2Params.obj_functions_info->f_indexes = (int *)calloc(nsga2Params.nobj, sizeof(int));
+    nsga2Params.obj_functions_info->f_obj = (obj_function_ptr_t *)calloc(nsga2Params.nobj, sizeof(obj_function_ptr_t));
+    for(i = 0; i<nsga2Params.nobj; i++){ // read from file
+        scanf("%d", &(nsga2Params.obj_functions_info->f_indexes[i]));
+    }
+    nsga2Params.obj_functions_info->negative_required = (int *)calloc(nsga2Params.nobj, sizeof(int));
+
+    // set objective functions pointers
+    select_objective_functions(&nsga2Params, nsga2Params.obj_functions_info);
+
     // my parameters -- general
-    scanf("%d",&nsga2Params.neuron_type);    
+    scanf("%d",&nsga2Params.neuron_type);
     scanf("%d",&nsga2Params.max_motifs);
     scanf("%d",&nsga2Params.min_motifs);
     scanf("%lf",&nsga2Params.max_percentage_connectivity);
@@ -333,6 +350,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.min_latency);
     scanf("%d",&nsga2Params.max_learning_rule);
     scanf("%d",&nsga2Params.min_learning_rule);
+    scanf("%d", &nsga2Params.weights_included);    
     scanf("%lf",&nsga2Params.max_weight);
     scanf("%lf",&nsga2Params.min_weight);
 
@@ -363,23 +381,119 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%lf",&nsga2Params.max_motifs_remove);
     scanf("%lf",&nsga2Params.min_motifs_remove);
 
-    // file names
-    scanf("%s",&nsga2Params.obj_values_dir);
-    scanf("%s",&nsga2Params.classification_dir);
-    scanf("%s",&nsga2Params.acc_file_dir);
 
-    nsga2Params.individuals_dir = (char **)malloc(nsga2Params.popsize * sizeof(char *));
-    char tmp_file_name[500];
-    char s_number[500];
-    scanf("%s",&tmp_file_name);
-        
-    for(i = 0; i<nsga2Params.popsize; i++){
-        nsga2Params.individuals_dir[i] = (char *)calloc(500, sizeof(char));
-        strcat(nsga2Params.individuals_dir[i], tmp_file_name);
-        sprintf(s_number, "%d", i); 
-        strcat(nsga2Params.individuals_dir[i], s_number);
+    // file names
+    scanf("%s",&nsga2Params.results_dir);
+
+    // check if the directory exists
+    if(stat(nsga2Params.results_dir, &st) == -1){
+        if(mkdir(nsga2Params.results_dir, 0700) == 0){
+            printf(" > Directory created: %s\n", nsga2Params.results_dir);
+        }
+        else{
+            printf(" > Error creating directory!\n");
+            exit(1);
+        }
     }
+    else{
+        printf(" > Directory already exists: %s\n", nsga2Params.results_dir);
+    }
+
+
+    // concatenate the text for the files to store the individuals
+    nsga2Params.individuals_dirs = (char (*)[500])calloc(nsga2Params.popsize, sizeof(char[500]));
+    strcpy(tmp_ind_dir, nsga2Params.results_dir);
+    strcat(tmp_ind_dir, "/individuals\0");
+
+    // create folder for individuals
+    if(stat(tmp_ind_dir, &st) == -1){
+        if(mkdir(tmp_ind_dir, 0700) == 0){
+            printf(" > Directory created: %s\n", tmp_ind_dir);
+        }
+        else{
+            printf(" > Error creating directory for individuals!\n");
+            exit(1);
+        }
+    }
+    else{
+        printf(" > Directory already exists: %s\n", tmp_ind_dir);
+    }
+
+    // fill text for individuals files
+    strcat(tmp_ind_dir, "/individual");
+    for(i = 0; i<nsga2Params.popsize; i++){
+        strcpy(nsga2Params.individuals_dirs[i], tmp_ind_dir); // copy global directory for individuals
+        sprintf(s_number, "%d", i); 
+        strcat(nsga2Params.individuals_dirs[i], s_number);
+        strcat(nsga2Params.individuals_dirs[i], ".txt\0");
+    }
+
+
+    // concatenate the text to form the directories for storing objective functions data
+    strcpy(tmp_obj_dir, nsga2Params.results_dir);
+
+    nsga2Params.f_obj_dirs = (char (*)[500])calloc(nsga2Params.nobj, sizeof(char[500]));
     
+    for(i = 0; i<nsga2Params.nobj; i++){
+
+        strcpy(nsga2Params.f_obj_dirs[i], tmp_obj_dir);
+
+        switch (nsga2Params.obj_functions_info->f_indexes[i])
+        {
+            case 0:
+                strcat(nsga2Params.f_obj_dirs[i], "/my_metric.txt\0");
+                break;
+            case 1:
+                strcat(nsga2Params.f_obj_dirs[i], "/in_distance.txt\0");
+                break;
+            case 2:
+                strcat(nsga2Params.f_obj_dirs[i], "/class_distance.txt\0");
+                break;
+            case 3:
+                strcat(nsga2Params.f_obj_dirs[i], "/accuracy.txt\0");
+                break;
+            case 4:
+                strcat(nsga2Params.f_obj_dirs[i], "/n_spikes_per_neuron.txt\0");
+                break;
+            case 5:
+                strcat(nsga2Params.f_obj_dirs[i], "/n_spikes_per_motif.txt\0");
+                break;
+            case 6:
+                strcat(nsga2Params.f_obj_dirs[i], "/n_spikes_per_region.txt\0");
+                break;
+        }
+    }
+
+
+    // other files (directories for classification score and accuracy files)
+    strcpy(nsga2Params.f_class_dir, nsga2Params.results_dir);
+    strcat(nsga2Params.f_class_dir, "/classification.txt\0");
+
+    strcpy(nsga2Params.f_acc_dir, nsga2Params.results_dir);
+    strcat(nsga2Params.f_acc_dir, "/accuracy.txt\0");
+
+
+    /* Open the files to store the results */
+
+    // files for storing objective functions values during the simulation
+    fobj = (FILE **)calloc(nsga2Params.nobj, sizeof(FILE *));
+    for(i = 0; i<nsga2Params.nobj; i++)
+        fobj[i] = fopen(nsga2Params.f_obj_dirs[i], "w");
+    
+    // files for storing the best individuals
+    findividuals = (FILE **)calloc(nsga2Params.popsize, sizeof(FILE *));
+    for(i = 0; i<nsga2Params.popsize; i++)
+        findividuals[i] = fopen(nsga2Params.individuals_dirs[i], "w");
+
+    // other files
+    fclass = fopen(nsga2Params.f_class_dir, "w"); // file to store the classification obtained for the samples
+    facc = fopen(nsga2Params.f_acc_dir, "w");
+
+
+    //scanf("%s",&nsga2Params.obj_values_dir);
+    //scanf("%s",&nsga2Params.classification_dir);
+    //scanf("%s",&nsga2Params.acc_file_dir);
+
 
     // DEBUG levels are used to manage what messages will be printed
 
@@ -413,6 +527,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Min latency: %d\n", nsga2Params.min_latency);
     printf(" > Max learning rule: %d\n", nsga2Params.max_learning_rule);
     printf(" > Min learning rule: %d\n", nsga2Params.min_learning_rule);
+    printf(" > Weights included: %d\n", nsga2Params.weights_included);
     printf(" > Max weight: %e\n", nsga2Params.max_weight);
     printf(" > Min weight: %e\n", nsga2Params.min_weight);
 
@@ -440,11 +555,14 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf("> Max motifs to remove (percentage): %lf\n",nsga2Params.max_motifs_remove);
     printf("> Min motifs to remove (percentage): %lf\n",nsga2Params.min_motifs_remove);
 
-    printf(" > Obj. function values file dir: %s\n", nsga2Params.obj_values_dir);
-    printf(" > Classification file dir: %s\n", nsga2Params.classification_dir);
-    printf(" > Acc. file dir: %s\n", nsga2Params.acc_file_dir);
+    for(i = 0; i<nsga2Params.nobj; i++)
+        printf(" > Obj. function values file dir: %s\n", nsga2Params.f_obj_dirs[i]);
+
     for(i=0; i<nsga2Params.popsize; i++)
-        printf(" > Directories for files to store individuals: %s\n", nsga2Params.individuals_dir[i]);
+        printf(" > Directories for files to store individuals: %s\n", nsga2Params.individuals_dirs[i]);
+
+    printf(" > Classification file dir: %s\n", nsga2Params.f_class_dir);
+    printf(" > Acc. file dir: %s\n", nsga2Params.f_acc_dir);
 
     printf("\n = == === ===== === == = \n Input parameters printed!\n = == === ===== === == = \n");
     fflush(stdout);
@@ -528,14 +646,6 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // == MY CHANGES START HERE == //
     //  =========================  //
 
-    /* Open the files to store the results */
-    fobj = fopen(nsga2Params->obj_values_dir, "w"); // file to store the objective function values during the simulation
-    fclass = fopen(nsga2Params->classification_dir, "w"); // file to store the classification obtained for the samples
-    facc = fopen(nsga2Params->acc_file_dir, "w");
-    findividuals = (FILE **)calloc(nsga2Params->popsize, sizeof(FILE *));
-    for(i = 0; i<nsga2Params->popsize; i++)
-        findividuals[i] = fopen(nsga2Params->individuals_dir[i], "w");
-
     /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
     initialize_motifs();
 
@@ -574,7 +684,6 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
     /* Initialize the parent population */
     initialize_pop (nsga2Params,  parent_pop);
-
 
 #ifdef DEBUG1
     printf(" > First population initialized!\n\n");
@@ -763,7 +872,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif 
 
         selection (nsga2Params,  parent_pop, child_pop);
-
+        
     #ifdef DEBUG1
         printf(" > New population selected!\n\n");
 
@@ -808,7 +917,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif
 
         mutation_pop (nsga2Params,  child_pop);
-
+        
     #ifdef DEBUG1
         printf(" > Population mutated!\n\n");
 
@@ -849,7 +958,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif
 
         decode_pop(nsga2Params,  child_pop);
-
+        
     #ifdef DEBUG1
         printf(" > Child population decoded!\n\n");        
 
@@ -859,7 +968,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     #endif
 
         evaluate_pop(nsga2Params,  child_pop, inp, out);
-
+        
    #ifdef DEBUG1
         printf(" > Population evaluated!\n\n");
     
@@ -988,9 +1097,15 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     }
 
 
-    fclose(fobj); // file to store the objective function values during the simulation 
+    // close files and deallocate memory
     fclose(fclass); // file to store the classification obtained for the samples
     fclose(facc);
+
+    for(i = 0; i<nsga2Params->nobj; i++){
+        fclose(fobj[i]);
+    }
+    free(fobj);
+
     for(i = 0; i<nsga2Params->popsize; i++){
         fclose(findividuals[i]);
     }
@@ -1018,10 +1133,15 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     free(image_dataset.labels);
 
 
-    for(i = 0; i<nsga2Params->popsize; i++){
-        free(nsga2Params->individuals_dir[i]);
-    }
-    free(nsga2Params->individuals_dir);
+    /*for(i = 0; i<nsga2Params->popsize; i++){
+        free(nsga2Params->individuals_dirs[i]);
+    }*/
+    free(nsga2Params->individuals_dirs);
+
+    /*for(i = 0; i<nsga2Params->nobj; i++){
+        free(nsga2Params->f_obj_dirs[i]);
+    }*/
+    free(nsga2Params->f_obj_dirs);
 
     printf("\n Routine successfully exited \n");
     return (0);

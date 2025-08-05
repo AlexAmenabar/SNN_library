@@ -35,7 +35,7 @@ void allocate_memory_ind (NSGA2Type *nsga2Params,  individual *ind)
 {
     ind->obj = (double *)calloc(nsga2Params->nobj, sizeof(double));
     ind->snn = (spiking_nn_t *)calloc(1, sizeof(spiking_nn_t));
-    
+
     return;
 }
 

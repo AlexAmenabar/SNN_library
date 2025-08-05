@@ -472,7 +472,7 @@ void connect_motifs(NSGA2Type *nsga2Params, individual *ind){
     #endif
 
     // build the sparse matrix of synapses
-    build_sparse_matrix(ind, selected_input_motifs);
+    build_sparse_matrix(nsga2Params, ind, selected_input_motifs);
 
 
     /* free memory allocated by lists */
@@ -556,7 +556,7 @@ void connect_motifs_from_arrays(NSGA2Type *nsga2Params, individual *ind, int_arr
     #endif
 
     // build the sparse matrix of synapses
-    build_sparse_matrix(ind, selected_input_motifs);
+    build_sparse_matrix(nsga2Params, ind, selected_input_motifs);
     //printf(" Sparse matrix built\n");
     //fflush(stdout);
 }
@@ -704,7 +704,7 @@ void initialize_lists_of_connectivity(individual *ind, int_array_t *selected_inp
 }
 
 /* Function to build the sparse matrix of synaptic connections */
-void build_sparse_matrix(individual *ind, int_array_t *selected_input_motifs){
+void build_sparse_matrix(NSGA2Type *nsga2Params, individual *ind, int_array_t *selected_input_motifs){
 
     int i;
 
@@ -741,7 +741,7 @@ void build_sparse_matrix(individual *ind, int_array_t *selected_input_motifs){
         SMBI.actual_motif_info = &(motifs_data[SMBI.actual_motif_type]);
         
         // construct sparse matrix
-        synapse_node = build_motif_sparse_matrix_columns(ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
+        synapse_node = build_motif_sparse_matrix_columns(nsga2Params, ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
 
         // move to the next motif
         motif_node->next_motif;
@@ -760,18 +760,18 @@ void build_sparse_matrix(individual *ind, int_array_t *selected_input_motifs){
 }
 
 /* Function to build the columns of a motif in the sparse matrix of synapses */
-sparse_matrix_node_t* build_motif_sparse_matrix_columns(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* build_motif_sparse_matrix_columns(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI){
     
     // loop over motif neurons
     for(int i=0; i<SMBI->actual_motif_info->n_neurons; i++){
         SMBI->actual_neuron_local_index = i;
-        synapse_node = build_neuron_sparse_matrix_column(ind, synapse_node, selected_input_motifs, SMBI);
+        synapse_node = build_neuron_sparse_matrix_column(nsga2Params, ind, synapse_node, selected_input_motifs, SMBI);
     }
     return synapse_node;
 }
 
 /* Function to build a column of a motif in the sparse matrix of synapses */
-sparse_matrix_node_t* build_neuron_sparse_matrix_column(individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* build_neuron_sparse_matrix_column(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, int_array_t *selected_input_motifs, sparse_matrix_build_info_t *SMBI){
     
     int i;
 
@@ -803,13 +803,13 @@ sparse_matrix_node_t* build_neuron_sparse_matrix_column(individual *ind, sparse_
         else
             SMBI->next_input_motif_index = selected_input_motifs->array[i+1];
 
-        synapse_node = add_neuron_to_motif_connections(ind, synapse_node, SMBI);
+        synapse_node = add_neuron_to_motif_connections(nsga2Params, ind, synapse_node, SMBI);
     }
     return synapse_node;
 }
 
 /* Function to add the "cell" of a neuron (motif neuron connection) in the sparse matrix of synapses */
-sparse_matrix_node_t* add_neuron_to_motif_connections(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* add_neuron_to_motif_connections(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
     
     int i, j;
     int actual_motif_index, input_motif_index, previous_input_motif_index, next_input_motif_index;
@@ -823,29 +823,29 @@ sparse_matrix_node_t* add_neuron_to_motif_connections(individual *ind, sparse_ma
 
     if (input_motif_index == actual_motif_index) {
         // loop over motif neurons
-        synapse_node = build_motif_internal_structure_and_connection(ind, synapse_node, SMBI);
+        synapse_node = build_motif_internal_structure_and_connection(nsga2Params, ind, synapse_node, SMBI);
     }
     else if (input_motif_index < actual_motif_index) {
         // loop over motif neurons
-        synapse_node = build_connection(ind, synapse_node, SMBI);
+        synapse_node = build_connection(nsga2Params, ind, synapse_node, SMBI);
         
         if(next_input_motif_index == -1){
-            synapse_node = build_motif_internal_structure(ind, synapse_node, SMBI);
+            synapse_node = build_motif_internal_structure(nsga2Params, ind, synapse_node, SMBI);
         }
     }
     else {// (input_motif_index > actual_motif_index) {
         // loop over motif neurons
         if(previous_input_motif_index < actual_motif_index && SMBI->actual_motif_proccessed == 0){ 
-            synapse_node = build_motif_internal_structure(ind, synapse_node, SMBI);
+            synapse_node = build_motif_internal_structure(nsga2Params, ind, synapse_node, SMBI);
         }
 
-        synapse_node = build_connection(ind, synapse_node, SMBI);
+        synapse_node = build_connection(nsga2Params, ind, synapse_node, SMBI);
     }
     return synapse_node;
 }
 
 /* Function to build the internal structure of a motif */
-sparse_matrix_node_t* build_motif_internal_structure(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* build_motif_internal_structure(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
     int i, row, col, value, actual_motif_first_neuron_index, actual_neuron_local_index;
     motif_t *actual_motif_info;
 
@@ -863,14 +863,14 @@ sparse_matrix_node_t* build_motif_internal_structure(individual *ind, sparse_mat
             col = actual_motif_first_neuron_index + actual_neuron_local_index;
             value = actual_motif_info->connectivity_matrix[i * actual_motif_info->n_neurons + actual_neuron_local_index];
 
-            synapse_node = initialize_sparse_matrix_node(ind, synapse_node, value, row, col);
+            synapse_node = initialize_sparse_matrix_node(nsga2Params, ind, synapse_node, value, row, col);
         }
     }
     return synapse_node;
 }
 
 /* Function to build the connection of a neuron with a motif */
-sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* build_connection(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
     
     int i, row, col, value;
     int actual_motif_type, input_motif_type, actual_motif_first_neuron_index, actual_neuron_local_index, input_motif_first_neuron_index, n_connections;
@@ -899,7 +899,7 @@ sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *sy
                 row = input_motif_first_neuron_index + i; // we are processing the i.th neuron of the input motif
                 col = actual_motif_first_neuron_index + actual_neuron_local_index; // we are processing the neuron_local_index.th neuron of the actual motif
 
-                synapse_node = initialize_sparse_matrix_node(ind, synapse_node, value, row, col);
+                synapse_node = initialize_sparse_matrix_node(nsga2Params, ind, synapse_node, value, row, col);
             }
         }
     }
@@ -907,7 +907,7 @@ sparse_matrix_node_t* build_connection(individual *ind, sparse_matrix_node_t *sy
 }
 
 /* Function to build  */
-sparse_matrix_node_t* build_motif_internal_structure_and_connection(individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
+sparse_matrix_node_t* build_motif_internal_structure_and_connection(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
     
     int i, row, col, value;
     int actual_motif_type, input_motif_type, actual_motif_first_neuron_index, actual_neuron_local_index, input_motif_first_neuron_index, n_connections;
@@ -943,19 +943,19 @@ sparse_matrix_node_t* build_motif_internal_structure_and_connection(individual *
             row = actual_motif_first_neuron_index + i;
             col = actual_motif_first_neuron_index + actual_neuron_local_index;
 
-            synapse_node = initialize_sparse_matrix_node(ind, synapse_node, value, row, col);
+            synapse_node = initialize_sparse_matrix_node(nsga2Params, ind, synapse_node, value, row, col);
         }
     }
     return synapse_node;
 }
 
 /* Function to allocate memory for the new sparse matrix node and initialize it */
-sparse_matrix_node_t* initialize_sparse_matrix_node(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
+sparse_matrix_node_t* initialize_sparse_matrix_node(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
     // allocate memory for the synapse
     matrix_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     matrix_node = matrix_node->next_element; // move to the next synapse
 
-    initialize_sparse_matrix_node_only(ind, matrix_node, value, row, col);
+    initialize_sparse_matrix_node_only(nsga2Params, ind, matrix_node, value, row, col);
 
     return matrix_node;
 }
@@ -967,7 +967,7 @@ int exp_distribution(double lambda){
 }
 
 /* Function to initialize a matrix node (synapse) */
-void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
+void initialize_sparse_matrix_node_only(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *matrix_node, int value, int row, int col){
     int i;
 
     // initialize synapse
@@ -979,12 +979,20 @@ void initialize_sparse_matrix_node_only(individual *ind, sparse_matrix_node_t *m
     matrix_node->weight = (double *)calloc(abs(value), sizeof(double));
     matrix_node->learning_rule = (int8_t *)calloc(abs(value), sizeof(int8_t));
 
-    // initialize the values in the list // TODO
+    // initialize the values in the list
     for(i = 0; i<abs(value); i++){
+
         matrix_node->latency[i] = exp_distribution(0.75);//3; 
         if(matrix_node->latency[i] <= 0) matrix_node->latency[i] = 1; // latency must be bigger than 0
-        matrix_node->weight[i] = 0; // TODO: In this moment weight is not used inside the evolutionary algorithm, it is here for future purposes
-        matrix_node->learning_rule[i] = 0; // TODO: Learning rule is not initialized in the first phase of the evolutionary algorithm
+
+        // initialize synapse weight if weights are included in the genotype
+        if(nsga2Params->weights_included != 0){
+            matrix_node->weight[i] = rnd(nsga2Params->min_weight, nsga2Params->max_weight);
+
+            if(value < 0) matrix_node->weight[i] -= matrix_node->weight[i]; // if value is negative, the synapse is inhibitory
+        }
+        
+        matrix_node->learning_rule[i] = 0; 
     }
 
     matrix_node->next_element = NULL;
@@ -1008,11 +1016,11 @@ void initialize_input_synapses(NSGA2Type *nsga2Params, individual *ind){
 
     // initialize the first synapse
     sparse_matrix_node_t *input_synapse = ind->input_synapses;
-    initialize_sparse_matrix_node_only(ind, ind->input_synapses, 1, 0, 0); // it is only a column, so row -1, and the value is 1 always
+    initialize_sparse_matrix_node_only(nsga2Params, ind, ind->input_synapses, 1, 0, 0); // it is only a column, so row -1, and the value is 1 always
 
     // initialize input synapses
     for(i = 1; i<ind->n_input_synapses; i++){
-        input_synapse = initialize_sparse_matrix_node(ind, input_synapse, 1, 0, i); // it is only a column, so row -1, and the value is 1 always TODO: value shoul be 1 always???
+        input_synapse = initialize_sparse_matrix_node(nsga2Params, ind, input_synapse, 1, 0, i); // it is only a column, so row -1, and the value is 1 always TODO: value shoul be 1 always???
     }
 }
 

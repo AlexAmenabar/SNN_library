@@ -98,7 +98,7 @@ void reinitialize_LIF_neurons_from_genotype(spiking_nn_t *snn, individual *ind){
 /* Functions related to synaptic connections */
 
 /* Function to initialize synapses from genotype */
-void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2Type *nsga2Params){
+void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn, individual *ind){
     int i = 0,j = 0,k;
     synapse_t *synapse;
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
@@ -112,8 +112,10 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
         for(j = 0; j<abs(synapse_node->value); j++){
             synapse = &(snn->synapses[i]);
         
-            // TODO
-            // IFDEF WEIGHT INCLUDED IN GENOTYPE
+            // if weights are included in the genotype, copy
+            if(nsga2Params->weights_included != 0)
+                synapse->w = synapse_node->weight[j];
+
             // synapse->weight = synapse_node->weight 
             synapse->delay = synapse_node->latency[j];
             synapse->max_spikes = INPUT_MAX_SPIKES; // TODO: This does not convince me at all
@@ -166,10 +168,10 @@ void initialize_synapses_from_genotype(spiking_nn_t *snn, individual *ind, NSGA2
             //printf("Initializing synapse %d / %d\n", i+1, snn->n_synapses);
             synapse = &(snn->synapses[i]);
 
-            // TODO
-            // IFDEF WEIGHT INCLUDED IN GENOTYPE
-            // synapse->weight = synapse_node->weight      
-            
+            // initialize synapse weight if the weight is included in the genotype
+            if(nsga2Params->weights_included != 0)
+                synapse->w = synapse_node->weight[j];
+
             synapse->delay = synapse_node->latency[j]; // TODO: This should be a list to manage each synapse in a node (a node can contain more than one synapse)
             synapse->max_spikes = MAX_SPIKES;
 
