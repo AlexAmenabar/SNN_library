@@ -47,6 +47,7 @@ void test1(){
     n_neurons = ind->n_neurons;
     n_classes = nsga2Params->n_classes; // TODO: Generalize this, now is only valid for this dataset
     time_steps = nsga2Params->bins;
+    n_obj = 4;
 
     obj_functions_t *ctx = nsga2Params->obj_functions_info;
     selected_samples_info = (selected_samples_info_t *)calloc(1, sizeof(selected_samples_info_t));
@@ -126,7 +127,6 @@ void test1(){
     // ========================================================= //
     // Simulate the networks and compute the objective functions //
     // ========================================================= //
-    n_obj = 2;
     for(rep = 0; rep<n_repetitions; rep++){
 
         printf(" In repetition %d\n", rep);
@@ -177,11 +177,9 @@ void test1(){
 
         ctx->rep = rep;
         ctx->obj_values[rep * n_obj + 0] = my_metric(nsga2Params, ind, ctx);
-        printf(" Objective function 1 computed\n");
-        fflush(stdout);
         ctx->obj_values[rep * n_obj + 1] = count_spikes_per_neuron(nsga2Params, ind, ctx);
-        printf(" Objective function 2 computed\n");
-        fflush(stdout);
+        ctx->obj_values[rep * n_obj + 2] = in_class_distance(nsga2Params, ind, ctx);
+        ctx->obj_values[rep * n_obj + 3] = between_classes_distance(nsga2Params, ind, ctx);
 
 
         // compute accuracy
@@ -244,8 +242,7 @@ void test1(){
     // compute the mean of the objective functions //
     // =========================================== //
 
-    ind->obj = (double *)calloc(2, sizeof(double));
-    n_obj = 2;
+    ind->obj = (double *)calloc(n_obj, sizeof(double));
 
     for(i = 0; i<n_obj; i++){
         ind->obj[i] = 0;

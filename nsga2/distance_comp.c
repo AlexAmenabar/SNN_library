@@ -15,3 +15,13 @@ int compute_manhattan_distance(int *array1, int *array2, int n){
 
     return distance;
 }
+
+int compute_manhattan_distance_for_chars(unsigned char *array1, unsigned char *array2, int n){
+    int i, distance = 0;
+    
+    for(i = 0; i<n; i++){
+        distance += array1[i] != array2[i];
+    }
+
+    return distance;
+}

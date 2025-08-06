@@ -174,7 +174,13 @@ int_array_t* select_neurons_to_change(NSGA2Type *nsga2Params, individual *ind){
 /* This mutation changes something on the selected synapses depending on the mutation code */
 void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutation_code){
     // select neurons to change
-    int i, j = 0, s = 0;
+    int i, j = 0, s = 0, mutation_parameter;
+
+    // select what property should be changed
+    if(nsga2Params->weights_included == 1)
+        mutation_parameter = rnd(0, 1); // the code indicates what mutation will be done
+    else
+        mutation_parameter = 0;
 
     // select neuron to do the changes
     int_array_t *selected_synapses = select_synapses_to_change(nsga2Params, ind);
@@ -182,27 +188,42 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
     // loop over dynamic list of neurons to find the selected ones and change them
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
+    s = 0; // index of the synapse inside in the synapse node
+
+    // loop over synapses to find those that must be mutated
     for(i = 0; i<selected_synapses->n; i++){
+        
         // loop until we reach the selected neuron node
         while(j != selected_synapses->array[i]){
-            synapse_node = synapse_node->next_element;
+
+            // each node has several synapses, so loop over those
+            if(s == abs(synapse_node->value)){
+                s = 0;
+                synapse_node = synapse_node->next_element;
+            }
+            else{
+                s++;
+            }
+
             j++;
         }
 
-
-        synapse_node->latency[0] = synapse_node->latency[0] + (rnd(-2, 2));
-        if(synapse_node->latency[0] <= 0)
-            synapse_node->latency[0] = 1;
-
-        /*
-        // change neuron property value depending on mutation type
         switch(mutation_parameter){
-            case 0: // change threshold
-                synapse_node->latency = synapse_node->latency + (rnd(-2, 2));
-                if(synapse_node->latency <= 0)
-                    synapse_node->latency = 1;
+            case 0:
+                synapse_node->latency[s] = synapse_node->latency[s] + (rnd(-2, 2));
+                if(synapse_node->latency[s] <= 0)
+                    synapse_node->latency[s] = 1;
                 break;
-        }   */
+            case 1:
+                synapse_node->weight[s] = synapse_node->weight[s] + (synapse_node->weight[s] * (rndreal(-0.5, 0.5)));
+                break;
+            case 2:
+                synapse_node->learning_rule[s] = synapse_node->learning_rule[s]; // TODO
+                break;
+        }
+
+
+
     }
 
     deallocate_int_arrays(selected_synapses, 1);
@@ -226,7 +247,7 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
 
     // select neurons to change values
     for(i = 0; i<selected_synapses->n; i++)
-        selected_synapses->array[i] = rnd(0, ind->n_neurons - 1); // TODO: revise this
+        selected_synapses->array[i] = rnd(0, ind->n_synapses - 1);
 
     // order the list
     insertion_sort(selected_synapses->array, selected_synapses->n);

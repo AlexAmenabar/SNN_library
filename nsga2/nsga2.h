@@ -309,6 +309,7 @@ typedef struct NSGA2Type
     int mode;
     int n_samples;
     int n_repetitions;
+    int distance_type;
 
     double max_percentage_connectivity, min_percentage_connectivity;
     double max_neurons, min_neurons;
@@ -324,6 +325,10 @@ typedef struct NSGA2Type
 
     // variables to store objective functions info
     obj_functions_t *obj_functions_info;
+
+    // number of processes for OpenMP
+    int n_processes;
+
 } NSGA2Type;
 
 
@@ -371,6 +376,9 @@ struct obj_functions_t {
     obj_function_ptr_t *f_obj; // array of function pointers
     int *f_indexes;
     int *negative_required;
+
+    // accuracy
+    double **acc_per_class_per_repetition, *acc_per_repetition, *acc_per_class, accuracy;
 };
 
 // Global 
@@ -393,7 +401,7 @@ extern FILE **fobj; // array of file pointers to store the objective function va
 extern FILE *fclass; // pointer to the file for storing the distance matrixes and classes
 extern FILE *facc; // pointer to the file for storing the accuracies
 extern int currentGeneration;
-
+extern int n_processes; // number of processes for openMP
 
 /**
  *  allocate.c
@@ -571,7 +579,7 @@ double count_spikes_per_motif(NSGA2Type *nsga2Params, individual *ind, obj_funct
 double count_spikes_per_region(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
 void compute_distance_matrix(double *distance_matrix, int n_samples, int **spike_amount_per_neurons_per_sample, int n_neurons);
 void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
-
+void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results);
 
 
 void assign_rank_and_crowding_distance (NSGA2Type *nsga2Params, population *new_pop);

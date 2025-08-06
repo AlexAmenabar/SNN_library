@@ -24,6 +24,7 @@ FILE **fobj; // file to store the objective function values during the simulatio
 FILE *fclass; // file to store the classification obtained for the samples
 FILE *facc;
 int currentGeneration;
+int n_processes;
 
 // dataset // TODO: This is only temporal
 image_dataset_t image_dataset;
@@ -365,6 +366,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.n_classes);
     scanf("%d",&nsga2Params.image_size);
     scanf("%d",&nsga2Params.bins);
+    scanf("%d",&nsga2Params.distance_type);
 
     // simulations repetitions and number of samples configuration
     scanf("%d",&nsga2Params.mode);
@@ -381,6 +383,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%lf",&nsga2Params.max_motifs_remove);
     scanf("%lf",&nsga2Params.min_motifs_remove);
 
+    scanf("%d", &nsga2Params.n_processes);
+    n_processes = nsga2Params.n_processes;
 
     // file names
     scanf("%s",&nsga2Params.results_dir);
@@ -541,19 +545,22 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > N classes: %d\n", nsga2Params.n_classes);
     printf(" > Image size: %d\n", nsga2Params.image_size);
     printf(" > Bins: %d\n", nsga2Params.bins);
+    printf(" > Distance type: %d\n", nsga2Params.distance_type);
 
     printf(" > Mode: %d\n", nsga2Params.mode);
     printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
     printf(" > N samples: %d\n", nsga2Params.n_samples);
 
-    printf("> Max neurons to change (percentage): %lf\n",nsga2Params.max_neurons);
-    printf("> Min neurons to change (percentage): %lf\n",nsga2Params.min_neurons);
-    printf("> Max synapses to change (percentage): %lf\n",nsga2Params.max_synapses);
-    printf("> Min synapses to change (percentage): %lf\n",nsga2Params.min_synapses);
-    printf("> Max motifs to add (percentage): %lf\n",nsga2Params.max_motifs_add);
-    printf("> Min motifs to add (percentage): %lf\n",nsga2Params.min_motifs_add);
-    printf("> Max motifs to remove (percentage): %lf\n",nsga2Params.max_motifs_remove);
-    printf("> Min motifs to remove (percentage): %lf\n",nsga2Params.min_motifs_remove);
+    printf(" > Max neurons to change (percentage): %lf\n",nsga2Params.max_neurons);
+    printf(" > Min neurons to change (percentage): %lf\n",nsga2Params.min_neurons);
+    printf(" > Max synapses to change (percentage): %lf\n",nsga2Params.max_synapses);
+    printf(" > Min synapses to change (percentage): %lf\n",nsga2Params.min_synapses);
+    printf(" > Max motifs to add (percentage): %lf\n",nsga2Params.max_motifs_add);
+    printf(" > Min motifs to add (percentage): %lf\n",nsga2Params.min_motifs_add);
+    printf(" > Max motifs to remove (percentage): %lf\n",nsga2Params.max_motifs_remove);
+    printf(" > Min motifs to remove (percentage): %lf\n",nsga2Params.min_motifs_remove);
+
+    printf(" > Number of thread for OpenMP: %d\n", nsga2Params.n_processes);
 
     for(i = 0; i<nsga2Params.nobj; i++)
         printf(" > Obj. function values file dir: %s\n", nsga2Params.f_obj_dirs[i]);
