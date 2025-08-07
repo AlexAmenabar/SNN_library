@@ -987,9 +987,9 @@ void initialize_sparse_matrix_node_only(NSGA2Type *nsga2Params, individual *ind,
 
         // initialize synapse weight if weights are included in the genotype
         if(nsga2Params->weights_included != 0){
-            matrix_node->weight[i] = rnd(nsga2Params->min_weight, nsga2Params->max_weight);
+            matrix_node->weight[i] = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
 
-            if(value < 0) matrix_node->weight[i] -= matrix_node->weight[i]; // if value is negative, the synapse is inhibitory
+            if(value < 0) matrix_node->weight[i] = -matrix_node->weight[i]; // if value is negative, the synapse is inhibitory
         }
         
         matrix_node->learning_rule[i] = 0; 
@@ -1050,13 +1050,14 @@ void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind){
         for(j = 0; j<neuron->n_output_synapse; j++){
             synapse = &(snn->synapses[neuron->output_synapse_indexes[j]]);
             
-            synapse->w = (double)rand() / RAND_MAX;
+            //synapse->w = (double)rand() / RAND_MAX;
+            synapse->w = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
 
             // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution
-            if(synapse->w < nsga2Params->min_weight)
+            /*if(synapse->w < nsga2Params->min_weight)
                 synapse->w = nsga2Params->min_weight;
             if(synapse->w > nsga2Params->max_weight)
-                synapse->w = nsga2Params->max_weight;
+                synapse->w = nsga2Params->max_weight;*/
 
             if(neuron->excitatory == -1){
                 synapse->w = -synapse->w;

@@ -103,7 +103,7 @@ void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutatio
     // select neuron to do the changes
     int_array_t *selected_neurons = select_neurons_to_change(nsga2Params, ind);
     
-    int mutation_parameter = rnd(0, 2); // the code indicates what mutation will be done
+    int mutation_parameter = rnd(0, 3); // the code indicates what mutation will be done
 
 
     // loop over dynamic list of neurons to find the selected ones and change them
@@ -130,6 +130,9 @@ void neuron_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutatio
                 neuron_node->refract_time = neuron_node->refract_time + (rnd(-2, 2));
                 if(neuron_node->refract_time < 0)
                     neuron_node->refract_time = 0;
+                break;
+            case 3: // change resistance
+                neuron_node->r = neuron_node->r + (rndreal(-0.25, 0.25));
                 break;
         }        
     }
@@ -197,14 +200,14 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
         while(j != selected_synapses->array[i]){
 
             // each node has several synapses, so loop over those
-            if(s == abs(synapse_node->value)){
+            if(s == abs(synapse_node->value) - 1){
                 s = 0;
                 synapse_node = synapse_node->next_element;
             }
             else{
                 s++;
             }
-
+            
             j++;
         }
 
@@ -221,9 +224,6 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
                 synapse_node->learning_rule[s] = synapse_node->learning_rule[s]; // TODO
                 break;
         }
-
-
-
     }
 
     deallocate_int_arrays(selected_synapses, 1);

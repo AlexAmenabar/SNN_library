@@ -75,8 +75,9 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
         }
 
         float temp_v = lif_neuron->v;
-        // compute membrane potential
-        lif_neuron->v =  lif_neuron->v * (1 - 1 / 20) + input_current;  //(0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
+        // compute membrane potential --> https://colab.research.google.com/github/johanjan/MOOC-HPFEM-source/blob/master/LIF_ei_balance_irregularity.ipynb
+        //lif_neuron->v =  lif_neuron->v * (1 - 1 / 20) + input_current;  //(0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
+        lif_neuron->v = lif_neuron->v + (-(lif_neuron->v - lif_neuron->v_rest) + (lif_neuron->r * input_current)) * (1 / 1);
     }
 }
 

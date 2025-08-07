@@ -104,8 +104,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     }
     if (nsga2Params.nreal != 0)
     {
-        nsga2Params.min_realvar = (double *)malloc(nsga2Params.nreal*sizeof(double));
-        nsga2Params.max_realvar = (double *)malloc(nsga2Params.nreal*sizeof(double));
+        nsga2Params.min_realvar = (double *)calloc(nsga2Params.nreal,sizeof(double));
+        nsga2Params.max_realvar = (double *)calloc(nsga2Params.nreal,sizeof(double));
         for (i=0; i<nsga2Params.nreal; i++)
         {
             printf ("\n Enter the lower limit of real variable %d : ",i+1);
@@ -161,9 +161,9 @@ NSGA2Type ReadParameters(int argc, char **argv){
     }
     if (nsga2Params.nbin != 0)
     {
-        nsga2Params.nbits = (int *)malloc(nsga2Params.nbin*sizeof(int));
-        nsga2Params.min_binvar = (double *)malloc(nsga2Params.nbin*sizeof(double));
-        nsga2Params.max_binvar = (double *)malloc(nsga2Params.nbin*sizeof(double));
+        nsga2Params.nbits = (int *)calloc(nsga2Params.nbin,sizeof(int));
+        nsga2Params.min_binvar = (double *)calloc(nsga2Params.nbin,sizeof(double));
+        nsga2Params.max_binvar = (double *)calloc(nsga2Params.nbin,sizeof(double));
         for (i=0; i<nsga2Params.nbin; i++)
         {
             printf ("\n Enter the number of bits for binary variable %d : ",i+1);
@@ -763,12 +763,12 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     image_dataset.n_images = nsga2Params->n_train_samples;
     image_dataset.n_classes = nsga2Params->n_classes;
 
-    image_dataset.images = malloc(image_dataset.n_images * sizeof(image_dataset_t)); // alloc memory for images
-    image_dataset.labels = malloc(image_dataset.n_images * sizeof(int)); // alloc memory for images
+    image_dataset.images = (spike_image_t *)calloc(image_dataset.n_images, sizeof(spike_image_t)); // alloc memory for images
+    image_dataset.labels = (int *)calloc(image_dataset.n_images, sizeof(int)); // alloc memory for images
     for(i = 0; i<image_dataset.n_images; i++){
-        image_dataset.images[i].image = malloc(image_dataset.image_size * sizeof(int *));
+        image_dataset.images[i].image = (int **)calloc(image_dataset.image_size, sizeof(int *));
         for(j=0; j<image_dataset.image_size; j++)
-            image_dataset.images[i].image[j] = malloc(image_dataset.bins * sizeof(int));
+            image_dataset.images[i].image[j] = (int *)calloc(image_dataset.bins, sizeof(int));
     }
 
     // load input spike trains
@@ -848,10 +848,6 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
     fclose(f_train);
     fclose(f_train_labels);
-
-
-
-    //exit(0);
 
     return;
 }

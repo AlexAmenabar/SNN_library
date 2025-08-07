@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 def parse_generation_line(line):
     return list(map(float, line.strip().replace(",", " ").split()))
@@ -44,7 +45,7 @@ def plot_multiple_objectives(file_paths, num_generations, num_individuals):
         new_axis.spines.right.set_position(("axes", 1 + 0.1 * (i - 1)))
         axes.append(new_axis)
 
-    colors = ['tab:blue', 'tab:green', 'tab:red', 'tab:orange', 'tab:purple', 'tab:brown']
+    colors = ['tab:blue', 'tab:red', 'tab:green', 'tab:orange', 'tab:purple', 'tab:brown']
     linestyles = ['--', '-', '-.']
 
     all_labels = []
@@ -76,9 +77,24 @@ def plot_multiple_objectives(file_paths, num_generations, num_individuals):
 # )
 
 # Main
-if __name__ == '__main__':
-    plot_multiple_objectives(
-        ["./experiments_snn_wn_ls_es/my_metric.txt", "./experiments_snn_wn_ls_es/n_spikes_per_neuron.txt"],
-        num_generations=10,
-        num_individuals=32
-    )
+if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Two integers followed by a list of strings")
+
+    # Two required positional integers
+    parser.add_argument("num1", type=int, help="First integer")
+    parser.add_argument("num2", type=int, help="Second integer")
+
+    # Remaining arguments as a list of strings
+    parser.add_argument("items", nargs='*', help="List of string inputs")
+
+    args = parser.parse_args()
+
+    plot_multiple_objectives(args.items, num_generations=args.num1, num_individuals=args.num2)
+
+    
+    #plot_multiple_objectives(
+    #    ["./experiments_snn_test/my_metric.txt", "./experiments_snn_test/n_spikes_per_neuron.txt"],
+    #    num_generations=10,
+    #    num_individuals=8
+    #)

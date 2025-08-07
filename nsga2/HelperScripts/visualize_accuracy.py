@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import argparse
 
 def process_file_generation_blocks(file_path):
     bests, worsts, means = [], [], []
@@ -67,6 +68,12 @@ def plot_accuracy(file_paths):
 # Example usage:
 # plot_block_formatted_objectives(["obj1_block.txt", "obj2_block.txt"])
 
-# Main
-if __name__ == '__main__':
-    plot_accuracy(["./experiments_snn_wn_ls_es/accuracy.txt"])
+def main(name, age):
+    print(f"Hello, {name}. You are {age} years old.")
+
+if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Accept a list of string inputs")
+    parser.add_argument("inputs", nargs='+', help="List of input strings")
+    args = parser.parse_args()
+    plot_accuracy(args.inputs)
