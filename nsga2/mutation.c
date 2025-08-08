@@ -247,7 +247,7 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
 
     // select neurons to change values
     for(i = 0; i<selected_synapses->n; i++)
-        selected_synapses->array[i] = rnd(0, ind->n_synapses - 1);
+        selected_synapses->array[i] = rnd(0, ind->n_synapses - ind->n_input_synapses - 1);
 
     // order the list
     insertion_sort(selected_synapses->array, selected_synapses->n);

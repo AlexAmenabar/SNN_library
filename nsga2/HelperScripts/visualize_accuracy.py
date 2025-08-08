@@ -68,9 +68,6 @@ def plot_accuracy(file_paths):
 # Example usage:
 # plot_block_formatted_objectives(["obj1_block.txt", "obj2_block.txt"])
 
-def main(name, age):
-    print(f"Hello, {name}. You are {age} years old.")
-
 if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Accept a list of string inputs")
