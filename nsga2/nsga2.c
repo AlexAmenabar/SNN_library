@@ -331,25 +331,27 @@ NSGA2Type ReadParameters(int argc, char **argv){
     char *input_individuals_dir_tmp; 
     scanf("%s", &input_individuals_dir_tmp);
     
-    // concatenate the text for the files to store the individuals
-    nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
-
-
     // create folder for individuals
-    if(stat(input_individuals_dir_tmp, &st) == -1){
-        if(mkdir(input_individuals_dir_tmp, 0700) == 0){
-            printf(" > Directory created: %s\n", input_individuals_dir_tmp);
+    if(nsga2Params.load_networks == 1){
+    
+        // concatenate the text for the files to store the individuals
+        nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
+
+        if(stat(input_individuals_dir_tmp, &st) == -1){
+            if(mkdir(input_individuals_dir_tmp, 0700) == 0){
+                printf(" > Directory created: %s\n", input_individuals_dir_tmp);
+            }
+            else{
+                printf(" > Error creating directory for loading individuals!\n");
+                exit(1);
+            }
         }
         else{
-            printf(" > Error creating directory for loading individuals!\n");
-            exit(1);
+            printf(" > Directory already exists: %s\n", tmp_ind_dir);
         }
     }
-    else{
-        printf(" > Directory already exists: %s\n", tmp_ind_dir);
-    }
 
-
+    
     for(i = 0; i<nsga2Params.popsize; i++){
         strcpy(nsga2Params.input_individuals_dir[i], input_individuals_dir_tmp); // copy global directory for individuals
         sprintf(s_number, "%d", i); 
