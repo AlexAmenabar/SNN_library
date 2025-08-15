@@ -9,6 +9,8 @@
 ...
 - objective function N index
 
+- Load initial population (0 / 1). If 1, population is loaded from file, else, it is randomly initialized
+- directory input networks
 - Neuron type
 - n max motifs
 - n min motifs
@@ -46,6 +48,7 @@
 - n classes in the dataset
 - image size (n x n)
 - bins
+- Simulation time steps
 - Type of distance computation (0: number of spikes / 1: exact timming of spikes)
 
 - mode

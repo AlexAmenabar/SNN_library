@@ -349,14 +349,13 @@ NSGA2Type ReadParameters(int argc, char **argv){
         else{
             printf(" > Directory already exists: %s\n", tmp_ind_dir);
         }
-    }
 
-    
-    for(i = 0; i<nsga2Params.popsize; i++){
-        strcpy(nsga2Params.input_individuals_dir[i], input_individuals_dir_tmp); // copy global directory for individuals
-        sprintf(s_number, "%d", i); 
-        strcat(nsga2Params.input_individuals_dir[i], s_number);
-        strcat(nsga2Params.input_individuals_dir[i], ".txt\0");
+        for(i = 0; i<nsga2Params.popsize; i++){
+            strcpy(nsga2Params.input_individuals_dir[i], input_individuals_dir_tmp); // copy global directory for individuals
+            sprintf(s_number, "%d", i); 
+            strcat(nsga2Params.input_individuals_dir[i], s_number);
+            strcat(nsga2Params.input_individuals_dir[i], ".txt\0");
+        }
     }
 
 
