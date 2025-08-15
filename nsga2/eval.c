@@ -17,14 +17,11 @@
 # include "distance_comp.h"
 
 
-int simulation_time_steps;
 
 
 /* Routine to evaluate objective function values and constraints for a population */
 void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out)
 {
-    simulation_time_steps = nsga2Params->bins * 5;
-
     int i, j, mode, n_samples, n_repetitions;
     selected_samples_info_t *selected_samples_info;
 
@@ -176,6 +173,9 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
     ctx->acc_per_class = (double *)calloc(n_classes, sizeof(double));
     ctx->accuracy = 0;
+    ctx->confusion_matrix = (int **)calloc(n_repetitions, sizeof(int *)); // one confusion matrix per repetition
+    for(i = 0; i<n_repetitions; i++)
+        ctx->confusion_matrix[i] = (int *)calloc(n_classes * n_classes, sizeof(int));
 
 
     // print in the file the information to visualize results
@@ -306,6 +306,17 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     }
     fprintf(facc, "\n");
 
+    // print confusion matrixes for each repetition
+    for(i = 0; i<n_repetitions; i++){
+        for(j = 0; j<n_classes; j++){
+            for(l=0; l<n_classes; l++){
+                fprintf(facc, "%d ", ctx->confusion_matrix[i][j*n_classes+l]);
+            }
+            fprintf(facc, "\n");
+        }
+        fprintf(facc, "\n");
+    }
+
     // ======================== //
     // free all the memory used //
     // ======================== //
@@ -331,6 +342,11 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         free(ctx->acc_per_class_per_repetition[i]);
     free(ctx->acc_per_class_per_repetition);
     free(ctx->acc_per_class);
+
+    for(i = 0; i<n_repetitions; i++)
+        free(ctx->confusion_matrix[i]);
+    free(ctx->confusion_matrix); // one confusion matrix per repetition
+
 
     return;
 }
@@ -428,7 +444,7 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
         // run the simulation
         //printf(" > > > Simulating sample...\n");
         //fflush(stdout);
-        for(j=0; j<simulation_time_steps; j++){ 
+        for(j=0; j<nsga2Params->simulation_time_steps; j++){ 
 
             clock_gettime(CLOCK_MONOTONIC, &start_bin);
 
@@ -696,6 +712,11 @@ double accuracy(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
     // loop over all classes
     for(i = 0; i<n_classes; i++){ // compute for each class;
 
+        // reinitialize confusion matrix
+        for(j = 0; j<n_classes; j++){
+            ctx->confusion_matrix[rep][i * n_classes + j] = 0;
+        }
+
         // reinitialize number of successes for this class
         c_success = 0;
 
@@ -728,6 +749,11 @@ double accuracy(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
                 else if(temp_local_index > ctx->centroid_info[l].index){
                     if(ctx->distance_matrix[ctx->centroid_info[l].index * n_samples + temp_local_index] < tmp_distance)
                         founded = 1;
+                }
+
+                // build the confusion matrix
+                if(founded == 1){
+                    ctx->confusion_matrix[rep][n_classes * i + l] ++;
                 }
 
                 l++;
@@ -926,7 +952,7 @@ void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individ
         for(j = i + 1; j<n_samples; j++){
             for(s = 0; s < n_neurons; s++){
                 distance_matrix[i * n_samples + j] += 
-                    compute_manhattan_distance_for_chars(simulation_results->results_per_sample[i].generated_spikes[s], simulation_results->results_per_sample[j].generated_spikes[s], simulation_time_steps);
+                    compute_manhattan_distance_for_chars(simulation_results->results_per_sample[i].generated_spikes[s], simulation_results->results_per_sample[j].generated_spikes[s], nsga2Params->simulation_time_steps);
             }
 
             distance_matrix[j * n_samples + i] = distance_matrix[i * n_samples + j];

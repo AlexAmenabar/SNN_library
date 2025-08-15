@@ -324,6 +324,40 @@ NSGA2Type ReadParameters(int argc, char **argv){
     // set objective functions pointers
     select_objective_functions(&nsga2Params, nsga2Params.obj_functions_info);
 
+
+    // scan if the networks must be loaded from a file or intiialized randomly
+    scanf("%d", &nsga2Params.load_networks);
+    
+    char *input_individuals_dir_tmp; 
+    scanf("%s", &input_individuals_dir_tmp);
+    
+    // concatenate the text for the files to store the individuals
+    nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
+
+
+    // create folder for individuals
+    if(stat(input_individuals_dir_tmp, &st) == -1){
+        if(mkdir(input_individuals_dir_tmp, 0700) == 0){
+            printf(" > Directory created: %s\n", input_individuals_dir_tmp);
+        }
+        else{
+            printf(" > Error creating directory for loading individuals!\n");
+            exit(1);
+        }
+    }
+    else{
+        printf(" > Directory already exists: %s\n", tmp_ind_dir);
+    }
+
+
+    for(i = 0; i<nsga2Params.popsize; i++){
+        strcpy(nsga2Params.input_individuals_dir[i], input_individuals_dir_tmp); // copy global directory for individuals
+        sprintf(s_number, "%d", i); 
+        strcat(nsga2Params.input_individuals_dir[i], s_number);
+        strcat(nsga2Params.input_individuals_dir[i], ".txt\0");
+    }
+
+
     // my parameters -- general
     scanf("%d",&nsga2Params.neuron_type);
     scanf("%d",&nsga2Params.max_motifs);
@@ -366,6 +400,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.n_classes);
     scanf("%d",&nsga2Params.image_size);
     scanf("%d",&nsga2Params.bins);
+    scanf("%d",&nsga2Params.simulation_time_steps);
     scanf("%d",&nsga2Params.distance_type);
 
     // simulations repetitions and number of samples configuration
@@ -508,6 +543,10 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Number of generations: %d\n", nsga2Params.ngen);
     printf(" > Number of objective functions: %d\n", nsga2Params.nobj);
 
+    if(nsga2Params.load_networks == 1){
+        for(i=0; i<nsga2Params.popsize; i++)
+            printf(" > Directories for loading individuals: %s\n", nsga2Params.input_individuals_dir[i]);
+    }
     printf(" > Neuron type: %d\n", nsga2Params.neuron_type);
     printf(" > Max motifs: %d\n", nsga2Params.max_motifs);
     printf(" > Min motifs: %d\n", nsga2Params.min_motifs);
@@ -545,6 +584,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > N classes: %d\n", nsga2Params.n_classes);
     printf(" > Image size: %d\n", nsga2Params.image_size);
     printf(" > Bins: %d\n", nsga2Params.bins);
+    printf(" > Simulation time steps: %d\n", nsga2Params.simulation_time_steps);
     printf(" > Distance type: %d\n", nsga2Params.distance_type);
 
     printf(" > Mode: %d\n", nsga2Params.mode);

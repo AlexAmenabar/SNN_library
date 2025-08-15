@@ -1916,6 +1916,150 @@ int_array_t *map_from_input_motifs_to_output(individual *ind, int n_motifs, int 
 }
 
 
+/* Learning zones mutations */
+
+// Function to add new learning zones
+void add_learning_zone_mutation(NSGA2Type *nsga2Params, individual *ind){
+
+    int n_new_lz, i, tmp_motif_index, n_layers, dir;
+    new_motif_t **motifs_array, *tmp_motif_node;
+    learning_zone_t *lz;
+
+    // copy motifs from dynamic list to an array for efficiency
+    motifs_array = (new_motif_t **)calloc(ind->n_motifs, sizeof(new_motif_t *));
+    new_motif_t *motif_node = ind->motifs_new;
+
+    // initialize helper arrays // TODO: Probably in this second phase the array of motifs can be helpful all the time, do it only once
+    for(i = 0; i<ind->n_motifs; i++){
+        motifs_array[i] = motif_node;
+        motif_node->in_learning_zone = 0; 
+        motif_node = motif_node->next_motif;
+    }
+
+    // loop over the last learning zone
+    while(lz->next_zone)
+        lz = lz->next_zone; // It would be helpfull to store the last one to get it directly
+
+    
+    // select how much learning zones will be added
+    n_new_lz = rnd(1, 1); // TODO: This should be a fucntion that depends on the number of learning zones in the individual
+
+    // select the centoid for the new learning zone (a motif that it is not already a centroid)
+    i = 0;
+    while(i < n_new_lz){
+        // select the centroid
+        tmp_motif_index = rnd(0, ind->n_motifs-1);
+
+        // check if the selected motifs has been selected for another learning zone in this generation
+        tmp_motif_node = motifs_array[tmp_motif_index];
+
+        if(tmp_motif_node->in_learning_zone == 0){
+
+            n_layers = rnd(1, 2); // TODO
+            dir = rnd(-1, 1);
+
+            // create new learning zone
+            initialize_and_allocate_learning_zone(nsga2Params, ind, lz, lz, tmp_motif_node);
+            extend_learning_zone(nsga2Params, ind, lz, tmp_motif_index, motifs_array, n_layers, dir);
+
+            i++;
+        }
+    }
+
+    // deallocate memory
+    free(motifs_array);
+}
+
+// Function to extend an existing learning zone
+void extend_learning_zones_mutation(NSGA2Type *nsga2Params, individual *ind){
+
+    int i, n_lz, lz_index, motif_index, dir, n_layers;
+    new_motif_t **motifs_array, *motif_node;
+    
+    // copy motifs from dynamic list to an array for efficiency
+    motifs_array = (new_motif_t **)calloc(ind->n_motifs, sizeof(new_motif_t *));
+    motif_node = ind->motifs_new;
+    // initialize helper arrays // TODO: Probably in this second phase the array of motifs can be helpful all the time, do it only once
+    for(i = 0; i<ind->n_motifs; i++){
+        motifs_array[i] = motif_node;
+        motif_node->in_learning_zone = 0; 
+        motif_node = motif_node->next_motif;
+    }
+
+
+    // select how much changes will be done
+    n_lz = rnd(1, ind->n_learning_zones / 4);
+
+    // select motifs, and extend that learning zone in the selected direction
+    i=0;
+    while(i < n_lz){
+        
+        motif_index = rnd(0, ind->n_motifs);
+        motif_node = motifs_array[motif_index];
+
+        if(motif_node->in_learning_zone == 0){ // if motif is not already added to a learning zone in this mutation, then mutate
+            
+            // select the direction to extend the learning zone
+            dir = rnd(-1, 1);
+            // select how much layers will be extended
+            n_layers = rnd(1, 2); // TODO: This should be dependent on connectivity and number of motifs in the individual
+            
+            // extend learning layer
+            extend_learning_zone(nsga2Params, ind, motif_node->lz, motif_index, motifs_array, n_layers-1, dir);
+
+            i++;            
+        }
+    }
+
+
+    // deallocate memory
+    free(motifs_array);
+}
+
+/*int_array_t* select_learning_zones(individual *ind){
+    
+    int n_learning_zones, min, max;
+
+    // decide how much learning zones to change
+    min = 1;
+    max = ind->n_motifs * 0.1;
+
+    if(max < min) 
+        max = 1;
+    
+    max = 1; // TODO: This is temporal
+    n_learning_zones = rnd(min, max);
+
+    // select n_learning_zones
+
+    int i = 0, j=0, valid = 0;
+    int_array_t *learning_zones_to_change;
+    learning_zones_to_change = (int_array_t *)calloc(1 + n_learning_zones, sizeof(int_array_t)); // first int_array indicates the selected learning zones,
+                                                                                                 // the rest the motif
+
+    learning_zones_to_change->n = n_learning_zones;
+    learning_zones_to_change = (int *)calloc(n_learning_zones, sizeof(int));
+
+    while(i < n_learning_zones){
+        valid = 1;
+        learning_zones_to_change->array[i] = rnd(0, ind->n_learning_zones-1);
+    
+        for(j = 0; j<i; j++){
+            if(learning_zones_to_change->array[j] == learning_zones_to_change->array[i])
+                valid = 0;
+        }
+
+        if(valid == 1)
+            i++;
+    }
+
+
+    // select the number of motifs to add per learning zone
+
+    return learning_zones_to_change;
+}*/
+
+
 /**
  * Functions not used by me // TODO: Remove in the future
  */
