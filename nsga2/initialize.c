@@ -1034,7 +1034,6 @@ void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind){
     // input synapses are located at the begining of the list
     for(i=0; i<snn->n_input_synapses; i++){
         synapse = &(snn->synapses[i]);
-        synapse = &(snn->synapses[neuron->output_synapse_indexes[j]]);
         
         //synapse->w = (double)rand() / RAND_MAX;
         synapse->w = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
