@@ -330,13 +330,12 @@ NSGA2Type ReadParameters(int argc, char **argv){
     
     char *input_individuals_dir_tmp; 
     scanf("%s", &input_individuals_dir_tmp);
-    
+    nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
+
     // create folder for individuals
     if(nsga2Params.load_networks == 1){
     
         // concatenate the text for the files to store the individuals
-        nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
-
         if(stat(input_individuals_dir_tmp, &st) == -1){
             if(mkdir(input_individuals_dir_tmp, 0700) == 0){
                 printf(" > Directory created: %s\n", input_individuals_dir_tmp);
@@ -1180,6 +1179,8 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     /*for(i = 0; i<nsga2Params->popsize; i++){
         free(nsga2Params->individuals_dirs[i]);
     }*/
+    
+    free(nsga2Params->input_individuals_dir);
     free(nsga2Params->individuals_dirs);
 
     /*for(i = 0; i<nsga2Params->nobj; i++){

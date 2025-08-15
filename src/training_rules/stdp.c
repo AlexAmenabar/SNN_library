@@ -20,7 +20,7 @@ void add_stdp(synapse_t *synapse){
         synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
 
         int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
-        float initial_weight = synapse->w;
+        double initial_weight = synapse->w;
 
         if(time_diff > 0 && time_diff < 75){
             synapse->w += A_PLUS * exp(-time_diff / TAU_PLUS);
@@ -45,7 +45,7 @@ void mult_stdp(synapse_t *synapse){
         synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
         
         int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
-        float initial_weight = synapse->w;
+        double initial_weight = synapse->w;
 
         if(time_diff > 0 && time_diff < 75){
             synapse->w += A_PLUS * synapse->w * (1 - synapse->w) * exp(-time_diff / TAU_PLUS);
@@ -71,7 +71,7 @@ void anti_stdp(synapse_t *synapse){
         synapse->post_synaptic_lif_neuron->t_last_spike != synapse->pre_synaptic_lif_neuron->t_last_spike){
         
         int time_diff = synapse->post_synaptic_lif_neuron->t_last_spike - synapse->pre_synaptic_lif_neuron->t_last_spike;
-        float initial_weight = synapse->w;
+        double initial_weight = synapse->w;
 
         if(time_diff > 0 && time_diff < 75){
             synapse->w -= A_PLUS * exp(-time_diff / TAU_PLUS);

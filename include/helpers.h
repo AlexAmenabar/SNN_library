@@ -30,13 +30,13 @@ void print_array_uint8(__uint8_t *array, int length);
 /// @param matrix Matrix to be printed
 /// @param rows Number of rows of the matrix
 /// @param columns Number of columns of the matrix
-void print_matrix_f(float *matrix, int rows, int columns);
+void print_matrix_f(double *matrix, int rows, int columns);
 
 
 /// @brief Print an array (of real numbers)
 /// @param array Array to be printed
 /// @param length Number of elements of the array
-void print_array_f(float *array, int length);
+void print_array_f(double *array, int length);
 
 
 /// @brief This function generates random spike trains

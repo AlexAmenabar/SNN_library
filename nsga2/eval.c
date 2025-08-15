@@ -225,6 +225,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
         // compute the distance matrix if it is required for computing some of the objective functions
         if(nsga2Params->obj_functions_info->distance_matrix_req == 1){
+            
             if(nsga2Params->distance_type == 0)
                 compute_distance_matrix(ctx->distance_matrix, n_samples, ctx->spike_amount_per_neurons_per_sample, n_neurons);
             else
@@ -936,10 +937,6 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
 
 void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results){
     
-    // for sample
-        // for sample
-            // for neuron
-            
     int i, j, s, n_samples, n_neurons;
     double *distance_matrix;
     n_neurons = ind->n_neurons;

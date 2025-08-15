@@ -396,11 +396,11 @@ void initialize_sample_results_struct(simulation_results_per_sample_t *results_p
     results_per_sample->elapsed_time_neurons_input = 0;
     results_per_sample->elapsed_time_neurons_output = 0;    
     
-    results_per_sample->generated_spikes = (unsigned char **)malloc(conf->n_neurons * sizeof(unsigned char *));
+    results_per_sample->generated_spikes = (unsigned char **)calloc(conf->n_neurons, sizeof(unsigned char *));
     results_per_sample->n_spikes_per_neuron = (int *)calloc(conf->n_neurons, sizeof(int));
 
     for (int i = 0; i<conf->n_neurons; i++){
-        results_per_sample->generated_spikes[i] = (unsigned char *)malloc((conf->time_steps * 10) * sizeof(unsigned char));
+        results_per_sample->generated_spikes[i] = (unsigned char *)calloc((conf->time_steps * 10), sizeof(unsigned char));
         results_per_sample->n_spikes_per_neuron[i] = 0;
     }
 }

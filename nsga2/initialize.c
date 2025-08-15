@@ -983,13 +983,15 @@ void initialize_sparse_matrix_node_only(NSGA2Type *nsga2Params, individual *ind,
     for(i = 0; i<abs(value); i++){
 
         matrix_node->latency[i] = exp_distribution(0.75);//3; 
-        if(matrix_node->latency[i] <= 0) matrix_node->latency[i] = 1; // latency must be bigger than 0
+        if(matrix_node->latency[i] <= 0) 
+            matrix_node->latency[i] = 1; // latency must be bigger than 0
 
         // initialize synapse weight if weights are included in the genotype
         if(nsga2Params->weights_included != 0){
             matrix_node->weight[i] = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
 
-            if(value < 0) matrix_node->weight[i] = -matrix_node->weight[i]; // if value is negative, the synapse is inhibitory
+            if(value < 0) 
+                matrix_node->weight[i] = -matrix_node->weight[i]; // if value is negative, the synapse is inhibitory
         }
         
         matrix_node->learning_rule[i] = 0; 
@@ -1033,17 +1035,18 @@ void initialize_synapse_weights(NSGA2Type *nsga2Params, individual *ind){
 
     // input synapses are located at the begining of the list
     for(i=0; i<snn->n_input_synapses; i++){
+        
         synapse = &(snn->synapses[i]);
         
-        //synapse->w = (double)rand() / RAND_MAX;
-        synapse->w = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
+        /*synapse->w = (double)rand() / RAND_MAX;
 
-        // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution
-        /*if(synapse->w < nsga2Params->min_weight)
+        // TODO: this is temporal, should be changed in the near future, using some intelligent weight initialization or a distribution // TODO: prob dist.????
+        if(synapse->w < nsga2Params->min_weight)
             synapse->w = nsga2Params->min_weight;
         if(synapse->w > nsga2Params->max_weight)
             synapse->w = nsga2Params->max_weight;*/
-
+        
+        synapse->w = rndreal(nsga2Params->min_weight, nsga2Params->max_weight);
     }
 
     // Initialize the rest of synapses

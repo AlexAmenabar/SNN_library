@@ -185,7 +185,7 @@ void generate_random_synaptic_weights(network_data_t *network_data, configuratio
     int i,j, l;
 
     int next_synapse = 0, valid;
-    float w, min_w, max_w;
+    double w, min_w, max_w;
 
     switch(conf->weight){
         case 0: // default
@@ -211,23 +211,23 @@ void generate_random_synaptic_weights(network_data_t *network_data, configuratio
             // if weight == 0 or 2, default 
             if(conf->weight == 0 || conf->weight == 2){
                 while(valid == 0){
-                    w = ((float)rand() / (float)(RAND_MAX)) * 5;
+                    w = ((double)rand() / (double)(RAND_MAX)) * 5;
                     if(w>0.005) valid = 1;
                 }
             }
             // use interval
             else{
-                w = (float)(rand() % (int)(max_w));
+                w = (double)(rand() % (int)(max_w));
                 
-                if(w > (float)max_w)
-                    w = (float)max_w;
-                if(w < (float)min_w)
-                    w = (float)min_w;
+                if(w > (double)max_w)
+                    w = (double)max_w;
+                if(w < (double)min_w)
+                    w = (double)min_w;
 
                 // check if we are using integers
                 if(conf->integers == 1){
                     int temp_w = (int)w;
-                    w = (float)temp_w; // convert to int and then to float
+                    w = (double)temp_w; // convert to int and then to float
                 }
                 else{
                     w = w * 0.99;
@@ -236,7 +236,7 @@ void generate_random_synaptic_weights(network_data_t *network_data, configuratio
                 //printf("generated w %f\n", w);
 
             // store weight
-            network_data->weights[next_synapse] = (float)w; 
+            network_data->weights[next_synapse] = (double)w; 
             next_synapse ++;
         }
     }
@@ -247,28 +247,28 @@ void generate_random_synaptic_weights(network_data_t *network_data, configuratio
             for(l = 0; l<network_data->connections[i][j+1]; l++){
                 // generate random value
                 int valid = 0;
-                float w = 0;
+                double w = 0;
                 
                 // if weight == 0 or 2, default 
                 if(conf->weight == 0 || conf->weight == 2){
                     while(valid == 0){
-                        w = ((float)rand() / (float)(RAND_MAX)) * 5;
+                        w = ((double)rand() / (double)(RAND_MAX)) * 5;
                         if(w>0.005) valid = 1;
                     }
                 }
                 // use interval
                 else{
-                    w = (float)(rand() % (int)(max_w));
+                    w = (double)(rand() % (int)(max_w));
 
-                    if(w > (float)max_w)
-                        w = (float)max_w;
-                    if(w < (float)min_w)
-                        w = (float)min_w;
+                    if(w > (double)max_w)
+                        w = (double)max_w;
+                    if(w < (double)min_w)
+                        w = (double)min_w;
 
                     // check if we are using integers
                     if(conf->integers == 1){
                         int temp_w = (int)w;
-                        w = (float)temp_w; // convert to int and then to float
+                        w = (double)temp_w; // convert to int and then to float
                     }
                     else{
                         w = w * 0.99;
@@ -283,14 +283,14 @@ void generate_random_synaptic_weights(network_data_t *network_data, configuratio
 
                 //printf("generated w %f\n", w);
                 if(j == network_data->n_neurons){ // network output synapse: always positive
-                    network_data->weights[next_synapse] = (float)w; 
+                    network_data->weights[next_synapse] = (double)w; 
                 }
                 else{ // other synapses can be positive or negative depending on neuron
                     if(network_data->behaviour_list[i-1] == 1){ // excitatory neuron
-                        network_data->weights[next_synapse] = (float)w; 
+                        network_data->weights[next_synapse] = (double)w; 
                     }
                     else{ // inhibitory neuron
-                        network_data->weights[next_synapse] = (float)-w;
+                        network_data->weights[next_synapse] = (double)-w;
                     }
                 }
                 next_synapse ++;
@@ -389,7 +389,7 @@ void generate_neurons_data(network_data_t *network_data, configuration_t *conf){
             random_value = rand() % max_value;
             if(random_value < min_value) 
                 random_value = min_value;
-            network_data->v_thres_list[i] = (float)random_value;
+            network_data->v_thres_list[i] = (double)random_value;
         }
         else{ // random --> NOT SENSE
             // TODO
@@ -406,7 +406,7 @@ void generate_neurons_data(network_data_t *network_data, configuration_t *conf){
             random_value = rand() % max_value;
             if(random_value < min_value) 
                 random_value = min_value;
-            network_data->v_rest_list[i] = (float)random_value;
+            network_data->v_rest_list[i] = (double)random_value;
         }
         else{ // random --> NOT SENSE
             // TODO

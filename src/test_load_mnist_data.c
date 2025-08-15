@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     //__int8_t *synapse_matrix;
     int **synaptic_connections, *neuron_excitatory, *training_zones; // change to uint in the future
     int *delay_list;
-    float *weight_list;
+    double *weight_list;
 
     void *neuron_initializer; // function to initialize neurons
     void (*input_step)(), (*output_step)(); // functions to run a step on the simulation

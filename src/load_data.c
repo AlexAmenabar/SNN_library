@@ -161,10 +161,10 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
     // reserve memory for lists related to neurons
     lists->neuron_excitatory = (int *)malloc(snn->n_neurons * sizeof(int));
     lists->r_time_list = (int *)malloc(snn->n_neurons * sizeof(int));
-    lists->v_thres_list = (float *)malloc(snn->n_neurons * sizeof(float));
-    lists->v_rest_list = (float *)malloc(snn->n_neurons * sizeof(float));
+    lists->v_thres_list = (double *)malloc(snn->n_neurons * sizeof(double));
+    lists->v_rest_list = (double *)malloc(snn->n_neurons * sizeof(double));
 
-    lists->weight_list = (float *)malloc(snn->n_synapses * sizeof(float));
+    lists->weight_list = (double *)malloc(snn->n_synapses * sizeof(double));
     lists->delay_list = (int *)malloc(snn->n_synapses * sizeof(int));
     lists->training_zones = (int *)malloc(snn->n_synapses * sizeof(int));
 
@@ -283,7 +283,7 @@ void load_network_information(const char *file_name, spiking_nn_t *snn, network_
             }
 
             // load data into lists structure
-            (lists->weight_list)[i] = (float)weight.u.d;
+            (lists->weight_list)[i] = (double)weight.u.d;
             (lists->delay_list)[i] = (int)latency.u.i;
             (lists->training_zones)[i] = (int)training_zone.u.i;
         }

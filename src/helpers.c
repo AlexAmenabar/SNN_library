@@ -39,7 +39,7 @@ void print_array_uint8(__uint8_t *array, int length){
 }
 
 
-void print_matrix_f(float *matrix, int rows, int columns){
+void print_matrix_f(double *matrix, int rows, int columns){
     for(int i = 0; i<rows; i++){
         for(int j = 0; j<columns; j++){
             printf("%f ", matrix[i*columns + j]);
@@ -48,7 +48,7 @@ void print_matrix_f(float *matrix, int rows, int columns){
     }
 }
 
-void print_array_f(float *array, int length){
+void print_array_f(double *array, int length){
     int i;
     for(i=0; i<length; i++){
         printf("%f ", array[i]);

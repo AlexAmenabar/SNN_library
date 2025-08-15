@@ -36,11 +36,11 @@ typedef struct {
 
     int excitatory; // 0 if inhibitory, else 1
 
-    float v; // if at start it's postive, excitatory neuron, else inhibitory
-    float r;// = 1.0; // membrane resistance
-    float v_rest;// = 0;
-    float v_reset;// = 0;
-    float v_tresh;// = 1;
+    double v; // if at start it's postive, excitatory neuron, else inhibitory
+    double r;// = 1.0; // membrane resistance
+    double v_rest;// = 0;
+    double v_reset;// = 0;
+    double v_tresh;// = 1;
 
     int r_time, r_time_rest; //refractory time
 
@@ -51,7 +51,7 @@ typedef struct {
 
 /// @brief Structure to store all the information about the synapses
 typedef struct {
-    float w; // if at start it is positive, excitatory, else inhibitory
+    double w; // if at start it is positive, excitatory, else inhibitory
     int delay; // the delay time of the synapse
 
     int *l_spike_times; // FIFO list
@@ -140,11 +140,11 @@ typedef struct{
 typedef struct{
     int **synaptic_connections, *neuron_excitatory, *training_zones; // change to uint in the future
     int *delay_list;
-    float *weight_list;
+    double *weight_list;
 
     // lists dependent on neuron types
     // LIF neuron
-    float *v_list, *v_thres_list, *R_list, *v_rest_list;
+    double *v_list, *v_thres_list, *R_list, *v_rest_list;
     int *r_time_list; //refractory time
 
 } network_construction_lists_t;

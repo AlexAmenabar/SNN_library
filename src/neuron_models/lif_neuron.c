@@ -9,7 +9,7 @@
 void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
-    float input_current = 0;
+    double input_current = 0;
     int synapse_index;
     synapse_t *synapse;
 
@@ -74,7 +74,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
             #endif
         }
 
-        float temp_v = lif_neuron->v;
+        double temp_v = lif_neuron->v;
         // compute membrane potential --> https://colab.research.google.com/github/johanjan/MOOC-HPFEM-source/blob/master/LIF_ei_balance_irregularity.ipynb
         //lif_neuron->v =  lif_neuron->v * (1 - 1 / 20) + input_current;  //(0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
         lif_neuron->v = lif_neuron->v + (-(lif_neuron->v - lif_neuron->v_rest) + (lif_neuron->r * input_current)) * (1 / 1);
@@ -84,7 +84,7 @@ void lif_neuron_compute_input_synapses(spiking_nn_t *snn, int t, int neuron_id, 
 void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
-    float input_current = 0;
+    double input_current = 0;
     int synapse_index;
     synapse_t *synapse;
 
@@ -146,7 +146,7 @@ void lif_neuron_compute_output_synapses(spiking_nn_t *snn, int t, int neuron_id,
 void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results_per_sample_t *results){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i, next_spike_time; // next spike to process;
-    float input_current = 0;
+    double input_current = 0;
     int synapse_index;
     synapse_t *synapse;
 
@@ -208,7 +208,7 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results
             #endif
         }
 
-        float temp_v = lif_neuron->v;
+        double temp_v = lif_neuron->v;
         // compute membrane potential
         lif_neuron->v =  lif_neuron->v * (1 - 1 / 20) + input_current;  //(0.2) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current); // (1 / 5)
     
@@ -264,7 +264,7 @@ void lif_neuron_step(spiking_nn_t *snn, int t, int neuron_id, simulation_results
 void step_lif_neuron_stdp_integrated(spiking_nn_t *snn, int t, int neuron_id, unsigned char **generated_spikes){
     lif_neuron_t *lif_neuron = &(snn->lif_neurons[neuron_id]);
     int i;
-    float input_current = 0;
+    double input_current = 0;
 
     #ifdef DEBUG
         printf(" - Processing neuron %d \n", neuron_id);
@@ -301,7 +301,7 @@ void step_lif_neuron_stdp_integrated(spiking_nn_t *snn, int t, int neuron_id, un
         #endif
     }
 
-    float temp_v = lif_neuron->v;
+    double temp_v = lif_neuron->v;
     // compute membrane potential
     lif_neuron->v +=  (1.0 / 5) * (-(lif_neuron->v - lif_neuron->v_rest) + lif_neuron->r * input_current);
 

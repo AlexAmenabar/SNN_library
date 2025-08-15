@@ -8,11 +8,11 @@ typedef struct {
 
     // neurons section
     int behaviour, *behaviour_list, r, *r_list, refract_time, *refract_time_list, *n_input_synapses_per_neuron, *n_output_synapses_per_neuron;
-    float v_thres, *v_thres_list, v_rest, *v_rest_list;
+    double v_thres, *v_thres_list, v_rest, *v_rest_list;
 
     // synapses section
     int latency, *latency_list, training_zones, *training_zones_list, **connections;
-    float *weights;
+    double *weights;
     // STDP
     int plus_A, *plus_A_list, minus_A, *minus_A_list; // TODO 
 } network_data_t;
@@ -29,10 +29,10 @@ typedef struct {
 
     // neurons configuration
     int min_behaviour, max_behaviour, min_R, max_R, min_refract_time, max_refract_time;
-    float min_v_thres, max_v_thres, min_v_rest, max_v_rest;
+    double min_v_thres, max_v_thres, min_v_rest, max_v_rest;
 
     int min_latency, max_latency, min_training_zone, max_training_zone;
-    float min_weight, max_weight;
+    double min_weight, max_weight;
 
 
     // the way the output must be generated

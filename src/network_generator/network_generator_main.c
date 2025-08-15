@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
     network_data.behaviour_list = (int *)malloc(network_data.n_neurons * sizeof(int));
     network_data.r_list = (int *)malloc(network_data.n_neurons * sizeof(int));
     network_data.refract_time_list = (int *)malloc(network_data.n_neurons * sizeof(int));
-    network_data.v_thres_list = (float *)malloc(network_data.n_neurons * sizeof(float));
-    network_data.v_rest_list = (float *)malloc(network_data.n_neurons * sizeof(float));
+    network_data.v_thres_list = (double *)malloc(network_data.n_neurons * sizeof(double));
+    network_data.v_rest_list = (double *)malloc(network_data.n_neurons * sizeof(double));
     network_data.n_input_synapses_per_neuron = (int *)malloc(network_data.n_neurons * sizeof(int));
     network_data.n_output_synapses_per_neuron = (int *)malloc(network_data.n_neurons * sizeof(int));
 
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
     // alloc memory for arrays related to synaptic connections
     network_data.latency_list = (int *)malloc(network_data.n_synapses * sizeof(int));
-    network_data.weights = (float *)malloc(network_data.n_synapses * sizeof(float));
+    network_data.weights = (double *)malloc(network_data.n_synapses * sizeof(double));
     network_data.training_zones_list = (int *)malloc(network_data.n_synapses * sizeof(int));
 
 
