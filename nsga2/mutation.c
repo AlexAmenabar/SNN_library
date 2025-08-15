@@ -70,6 +70,10 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
         case 2: // add motif mutation
             min = (int)(ind->n_motifs * nsga2Params->min_motifs_add);
             max = (int)(ind->n_motifs * nsga2Params->max_motifs_add);
+
+            if(min < 1) min = 1;
+            if(max < 1) max = 1;
+
             mutation_parameter =  rnd(min, max);//rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
                 
             //mutation_parameter =  rnd(1, 5); // TODO: n_motifs, this should not be a fixed value
@@ -78,6 +82,10 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
         case 3: // remove motif mutation
             min = (int)(ind->n_motifs * nsga2Params->min_motifs_remove);
             max = (int)(ind->n_motifs * nsga2Params->max_motifs_remove);
+
+            if(min < 1) min = 1;
+            if(max < 1) max = 1;
+
             mutation_parameter =  rnd(min, max);//rnd(1, 1); // TODO: n_motifs, this should not be a fixed value
             #ifdef DEBUG2
             printf(" > > > > N motifs: %d / %d\n", mutation_parameter, ind->n_motifs);
