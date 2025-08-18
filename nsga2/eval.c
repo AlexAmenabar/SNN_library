@@ -84,11 +84,11 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 
     int i, j;
     
-#ifdef PHASE2
-    test_SNN_phase2(nsga2Params, ind, selected_samples_info);
-#else
+//#ifdef PHASE2
+//    test_SNN_phase2(nsga2Params, ind, selected_samples_info);
+//#else
     test_SNN(nsga2Params, ind, selected_samples_info);
-#endif
+//#endif
 
     if (nsga2Params->ncon==0)
     {

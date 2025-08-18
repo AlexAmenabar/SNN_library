@@ -323,8 +323,6 @@ void copy_learning_zones(individual *ind1, individual *ind2){
 
     ind2->n_learning_zones = ind1->n_learning_zones;
 
-    printf(" > Copying learning zones (%d)\n", ind1->n_learning_zones);
-
     if(ind2->n_learning_zones > 0){
         
         ind2->learning_zones = (learning_zone_t *)calloc(1, sizeof(learning_zone_t));
@@ -333,9 +331,6 @@ void copy_learning_zones(individual *ind1, individual *ind2){
 
         for(i = 0; i<ind2->n_learning_zones; i++){
             
-            printf(" > > In lz %d / %d\n", i, ind2->n_learning_zones);
-
-            fflush(stdout);
             copy_learning_zone(or_lz, cp_lz);
             
             cp_lz->previous_zone = pr_lz;
