@@ -37,10 +37,10 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
 
     int mutation_code = rnd(0,2);
 
-    //#ifdef DEBUG2
+    #ifdef DEBUG2
         printf(" > > > Mutation code %d\n", mutation_code);
         fflush(stdout);
-    //#endif
+    #endif
 
     
     switch (mutation_code)
@@ -2163,22 +2163,6 @@ void add_learning_zone_mutation(NSGA2Type *nsga2Params, individual *ind){
             n_layers = rnd(1, 1); // TODO
             dir = rnd(-1, 1); // direction to expand the learning zone
 
-
-
-            // create new learning zone
-            printf(" n_lz = %d before removing motif from learning zone (lz = %d)\n", ind->n_learning_zones, tmp_motif_node->lz->n_motifs);
-
-            learning_zone_t *helper = ind->learning_zones;
-            while(helper){
-                printf("%d\n", helper->n_motifs);
-                helper = helper->next_zone;
-
-            }
-            printf("\n");
-            fflush(stdout);
-
-
-
             // initialize learning zone
             lz = initialize_and_allocate_learning_zone(nsga2Params, ind, lz, lz);
 
@@ -2188,16 +2172,6 @@ void add_learning_zone_mutation(NSGA2Type *nsga2Params, individual *ind){
             // expand learning zone
             extend_learning_zone(nsga2Params, ind, lz, ind->n_learning_zones - 1, tmp_motif_index, motifs_array, n_layers, dir);
             i++;
-
-
-            printf(" n_lz = %d after removing motif from learning zone (lz = %d)\n", ind->n_learning_zones, tmp_motif_node->lz->n_motifs);
-            helper = ind->learning_zones;
-            while(helper){
-                printf("%d\n", helper->n_motifs);
-                helper = helper->next_zone;
-
-            }
-            fflush(stdout);
         }
     }
 

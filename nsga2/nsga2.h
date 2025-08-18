@@ -431,8 +431,9 @@ void deallocate_int_array(int_array_t *int_array);
 void deallocate_int_arrays(int_array_t *int_arrays, int n);
 void deallocate_int_array_list(int_array_list_t *list_int_array, int n);
 void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node);
-//void allocate_objective_functions_context(obj_functions_t *ctx);
-//void deallocate_objective_functions_context(obj_functions_t *ctx);
+void allocate_objective_functions_context(NSGA2Type *nsga2Params, individual *ind, int n_ctx);
+void deallocate_objective_functions_context(NSGA2Type *nsga2Params, individual * ind, int n_ctx);
+
 
 /**
  * 
@@ -596,8 +597,9 @@ void real_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
 
 
 void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info); 
+void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info);
 void test_problem (double *xreal, double *xbin, int **gene, double *obj, double *constr);
-void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset);
+void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset, int train);
 void select_samples(selected_samples_info_t *selected_samples_info, int n_samples, int mode, int *percentages);
 // objective functions
 void select_objective_functions(NSGA2Type *nsga2Params, obj_functions_t *ctx);

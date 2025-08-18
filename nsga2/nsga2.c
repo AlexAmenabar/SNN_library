@@ -1188,6 +1188,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         free(nsga2Params->f_obj_dirs[i]);
     }*/
     free(nsga2Params->f_obj_dirs);
+    free(nsga2Params->obj_functions_info);
 
     printf("\n Routine successfully exited \n");
     return (0);
