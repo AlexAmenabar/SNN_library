@@ -113,8 +113,10 @@ void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn
             synapse = &(snn->synapses[i]);
         
             // if weights are included in the genotype, copy
+#ifndef PHASE2
             if(nsga2Params->weights_included != 0)
                 synapse->w = synapse_node->weight[j];
+#endif
 
             // synapse->weight = synapse_node->weight 
             synapse->delay = synapse_node->latency[j];
@@ -169,9 +171,10 @@ void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn
             synapse = &(snn->synapses[i]);
 
             // initialize synapse weight if the weight is included in the genotype
+#ifndef PHASE2
             if(nsga2Params->weights_included != 0)
                 synapse->w = synapse_node->weight[j];
-
+#endif
             synapse->delay = synapse_node->latency[j]; // TODO: This should be a list to manage each synapse in a node (a node can contain more than one synapse)
             synapse->max_spikes = MAX_SPIKES;
 
@@ -196,7 +199,7 @@ void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn
                 case 0:
                     synapse->learning_rule = &add_stdp;//(void (*)())&add_stdp;
                     break;
-                /*case 1:
+                case 1:
                     synapse->learning_rule = &mult_stdp;//(void (*)())&mult_stdp;
                     break;
                 case 2:

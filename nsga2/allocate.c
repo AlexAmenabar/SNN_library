@@ -189,6 +189,22 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
 
+    
+    // deallocate learning rules
+    if(ind->learning_zones){
+        learning_zone_t *lz, *tmp_lz;
+        lz = ind->learning_zones;
+
+        while(lz){
+            free(lz->lr);
+            tmp_lz = lz;
+            lz = lz->next_zone;
+
+            free(tmp_lz);
+        }
+    }
+    ind->learning_zones = NULL;
+
 
     if(ind->obj)
         free(ind->obj);

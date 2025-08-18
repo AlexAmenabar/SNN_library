@@ -218,6 +218,9 @@ int test1(){
         if(ind->n_neurons != n_neurons)
             equals = 0;
 
+        printf("equals %d\n", equals);
+        fflush(stdout);
+
         // check linked lists of connections
         if(ind->connectivity_info.in_connections[0].n_nodes != 1 || ind->connectivity_info.in_connections[1].n_nodes != 3)
             equals = 0;

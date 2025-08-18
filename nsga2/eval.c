@@ -205,8 +205,10 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         // ================ //
 
         // initialize weights for this repetition randomly, if weights are not included in the genotype
+#ifndef PHASE2
         if(nsga2Params->weights_included == 0)
             initialize_synapse_weights(nsga2Params, ind);
+#endif
 
         // simulate the network // TODO: generalize dataset management
         simulate_by_samples_enas(ind->snn, nsga2Params, ind, &results, n_samples, sample_indexes, &image_dataset);

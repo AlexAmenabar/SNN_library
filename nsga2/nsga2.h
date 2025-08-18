@@ -45,6 +45,20 @@ typedef struct
 }
 int_array_list_t;
 
+typedef struct int_node_t
+{
+    int value;
+    struct int_node_t *next;
+    struct int_node_t *prev;
+}
+int_node_t;
+
+typedef struct int_dynamic_list_t{
+    int n_nodes;
+    struct int_node_t *first_node;
+}
+int_dynamic_list_t;
+
 
 // In this struct the internal structure of each motif type is stored <-- ONLY INTERNAL STRUCTURE INFORMATION
 // this struct is used to avoid to repeat information
@@ -130,7 +144,8 @@ typedef struct new_motif_t
     struct new_motif_t *next_motif; // pointer to the next motif of the list
     
     struct learning_zone_t *lz;
-    int in_learning_zone;
+    int lz_index;
+    int in_lz;
 
     // The variables above could be used in the future to optimize the implementation
     //struct sparse_matrix_node_t *first_input_synapse; // pointer to the first input synapse of the first neuron
@@ -142,27 +157,13 @@ new_motif_t;
 // NEW
 struct learning_zone_t
 {
-    int stdp_type, n_motifs; // n_motifs can be used for computing statistics
-    new_motif_t *central_motif;
+    // general information
+    int *lr, n_lr, n_motifs; // n_motifs can be used for computing statistics
 
+    // dynamic list
     struct learning_zone_t *next_zone;
     struct learning_zone_t *previous_zone;
 };
-
-typedef struct int_node_t
-{
-    int value;
-    struct int_node_t *next;
-    struct int_node_t *prev;
-}
-int_node_t;
-
-typedef struct int_dynamic_list_t{
-    int n_nodes;
-    struct int_node_t *first_node;
-}
-int_dynamic_list_t;
-
 
 typedef struct ind_connectivity_info_t
 {
@@ -448,6 +449,10 @@ void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *syn
 void copy_synapse_nodes(individual *ind1, individual *ind2);
 void copy_individual(individual *ind1, individual *ind2);
 void copy_connectivity(individual *ind1, individual *ind2);
+void copy_learning_zones(individual *ind1, individual *ind2);
+void copy_learning_zone(learning_zone_t *lz1, learning_zone_t *lz2);
+void copy_lz_for_motifs(individual *ind1, individual *ind2);
+void connect_motifs_and_lz(individual *ind);
 void print_individuals(NSGA2Type *nsga2Params, population *pop);
 void print_networks(NSGA2Type *nsga2Params, population *pop);
 void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_node_t *matrix_node, int n_neurons);
@@ -456,7 +461,8 @@ void print_connectivity_matrix(int *matrix, int n);
 void print_synapses_dynamic_list(sparse_matrix_node_t *matrix_node);
 void load_individual_from_file(FILE *f, individual *ind);
 void store_individual_in_file(FILE *f, individual *ind);
-
+void load_individual_from_file_learning_zone_included(FILE *f, individual *ind);
+void store_individual_in_file_learning_zone_included(FILE *f, individual *ind);
 
 void crossover (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);
 void realcross (NSGA2Type *nsga2Params, individual *parent1, individual *parent2, individual *child1, individual *child2);
@@ -534,13 +540,14 @@ int_node_t* initialize_and_allocate_int_node(int value, int_node_t *prev, int_no
 // functions to divide the network in learning zones
 void initialize_learning_zones_population(NSGA2Type *nsga2Params, population *pop, int n_pop);
 void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *ind);
-void add_motif_to_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, new_motif_t *motif);
-void change_motif_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *old_lz, learning_zone_t *new_lz, new_motif_t *motif);
-learning_zone_t* initialize_and_allocate_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz, new_motif_t *central_motif);
-void initialize_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz, new_motif_t *central_motif);
-void extend_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int motif_index, new_motif_t **motifs_array, int remaining_layers, int dir);
-
-
+void add_motif_to_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int lz_index, new_motif_t *motif);
+void remove_motif_from_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, new_motif_t *motif);
+learning_zone_t* initialize_and_allocate_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz);
+void initialize_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz);
+void extend_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int lz_index, int motif_index, new_motif_t **motifs_array, int remaining_layers, int dir);
+int_array_t* clear_learning_zones(NSGA2Type *nsga2Params, individual *ind);
+void update_learning_zones_indexes(NSGA2Type *nsga2Params, individual *ind, int_array_t *r_lz);
+void cp_learning_rules_in_synapses(NSGA2Type *nsga2Params, individual *ind, new_motif_t **motifs_array);
 
 void insert (list *node, int x);
 list* del (list *node);
@@ -582,6 +589,7 @@ int_array_t *map_from_input_motifs_to_output(individual *ind, int n_motifs, int 
 // learning zones mutation
 void add_learning_zone_mutation(NSGA2Type *nsga2Params, individual *ind);
 void extend_learning_zones_mutation(NSGA2Type *nsga2Params, individual *ind);
+void change_learning_rule_mutation(NSGA2Type *nsga2Params, individual *ind);
 // not used
 void bin_mutate_ind (NSGA2Type *nsga2Params, individual *ind);
 void real_mutate_ind (NSGA2Type *nsga2Params, individual *ind);

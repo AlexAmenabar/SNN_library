@@ -17,6 +17,8 @@ void merge(NSGA2Type *nsga2Params,  population *pop1, population *pop2, populati
     }
     for (i=0, k=nsga2Params->popsize; i<nsga2Params->popsize; i++, k++)
     {
+        printf(" Copying indidivual %d in merge\n", i);
+        fflush(stdout);
         copy_ind (nsga2Params,  &(pop2->ind[i]), &(pop3->ind[k]));
     }
     return;

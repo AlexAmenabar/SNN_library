@@ -12,6 +12,8 @@
 - Load initial population (0 / 1). If 1, population is loaded from file, else, it is randomly initialized
 - directory input networks
 - Neuron type
+
+IF phase == 1{
 - n max motifs
 - n min motifs
 - Maximum percentage of connectivity for a motif
@@ -38,6 +40,30 @@
 - max weight
 - min weight
 
+- percentage of max neuron to change
+- percentage of min neuron to change
+
+- percentage max synapses to change
+- percentage min synapses to change
+
+- perentage of max motifs to add
+- percentage of min motifs to add
+
+- perentage of max motifs to remove
+- percentage of min motifs to remove
+
+}
+
+IF phase == 2{
+
+- max learning rule
+- min learning rule
+
+- n max layers
+
+}
+
+
 - dataset type
 - directory to the train dataset
 - directory to the labels of the train dataset
@@ -54,18 +80,6 @@
 - mode
 - number of repetitions
 - number of samples taken into account
-
-- percentage of max neuron to change
-- percentage of min neuron to change
-
-- percentage max synapses to change
-- percentage min synapses to change
-
-- perentage of max motifs to add
-- percentage of min motifs to add
-
-- perentage of max motifs to remove
-- percentage of min motifs to remove
 
 - n processes for OpenMP
 

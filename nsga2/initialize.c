@@ -63,6 +63,14 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     // initialize input synaptic connections (not included in the sparse matrix)
     initialize_input_synapses(nsga2Params, ind);
 
+
+    // in phase 1 learning zones are not used, so initialize only in second phase
+    ind->learning_zones = NULL;
+
+#ifdef PHASE2
+    initialize_learning_zones_individual(nsga2Params, ind);    
+#endif
+
     return;
 }
 
@@ -211,7 +219,8 @@ void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind){
     motif->motif_type = rnd(0, n_motifs-1);
     motif->initial_global_index = ind->n_neurons;
     motif->next_motif = NULL; // next element is not initialized yet
-    motif->in_learning_zone = 0; // motif not added yet to learning zone
+    motif->in_lz = 0; // motif not added yet to learning zone
+    motif->lz_index = -1;
 
     // add the amount of neurons of the motif to the individual
     ind->n_neurons += motifs_data[motif->motif_type].n_neurons;
@@ -1104,6 +1113,8 @@ void initialize_learning_zones_population(NSGA2Type *nsga2Params, population *po
     int i;
 
     for(i = 0; i<n_pop; i++){
+        printf(" In individual %d\n", i);
+        fflush(stdout);
         initialize_learning_zones_individual(nsga2Params, &(pop->ind[i]));
     }
 }
@@ -1112,10 +1123,10 @@ void initialize_learning_zones_population(NSGA2Type *nsga2Params, population *po
 /* Function to divide the network in learning zones */
 void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *ind){
 
-    int i, j, n_layers, learning_rule, n_motifs;
+    int i, n_layers;
     new_motif_t **motifs_array;
-    new_motif_t *motif_node, *central_motif, *tmp_motif;
-    learning_zone_t *lz, *prev_lz;
+    new_motif_t *motif_node;
+    learning_zone_t *lz;
 
     // copy motifs from dynamic list to an array for efficiency
     motifs_array = (new_motif_t **)calloc(ind->n_motifs, sizeof(new_motif_t *));
@@ -1124,7 +1135,9 @@ void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *in
     // initialize helper arrays // TODO: Probably in this second phase the array of motifs can be helpful all the time
     for(i = 0; i<ind->n_motifs; i++){
         motifs_array[i] = motif_node;
-        motif_node->in_learning_zone = 0;
+        motif_node->in_lz = 0; // motif not in any learning zone
+        motif_node->lz_index = -1; // motif does not have any learning zone asigned yet
+
         motif_node = motif_node->next_motif;
     }
 
@@ -1132,37 +1145,65 @@ void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *in
     // loop over motifs to create learning zones
     lz = NULL;
     for(i = 0; i<ind->n_motifs; i++){
-        
+
         // if motif is not added to any learning zone, then initialize a learning zone
-        if(!motifs_array[i]->lz){ // I'm not sure if this will work
-
-            // select learning rule for this zone
-            learning_rule = rnd(nsga2Params->min_learning_rule, nsga2Params->max_learning_rule-1);
-
-            // select the actual motif as the central one for the learning zone
-            central_motif = motifs_array[i];
-
+        if(motifs_array[i]->in_lz == 0){ // if motif is not part of any learning zone, then add to one
+            
             // initialize learning zone for the dynamic list of zones
-            if(!ind->learning_zones){
+            if(ind->n_learning_zones == 0){
                 // if it is the first element of the list, allocate memory and initialize
                 ind->learning_zones = (learning_zone_t *)calloc(1, sizeof(learning_zone_t));
-                initialize_learning_zone(nsga2Params, ind, lz, lz, central_motif);
+                lz = ind->learning_zones;
+                initialize_learning_zone(nsga2Params, ind, lz, NULL);
             }
             else{
                 // if the first element is already initialized, then allocate a new zone and initialize it
-                lz = initialize_and_allocate_learning_zone(nsga2Params, ind, lz, lz, central_motif);
+                lz = initialize_and_allocate_learning_zone(nsga2Params, ind, lz, lz);
             }
             
             // select the number of layers  for extending the learning zone
             n_layers = rnd(1, 1); // TODO: this should depend on amount of neurons and connectivity
             
             // propagate the learning zone
-            extend_learning_zone(nsga2Params, ind, lz, i, motifs_array, n_layers, 0); // 0 is used for both directions, input and output
+            extend_learning_zone(nsga2Params, ind, lz, ind->n_learning_zones - 1, i, motifs_array, n_layers, 0); // 0 is used for both directions, input and output
         }
     }
 
+    // cp 
+    cp_learning_rules_in_synapses(nsga2Params, ind, motifs_array);
+
+
     // free allocated memory
     free(motifs_array);
+}
+
+/// @brief add motif to a learning zone and update old learning zone information
+/// @param nsga2Params 
+/// @param ind 
+/// @param lz 
+/// @param motif 
+/// @return new index of the learning zone
+void add_motif_to_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int lz_index, new_motif_t *motif){
+
+    int helper_index;
+
+    // add the motif to the learning zone if it is not already part of that learning zone
+    if(motif->lz_index != lz_index){
+
+        // add one motig to the learning zone 
+        lz->n_motifs ++;
+
+        // if motif has a learning zone, then update data of that zone
+        if(motif->lz)
+            motif->lz->n_motifs --;
+
+        // update motif learning zone
+        motif->lz_index = lz_index;
+        motif->lz = lz;    
+    }
+
+    // motif added to learning zone in this generation or initialization
+    motif->in_lz = 1;
 }
 
 /// @brief 
@@ -1170,50 +1211,96 @@ void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *in
 /// @param ind 
 /// @param lz 
 /// @param motif 
-void add_motif_to_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, new_motif_t *motif){
+void remove_motif_from_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, new_motif_t *motif){
+    
+    // remove one motif from the learning zone
+    lz->n_motifs--;
 
-    // add one motif to the larning zone motif counter
-    lz->n_motifs ++;
-
-    // set learning zone to the motif
-    motif->lz = lz;    
+    // motif does not has any learning zone now
+    motif->lz = NULL;
+    motif->in_lz = 0;
+    motif->lz_index = -1;
 }
 
 /// @brief 
 /// @param nsga2Params 
 /// @param ind 
-/// @param old_lz 
-/// @param new_lz 
-/// @param motif 
-void change_motif_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *old_lz, learning_zone_t *new_lz, new_motif_t *motif){
-    
-    // update counters of number of motifs per each learning zone
-    old_lz->n_motifs --;
-    new_lz->n_motifs ++;
+int_array_t* clear_learning_zones(NSGA2Type *nsga2Params, individual *ind){
 
-    // if learning zone has no motifs, then remove it
-    if(old_lz->n_motifs == 0){
+    int i, next;
+    learning_zone_t *lz, *tmp_lz;
+    int_array_t *r_lz;
+
+    r_lz = (int_array_t *)calloc(1, sizeof(int_array_t));
+    r_lz->array = (int *)calloc(ind->n_learning_zones, sizeof(int));
+    r_lz->n = 0;
+
+    lz = ind->learning_zones;
+
+    // loop over all learning zones
+    i = 0;
+    next = 0;
+    while(lz){
         
-        if(old_lz == ind->learning_zones){
-            ind->learning_zones = old_lz->next_zone; // set the new first learning zone
-            ind->learning_zones->previous_zone = NULL; // is the first so there are not learning zones before it
+        // if learning zone has 0 motifs, remove
+        if(lz->n_motifs == 0){
+
+            if(lz == ind->learning_zones){
+
+                ind->learning_zones = lz->next_zone;
+                ind->learning_zones->previous_zone = NULL;
+            }
+            else{
+
+                // make connections
+                lz->previous_zone->next_zone = lz->next_zone;
+                lz->next_zone->previous_zone = lz->previous_zone;
+            }
+
+            // move to the next learning zone and store lz to be removed
+            tmp_lz = lz;
+            lz = lz->next_zone;
+
+            // store index of the removed learning zone
+            r_lz->array[next] = i;
+            next++;
+
+            // deallocate memory
+            free(tmp_lz->lr);
+            free(tmp_lz);
+            ind->n_learning_zones --;
         }
         else{
-            // update dynamic list
-            old_lz->previous_zone->next_zone = old_lz->next_zone;
-            old_lz->next_zone->previous_zone = old_lz->previous_zone;
+            lz = lz->next_zone;
         }
-
-        // deallocate the memory of the learning zone
-        free(old_lz);
-
-        // add a new learning zone to the counter of learning zones in the individual
-        ind->n_learning_zones --;
+        i++;
     }
 
-    // change learning zone for the motif
-    motif->lz = new_lz;
+    return r_lz;
 }
+
+/// @brief 
+/// @param nsga2Params 
+/// @param ind 
+/// @param r_lz 
+void update_learning_zones_indexes(NSGA2Type *nsga2Params, individual *ind, int_array_t *r_lz){
+
+    int i;
+    new_motif_t *motif_node;
+
+    motif_node = ind->motifs_new;
+    while(motif_node){
+        
+        i = 0;
+        while(r_lz->array[i] < motif_node->lz_index){
+            motif_node->lz_index --;
+            i++;
+        }
+
+        motif_node = motif_node->next_motif;
+    }
+}
+
 
 /// @brief 
 /// @param nsga2Params 
@@ -1222,14 +1309,14 @@ void change_motif_learning_zone(NSGA2Type *nsga2Params, individual *ind, learnin
 /// @param central_motif 
 /// @param n_motifs 
 /// @return 
-learning_zone_t* initialize_and_allocate_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz, new_motif_t *central_motif){
+learning_zone_t* initialize_and_allocate_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz){
 
     // allocate memory for the next learning zone
     lz->next_zone = (learning_zone_t *)calloc(1, sizeof(learning_zone_t));
     lz = lz->next_zone; // move to the next learning zone
 
     // initialize the learning zone
-    initialize_learning_zone(nsga2Params, ind, lz, prev_lz, central_motif);
+    initialize_learning_zone(nsga2Params, ind, lz, prev_lz);
 
     // return learning zone
     return lz;
@@ -1241,56 +1328,88 @@ learning_zone_t* initialize_and_allocate_learning_zone(NSGA2Type *nsga2Params, i
 /// @param prev_lz 
 /// @param central_motif 
 /// @param n_motifs 
-void initialize_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz, new_motif_t *central_motif){
+void initialize_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, learning_zone_t *prev_lz){
     
     // initialize the learning zone properties
-    lz->central_motif = central_motif;
-    lz->n_motifs = 1;
-    lz->stdp_type = rnd(nsga2Params->min_learning_rule, nsga2Params->max_learning_rule);
+    lz->n_motifs = 0; // it has only one motif yet
 
+    // initialize learning zone
+    lz->n_lr = rnd(1, 1); // TODO: this should be changed in the future
+    lz->lr = (int *)calloc(lz->n_lr, sizeof(int));
+    for(int i=0; i<lz->n_lr; i++){
+        lz->lr[i] = rnd(nsga2Params->min_learning_rule, nsga2Params->max_learning_rule);
+    }
+    
+    // dynamic list management
     lz->next_zone = NULL;
     lz->previous_zone = prev_lz;
 
-    ind->n_learning_zones ++; // add a learning zone to the individiuals learning zones counter
+    // individual has one more learning zone
+    ind->n_learning_zones++; // add a learning zone to the individiuals learning zones counter
 }
 
-void extend_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int motif_index, new_motif_t **motifs_array, int remaining_layers, int dir){
+void extend_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int lz_index, int motif_index, new_motif_t **motifs_array, int remaining_layers, int dir){
 
-    int i, j, tmp_motif_index;
-    new_motif_t *base_motif, *tmp_motif_node;
+    int i, tmp_motif_index;
+    new_motif_t *base_motif;
     int_node_t *tmp_motif_int_node;
 
     // add actual motif to learning zone
     base_motif = motifs_array[motif_index];
 
-    if(base_motif->in_learning_zone == 0) // add the motif to the learning zone if it is not already in another one // TODO: I'm not very sure with this, revise
-        add_motif_to_learning_zone(nsga2Params, ind, lz, base_motif);
+    if(base_motif->in_lz == 0){ // add the motif to the learning zone if it is not already in another one // TODO: I'm not very sure with this, revise
+        
+        add_motif_to_learning_zone(nsga2Params, ind, lz, lz_index, base_motif);
 
-    // TODO: Should I extend if the motif has not been added to the learning zone????? Think about this, revise
-    
-    // expand to n layers in the input and the output
-    if(remaining_layers > 0){
-    
-        if(dir != 1){
-            tmp_motif_int_node = ind->connectivity_info.in_connections[motif_index].first_node; // get the first input motif
-            for(i=0; i<ind->connectivity_info.in_connections[motif_index].n_nodes; i++){
-                
-                tmp_motif_index = tmp_motif_int_node->value; // get the index of the input/output motif
-                tmp_motif_node = motifs_array[tmp_motif_index];
-                extend_learning_zone(nsga2Params, ind, lz, tmp_motif_index, motifs_array, remaining_layers - 1, -1); // -1 is input
-                
-                tmp_motif_int_node = tmp_motif_int_node->next; // go to the next input motif
+        // expand to n layers in the input and the output
+        if(remaining_layers > 0){
+        
+            if(dir != 1){
+                tmp_motif_int_node = ind->connectivity_info.in_connections[motif_index].first_node; // get the first input motif
+                for(i=0; i<ind->connectivity_info.in_connections[motif_index].n_nodes; i++){
+                    
+                    tmp_motif_index = tmp_motif_int_node->value; // get the index of the input/output motif
+                    extend_learning_zone(nsga2Params, ind, lz, lz_index, tmp_motif_index, motifs_array, remaining_layers - 1, -1); // -1 is input
+                    
+                    tmp_motif_int_node = tmp_motif_int_node->next; // go to the next input motif
+                }
+            }
+            if(dir != -1){
+                tmp_motif_int_node = ind->connectivity_info.out_connections[motif_index].first_node; // get the first input motif
+                for(i=0; i<ind->connectivity_info.out_connections[motif_index].n_nodes; i++){
+                    
+                    tmp_motif_index = tmp_motif_int_node->value; // get the index of the input/output motif
+                    extend_learning_zone(nsga2Params, ind, lz, lz_index, tmp_motif_index, motifs_array, remaining_layers - 1, 1); // 1 is output
+                    
+                    tmp_motif_int_node = tmp_motif_int_node->next; // go to the next input motif
+                }
             }
         }
-        if(dir != -1){
-            tmp_motif_int_node = ind->connectivity_info.out_connections[motif_index].first_node; // get the first input motif
-            for(i=0; i<ind->connectivity_info.out_connections[motif_index].n_nodes; i++){
-                
-                tmp_motif_index = tmp_motif_int_node->value; // get the index of the input/output motif
-                tmp_motif_node = motifs_array[tmp_motif_index];
-                extend_learning_zone(nsga2Params, ind, lz, tmp_motif_index, motifs_array, remaining_layers - 1, 1); // 1 is output
-                
-                tmp_motif_int_node = tmp_motif_int_node->next; // go to the next input motif
+    }
+}
+
+void cp_learning_rules_in_synapses(NSGA2Type *nsga2Params, individual *ind, new_motif_t **motifs_array){
+    // copy information of learning rules to synapses
+    
+    int i, j;
+    sparse_matrix_node_t *synapse;
+    
+    synapse = ind->connectivity_matrix;
+    for(i = 0; i<ind->n_motifs; i++){
+        for(j = 0; j<ind->n_motifs; j++){
+            if(synapse){
+                while(synapse && synapse->row < motifs_array[i]->initial_global_index)
+                    synapse = synapse->next_element;
+
+                while(synapse && synapse->col < motifs_array[j]->initial_global_index)
+                    synapse = synapse->next_element;
+
+                while(synapse && synapse->row >= motifs_array[i]->initial_global_index && synapse->row < motifs_array[i]->initial_global_index + motifs_data[motifs_array[i]->motif_type].n_neurons &&
+                    synapse->col >= motifs_array[j]->initial_global_index && synapse->col < motifs_array[j]->initial_global_index + motifs_data[motifs_array[j]->motif_type].n_neurons){
+                    
+                    synapse->learning_rule[0] = (uint8_t)motifs_array[i]->lz->lr[0];
+                    synapse = synapse->next_element;
+                }
             }
         }
     }

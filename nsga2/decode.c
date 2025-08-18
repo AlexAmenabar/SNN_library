@@ -52,8 +52,6 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
     int *neurons_output_synapses = (int *)calloc(snn->n_neurons, sizeof(int));
 
     
-
-
     #ifdef DEBUG3
         // print motif types
         new_motif_t *motif_node = ind->motifs_new;
