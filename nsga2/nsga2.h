@@ -290,7 +290,7 @@ typedef struct NSGA2Type
     // added by me
 
     int load_networks;
-    char (*input_individuals_dir)[1000];
+    char (*input_individuals_dir)[2000];
 
     // variables for neurons
     double max_vthres, min_vthres;
@@ -306,10 +306,10 @@ typedef struct NSGA2Type
 
     // dataset variables
     int dataset_type; // for the future, now only images
-    char train_dataset_dir[500];
-    char train_labels_dir[500];
-    char test_dataset_dir[500];
-    char test_labels_dir[500];
+    char train_dataset_dir[2000];
+    char train_labels_dir[2000];
+    char test_dataset_dir[2000];
+    char test_labels_dir[2000];
     int n_train_samples;
     int n_test_samples;
     int n_classes;
@@ -329,10 +329,10 @@ typedef struct NSGA2Type
     double max_motifs_remove, min_motifs_remove;
 
     // directories to files
-    char results_dir[500]; // folder to store the results of the simulation
-    char (*individuals_dirs)[500]; // array of directories to the files for storing the best individuals [n_individuals x 500]
-    char (*f_obj_dirs)[500]; // directories of the files to store the results of the objective functions, [n_f_files x 500]
-    char f_acc_dir[500], f_class_dir[500];
+    char results_dir[2000]; // folder to store the results of the simulation
+    char (*individuals_dirs)[2000]; // array of directories to the files for storing the best individuals [n_individuals x 500]
+    char (*f_obj_dirs)[2000]; // directories of the files to store the results of the objective functions, [n_f_files x 500]
+    char f_acc_dir[2000], f_class_dir[2000];
 
     // variables to store objective functions info
     obj_functions_t *obj_functions_info;

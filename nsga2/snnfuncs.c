@@ -113,10 +113,12 @@ void initialize_synapses_from_genotype(NSGA2Type *nsga2Params, spiking_nn_t *snn
             synapse = &(snn->synapses[i]);
         
             // if weights are included in the genotype, copy
-#ifndef PHASE2
+#ifdef PHASE2
+            synapse->w = synapse_node->weight[j];
+#endif
+
             if(nsga2Params->weights_included != 0)
                 synapse->w = synapse_node->weight[j];
-#endif
 
             // synapse->weight = synapse_node->weight 
             synapse->delay = synapse_node->latency[j];

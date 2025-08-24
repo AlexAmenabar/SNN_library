@@ -27,6 +27,8 @@ FILE *facc;
 int currentGeneration;
 int n_processes;
 
+
+
 // dataset // TODO: This is only temporal
 image_dataset_t image_dataset;
 
@@ -35,7 +37,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     int i;
     NSGA2Type nsga2Params;
     struct stat st = {0};
-    char tmp_input_ind_dir[1000], tmp_ind_dir[500], s_number[500], tmp_obj_dir[500];
+    char tmp_input_ind_dir[2000], tmp_ind_dir[2000], s_number[500], tmp_obj_dir[2000];
 
 
 	printf("== Read input parameters == \n");
@@ -330,16 +332,14 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d", &(nsga2Params.load_networks));
     
     scanf("%s", &tmp_input_ind_dir);
-    printf("%s\n", tmp_input_ind_dir);
-
 
     // create folder for individuals
     if(nsga2Params.load_networks == 1){
         
-        nsga2Params.input_individuals_dir = (char (*)[1000])calloc(nsga2Params.popsize, sizeof(char[1000]));
+        nsga2Params.input_individuals_dir = (char (*)[2000])calloc(nsga2Params.popsize, sizeof(char[2000]));
 
         // concatenate the text for the files to store the individuals
-        if(stat(tmp_input_ind_dir, &st) == -1){
+        /*if(stat(tmp_input_ind_dir, &st) == -1){
             if(mkdir(tmp_input_ind_dir, 0700) == 0){
                 printf(" > Directory created: %s\n", tmp_input_ind_dir);
             }
@@ -358,7 +358,13 @@ NSGA2Type ReadParameters(int argc, char **argv){
             strcat(nsga2Params.input_individuals_dir[i], "/individual");
             strcat(nsga2Params.input_individuals_dir[i], s_number);
             strcat(nsga2Params.input_individuals_dir[i], ".txt\0");
+        }*/
+
+        // the same individual is loaded for the entire population
+        for(i = 0; i<nsga2Params.popsize; i++){
+            strcpy(nsga2Params.input_individuals_dir[i], tmp_input_ind_dir); // copy global directory for individuals
         }
+
     }
 
 
@@ -453,7 +459,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
 
 
     // concatenate the text for the files to store the individuals
-    nsga2Params.individuals_dirs = (char (*)[500])calloc(nsga2Params.popsize, sizeof(char[500]));
+    nsga2Params.individuals_dirs = (char (*)[2000])calloc(nsga2Params.popsize, sizeof(char[2000]));
     strcpy(tmp_ind_dir, nsga2Params.results_dir);
     strcat(tmp_ind_dir, "/individuals\0");
 
@@ -484,7 +490,7 @@ NSGA2Type ReadParameters(int argc, char **argv){
     // concatenate the text to form the directories for storing objective functions data
     strcpy(tmp_obj_dir, nsga2Params.results_dir);
 
-    nsga2Params.f_obj_dirs = (char (*)[500])calloc(nsga2Params.nobj, sizeof(char[500]));
+    nsga2Params.f_obj_dirs = (char (*)[2000])calloc(nsga2Params.nobj, sizeof(char[2000]));
     
     for(i = 0; i<nsga2Params.nobj; i++){
 
@@ -513,6 +519,11 @@ NSGA2Type ReadParameters(int argc, char **argv){
             case 6:
                 strcat(nsga2Params.f_obj_dirs[i], "/n_spikes_per_region.txt\0");
                 break;
+            case 7:
+                strcat(nsga2Params.f_obj_dirs[i], "/imp_my_metric.txt");
+                break;
+            case 8:
+                strcat(nsga2Params.f_obj_dirs[i], "imp_n_spikes_per_neuron.txt");
         }
     }
 
@@ -822,7 +833,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         fscanf(f_train_labels, "%d", &(image_dataset.labels[i]));
         for(j=0; j<image_dataset.image_size; j++){
             fscanf(f_train, "%d", &(image_dataset.images[i].image[j][0]));
-            for(l = 1; l<image_dataset.images[i].image[j][0]; l++){
+            for(l = 1; l<=image_dataset.images[i].image[j][0]; l++){
                 fscanf(f_train, "%d", &(image_dataset.images[i].image[j][l]));
             }
         }

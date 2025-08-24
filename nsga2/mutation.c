@@ -97,7 +97,7 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
     if(mutation_code == 3 && ind->n_motifs < nsga2Params->min_motifs) // when very few motifs are in the network, network can dissappear, this is used to avoid that
         mutation_code = 2; // This is temporal for testing
 
-    #ifdef DEBUG2
+    #ifdef DEBUG1
         printf(" > > > Mutation code %d\n", mutation_code);
     #endif
 
