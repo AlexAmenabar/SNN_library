@@ -782,12 +782,14 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
 #ifdef DEBUG1
     printf(" > Decoding population...\n");
+    fflush(stdout);
 #endif
 
     decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
 
 #ifdef DEBUG1
     printf(" > Population decoded!\n\n");
+    fflush(stdout);
 #endif
 
 
@@ -845,6 +847,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
 
 #ifdef DEBUG1
     printf(" > Evaluating parent population...\n");
+    fflush(stdout);
 #endif 
 
     fprintf(fclass, "%d\n%d\n%d\n", nsga2Params->popsize, nsga2Params->n_repetitions, nsga2Params->n_samples);
@@ -856,6 +859,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     printf(" > Parent population evaluated!\n\n");
 
     printf(" > Deallocating SNN structure...\n");
+    fflush(stdout);
 #endif
 
     deallocate_memory_pop_snn_only(nsga2Params, parent_pop, nsga2Params->popsize);
@@ -864,6 +868,7 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     printf(" > SNN structure deallocated!\n");
     
     printf(" > Computing rank and crowding distance...\n");
+    fflush(stdout);
 #endif
 
     assign_rank_and_crowding_distance (nsga2Params, parent_pop);
@@ -953,11 +958,6 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         #endif*/
 
         printf(" > Mutating population...\n");
-
-        printf(" > Motif types: ");
-
-
-
         fflush(stdout);
     #endif
 
@@ -1018,6 +1018,7 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         printf(" > Population evaluated!\n\n");
     
         printf(" > Deallocating SNN structure...\n");
+        fflush(stdout);
     #endif
 
         deallocate_memory_pop_snn_only(nsga2Params, child_pop, nsga2Params->popsize);

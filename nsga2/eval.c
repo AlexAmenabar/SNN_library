@@ -46,7 +46,12 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     {
         //printf(" > Evaluating individual %d...\n", i);
         //fflush(stdout);
+        #ifdef DEBUG1
+        printf(" > > Evaluating individual %d\n", i);
+        fflush(stdout);
+        #endif
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
+    
     }
 
     // free memory of selected samples

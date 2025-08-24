@@ -18,8 +18,9 @@ void mutation_pop (NSGA2Type *nsga2Params,  population *pop)
     int i;
     for (i=0; i<nsga2Params->popsize; i++)
     {
-        #ifdef DEBUG2
+        #ifdef DEBUG1
         printf(" > > Mutating individual %d...\n", i);
+        fflush(stdout);
         #endif
 
         mutation_ind(nsga2Params, &(pop->ind[i]));
@@ -99,6 +100,7 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
 
     #ifdef DEBUG1
         printf(" > > > Mutation code %d\n", mutation_code);
+        fflush(stdout);
     #endif
 
     //printf(" > > Mutation code %d\n", mutation_code);
