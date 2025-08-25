@@ -250,9 +250,25 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
 
     s = 0; // index of the synapse inside in the synapse node
 
+
+    printf(" > > n_synapses = %d, n_input_synapses = %d, selected synapses: ", ind->n_synapses, ind->n_input_synapses);
+    for(i = 0; i<selected_synapses->n; i++){
+        printf("%d,", selected_synapses->array[i]);
+    }
+    printf("\n");
+
+    int counter = 0;
+    while(synapse_node){
+        counter += abs(synapse_node->value);
+        synapse_node = synapse_node->next_element;
+    }
+    printf(" > > Counter %d\n", counter);
+
+    synapse_node = ind->connectivity_matrix;
+
     // loop over synapses to find those that must be mutated
     for(i = 0; i<selected_synapses->n; i++){
-        
+        printf(" > > > i = %d, j = %d, s = %d, selected = %d\n", i, j, s, selected_synapses->array[i]);
         // loop until we reach the selected neuron node
         while(j != selected_synapses->array[i]){
 
@@ -288,7 +304,7 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
 
 /* Select randomly what synapses will be mutated */
 int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
-    int i;
+    int i, j; //valid;
 
     int_array_t *selected_synapses;
 
@@ -303,8 +319,19 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
     selected_synapses->array = malloc(selected_synapses->n * sizeof(int));
 
     // select neurons to change values
-    for(i = 0; i<selected_synapses->n; i++)
-        selected_synapses->array[i] = rnd(0, ind->n_synapses - ind->n_input_synapses - 1);
+    i=0;
+    //valid = 1; 
+    while(i < selected_synapses->n){
+        selected_synapses->array[i] = rnd(0, ind->n_synapses - ind->n_input_synapses - 1);//rnd(0, ind->n_synapses - 1);//rnd(0, ind->n_synapses - ind->n_input_synapses - 1);
+        //valid = 1;
+
+        /*for(j = 0; j<i; j++)
+            if(selected_synapses->array[i] == selected_synapses->array[j])
+                valid = 0;
+
+        if(valid == 1)
+            i++;*/
+    }
 
     // order the list
     insertion_sort(selected_synapses->array, selected_synapses->n);
