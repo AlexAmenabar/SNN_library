@@ -97,7 +97,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
     counter = 0;
     while(synapse_node){
-        counter ++;
+        counter += abs(synapse_node->value);
         synapse_node = synapse_node->next_element;
     }
 
