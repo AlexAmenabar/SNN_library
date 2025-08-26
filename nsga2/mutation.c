@@ -251,7 +251,8 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
     s = 0; // index of the synapse inside in the synapse node
 
 
-    printf(" > > n_synapses = %d, n_input_synapses = %d, selected synapses: ", ind->n_synapses, ind->n_input_synapses);
+    printf(" > > n_synapses = %d, n_input_synapses = %d, selected synapses (n = %d): ", ind->n_synapses, ind->n_input_synapses, selected_synapses->n);
+    fflush(stdout);
     for(i = 0; i<selected_synapses->n; i++){
         printf("%d,", selected_synapses->array[i]);
     }
