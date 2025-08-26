@@ -325,6 +325,7 @@ int_array_t* select_synapses_to_change(NSGA2Type *nsga2Params, individual *ind){
     //valid = 1; 
     while(i < selected_synapses->n){
         selected_synapses->array[i] = rnd(0, ind->n_synapses - ind->n_input_synapses - 1);//rnd(0, ind->n_synapses - 1);//rnd(0, ind->n_synapses - ind->n_input_synapses - 1);
+        i++;
         //valid = 1;
 
         /*for(j = 0; j<i; j++)
