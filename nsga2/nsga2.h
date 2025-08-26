@@ -85,8 +85,7 @@ motif_t; // this struct is used to store existing motifs, not those
 // The list of synapses is orderes following the input criterion for neurons
 typedef struct sparse_matrix_node_t
 {
-    uint32_t row, col;
-    int8_t value;
+    int row, col, value;
 
     uint8_t *latency; //latency of the synaptic connection (is a list if value is bigger than 1)
     double *weight;

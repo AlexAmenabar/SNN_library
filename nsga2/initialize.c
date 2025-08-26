@@ -147,6 +147,39 @@ void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int n_m
     printf(" Input synapses initialzied\n");
     fflush(stdout);
 
+
+    // check initialization
+    new_motif_t *motif_node = ind->motifs_new;
+    int counter = 0;
+    while(motif_node){
+        counter ++;
+        motif_node = motif_node->next_motif;
+    }
+
+    printf(" > > n_motifs = %d, counter = %d\n", ind->n_motifs, counter);
+    fflush(stdout);
+
+    neuron_node_t *neuron_node = ind->neurons;
+    counter = 0;
+    while(neuron_node){
+        counter ++;
+        neuron_node = neuron_node->next_neuron;
+    }
+
+    printf(" > > n_neurons = %d, counter = %d\n", ind->n_neurons, counter);
+    fflush(stdout);
+
+
+    sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
+    counter = 0;
+    while(synapse_node){
+        counter += abs(synapse_node->value);
+        synapse_node = synapse_node->next_element;
+    }
+
+    printf(" > > n_synapses = %d, counter = %d\n", ind->n_synapses - ind->n_input_synapses, counter);
+    fflush(stdout);
+
     return;
 }
 
