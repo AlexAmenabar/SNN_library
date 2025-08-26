@@ -256,6 +256,7 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
         printf("%d,", selected_synapses->array[i]);
     }
     printf("\n");
+    fflush(stdout);
 
     int counter = 0;
     while(synapse_node){
@@ -263,12 +264,12 @@ void synapse_change_mutation(NSGA2Type *nsga2Params, individual *ind, int mutati
         synapse_node = synapse_node->next_element;
     }
     printf(" > > Counter %d\n", counter);
-
+    fflush(stdout);
     synapse_node = ind->connectivity_matrix;
 
     // loop over synapses to find those that must be mutated
     for(i = 0; i<selected_synapses->n; i++){
-        printf(" > > > i = %d, j = %d, s = %d, selected = %d\n", i, j, s, selected_synapses->array[i]);
+        //printf(" > > > i = %d, j = %d, s = %d, selected = %d\n", i, j, s, selected_synapses->array[i]);
         // loop until we reach the selected neuron node
         while(j != selected_synapses->array[i]){
 

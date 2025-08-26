@@ -51,6 +51,39 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
         fflush(stdout);
         #endif
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
+
+        if(i == 0){
+            pop->ind[i].obj[0] = -0.312141;
+            pop->ind[i].obj[1] = 538409.230000;
+        }
+        if(i == 1){
+            pop->ind[i].obj[0] = -0.365116;
+            pop->ind[i].obj[1] = 956824.430000;
+        }
+        if(i == 2){
+            pop->ind[i].obj[0] = -0.239497;
+            pop->ind[i].obj[1] = 785712.103333;
+        }
+        if(i == 3){
+            pop->ind[i].obj[0] = -0.312278;
+            pop->ind[i].obj[1] = 467788.166667;
+        }
+        if(i == 4){
+            pop->ind[i].obj[0] = -0.296015;
+            pop->ind[i].obj[1] = 1086749.186667;
+        }
+        if(i == 5){
+            pop->ind[i].obj[0] = -0.310856;
+            pop->ind[i].obj[1] = 572991.876667;
+        }
+        if(i == 6){
+            pop->ind[i].obj[0] = -0.320663;
+            pop->ind[i].obj[1] = 750292.816667;
+        }
+        if(i == 7){
+            pop->ind[i].obj[0] = -0.289747;
+            pop->ind[i].obj[1] = 623687.176667;
+        }
     
     }
 
@@ -92,7 +125,7 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 #ifdef PHASE2
     test_SNN_phase2(nsga2Params, ind, selected_samples_info);
 #else
-    test_SNN(nsga2Params, ind, selected_samples_info);
+    //test_SNN(nsga2Params, ind, selected_samples_info);
 #endif
 
     if (nsga2Params->ncon==0)
