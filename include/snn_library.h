@@ -121,7 +121,7 @@ typedef struct{
 typedef struct{
     double elapsed_time, elapsed_time_neurons, elapsed_time_neurons_input, elapsed_time_neurons_output, elapsed_time_synapses;
     unsigned char **generated_spikes;
-    unsigned int *n_spikes_per_neuron;
+    int *n_spikes_per_neuron;
 } simulation_results_per_sample_t;
 
 /// Struct used to store results of the simulation

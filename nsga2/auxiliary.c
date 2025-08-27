@@ -246,9 +246,9 @@ void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *syn
     synapse2->col = synapse1->col;
     synapse2->value = synapse1->value;
 
-    synapse2->latency = (uint8_t *)calloc(abs(synapse1->value), sizeof(uint8_t));
+    synapse2->latency = (int *)calloc(abs(synapse1->value), sizeof(int));
     synapse2->weight = (double *)calloc(abs(synapse1->value), sizeof(double));
-    synapse2->learning_rule = (uint8_t *)calloc(abs(synapse1->value), sizeof(uint8_t));
+    synapse2->learning_rule = (int *)calloc(abs(synapse1->value), sizeof(int));
 
     for(int i = 0; i<abs(synapse1->value); i++){
         synapse2->latency[i] = synapse1->latency[i];
@@ -261,8 +261,8 @@ void copy_synapse_node(sparse_matrix_node_t *synapse1, sparse_matrix_node_t *syn
 
 
 void copy_connectivity(individual *ind1, individual *ind2){
-    int i, j;
-    int_node_t *int_node, *int_node_to_copy, *prev, *next;
+    int i;
+    int_node_t *int_node, *int_node_to_copy;
 
     // allocate memory for lists and copy general information
     ind2->connectivity_info.in_connections = (int_dynamic_list_t *)calloc(ind1->n_motifs * 10, sizeof(int_dynamic_list_t));
@@ -407,7 +407,7 @@ void connect_motifs_and_lz(individual *ind){
 
 void load_individual_from_file(FILE *f, individual *ind){
     
-    int i, j, tmp;
+    int i, j;
 
     // load general information
     fscanf(f, "%d", &(ind->n_motifs));
@@ -430,8 +430,11 @@ void load_individual_from_file(FILE *f, individual *ind){
     ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
     new_motif_t *motif_node = ind->motifs_new;
 
-    fscanf(f, "%"SCNu8, &(motif_node->motif_type));
-    fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+    //fscanf(f, "%"SCNu8, &(motif_node->motif_type));
+    //fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+    fscanf(f, "%d", &(motif_node->motif_type));
+    fscanf(f, "%d", &(motif_node->initial_global_index));
+    
     motif_node->in_lz = 0;
     motif_node->lz_index = -1;
     motif_node->lz = NULL;
@@ -442,8 +445,12 @@ void load_individual_from_file(FILE *f, individual *ind){
         motif_node->next_motif = (new_motif_t *)calloc(1, sizeof(new_motif_t));
         motif_node = motif_node->next_motif;
 
-        fscanf(f, "%"SCNu8, &(motif_node->motif_type));
-        fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+        //fscanf(f, "%"SCNu8, &(motif_node->motif_type));
+        //fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+        
+        fscanf(f, "%d", &(motif_node->motif_type));
+        fscanf(f, "%d", &(motif_node->initial_global_index));
+        
         motif_node->in_lz = 0;
         motif_node->lz_index = -1;
         motif_node->lz = NULL;
@@ -456,7 +463,8 @@ void load_individual_from_file(FILE *f, individual *ind){
     motif_node = ind->motifs_new;
     printf(" > > Printing motifs:\n");
     for(i = 0; i<ind->n_motifs; i++){
-        printf(" > > > Motif type %"PRIu8", first neuron index %"PRIu32"\n", motif_node->motif_type, motif_node->initial_global_index);
+        //printf(" > > > Motif type %"PRIu8", first neuron index %"PRIu32"\n", motif_node->motif_type, motif_node->initial_global_index);
+        printf(" > > > Motif type %d, first neuron index %d\n", motif_node->motif_type, motif_node->initial_global_index);
         motif_node = motif_node->next_motif;
     }
     fflush(stdout);
@@ -468,7 +476,8 @@ void load_individual_from_file(FILE *f, individual *ind){
 
     fscanf(f, "%lf", &(neuron_node->threshold));
     fscanf(f, "%lf", &(neuron_node->v_rest));
-    fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+    //fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+    fscanf(f, "%d", &(neuron_node->refract_time));
     fscanf(f, "%f", &(neuron_node->r));
     fscanf(f, "%d", &(neuron_node->behaviour));
     neuron_node->next_neuron = NULL;
@@ -479,7 +488,8 @@ void load_individual_from_file(FILE *f, individual *ind){
 
         fscanf(f, "%lf", &(neuron_node->threshold));
         fscanf(f, "%lf", &(neuron_node->v_rest));
-        fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+        //fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+        fscanf(f, "%d", &(neuron_node->refract_time));
         fscanf(f, "%f", &(neuron_node->r));
         fscanf(f, "%d", &(neuron_node->behaviour));
         
@@ -491,7 +501,8 @@ void load_individual_from_file(FILE *f, individual *ind){
     neuron_node = ind->neurons;
     printf(" > > Printing neurons:\n");
     for(i = 0; i<ind->n_neurons; i++){
-        printf(" > > > V.t %lf, v.r %lf, r.t %"PRIu8", R %f, behav %d\n", neuron_node->threshold, neuron_node->v_rest, neuron_node->refract_time, neuron_node->r, neuron_node->behaviour);
+        //printf(" > > > V.t %lf, v.r %lf, r.t %"PRIu8", R %f, behav %d\n", neuron_node->threshold, neuron_node->v_rest, neuron_node->refract_time, neuron_node->r, neuron_node->behaviour);
+        printf(" > > > V.t %lf, v.r %lf, r.t %d, R %f, behav %d\n", neuron_node->threshold, neuron_node->v_rest, neuron_node->refract_time, neuron_node->r, neuron_node->behaviour);        
         neuron_node = neuron_node->next_neuron;
     }
     fflush(stdout);
@@ -579,19 +590,24 @@ void load_individual_from_file(FILE *f, individual *ind){
     ind->connectivity_matrix = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
-    fscanf(f, "%"SCNu32, &(synapse_node->row));
-    fscanf(f, "%"SCNu32, &(synapse_node->col));
-    fscanf(f, "%"SCNd8, &(synapse_node->value));
+    //fscanf(f, "%"SCNu32, &(synapse_node->row));
+    //fscanf(f, "%"SCNu32, &(synapse_node->col));
+    //fscanf(f, "%"SCNd8, &(synapse_node->value));
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%d", &(synapse_node->value));
 
     synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+    synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
     i = 0;
     while(i < abs(synapse_node->value)){
         fscanf(f, "%lf", &(synapse_node->weight[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        //fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
+        //fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
 
         i++;
     }
@@ -602,19 +618,24 @@ void load_individual_from_file(FILE *f, individual *ind){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
 
-        fscanf(f, "%"SCNu32, &(synapse_node->row));
-        fscanf(f, "%"SCNu32, &(synapse_node->col));
-        fscanf(f, "%"SCNd8, &(synapse_node->value));
+        //fscanf(f, "%"SCNu32, &(synapse_node->row));
+        //fscanf(f, "%"SCNu32, &(synapse_node->col));
+        //fscanf(f, "%"SCNd8, &(synapse_node->value));
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
         
         synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+        synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
         for(j = 0; j<abs(synapse_node->value); j++){
 
             fscanf(f, "%lf", &(synapse_node->weight[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            //fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
+            //fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
 
             i++;
         }
@@ -625,9 +646,12 @@ void load_individual_from_file(FILE *f, individual *ind){
     // print synapses
     synapse_node = ind->connectivity_matrix;
     while(synapse_node){
-        printf(" > > > > row %"PRIu32", col %"PRIu32", value %"PRId8"\n", synapse_node->row, synapse_node->col, synapse_node->value);
+        //printf(" > > > > row %"PRIu32", col %"PRIu32", value %"PRId8"\n", synapse_node->row, synapse_node->col, synapse_node->value);
+        printf(" > > > > row %d, col %d, value %d\n", synapse_node->row, synapse_node->col, synapse_node->value);
+
         for(i = 0; i<abs(synapse_node->value); i++){
-            printf(" > > > > > w %lf, latency %"PRIu8", lr %"PRIu8"\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
+            //printf(" > > > > > w %lf, latency %"PRIu8", lr %"PRIu8"\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
+            printf(" > > > > > w %lf, latency %d, lr %d\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
         }
         printf("\n");
 
@@ -641,20 +665,25 @@ void load_individual_from_file(FILE *f, individual *ind){
     ind->input_synapses = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     synapse_node = ind->input_synapses;
 
-    fscanf(f, "%"SCNu32, &(synapse_node->row));
-    fscanf(f, "%"SCNu32, &(synapse_node->col));
-    fscanf(f, "%"SCNd8, &(synapse_node->value));
+    //fscanf(f, "%"SCNu32, &(synapse_node->row));
+    //fscanf(f, "%"SCNu32, &(synapse_node->col));
+    //fscanf(f, "%"SCNd8, &(synapse_node->value));
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%d", &(synapse_node->value));
     
     synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+    synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
     i = 0;
     while(i < abs(synapse_node->value)){
 
         fscanf(f, "%lf", &(synapse_node->weight[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        //fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
+        //fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
         i++;
     }
     synapse_node->next_element = NULL;
@@ -663,19 +692,24 @@ void load_individual_from_file(FILE *f, individual *ind){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
         
-        fscanf(f, "%"SCNu32, &(synapse_node->row));
-        fscanf(f, "%"SCNu32, &(synapse_node->col));
-        fscanf(f, "%"SCNd8, &(synapse_node->value));
+        //fscanf(f, "%"SCNu32, &(synapse_node->row));
+        //fscanf(f, "%"SCNu32, &(synapse_node->col));
+        //fscanf(f, "%"SCNd8, &(synapse_node->value));
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
         
         synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+        synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
         
         for(j = 0; j<abs(synapse_node->value); j++){
         
             fscanf(f, "%lf", &(synapse_node->weight[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            //fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
+            //fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
             i++;
         }
         synapse_node->next_element = NULL;
@@ -685,9 +719,9 @@ void load_individual_from_file(FILE *f, individual *ind){
     // print input syanapses
     synapse_node = ind->input_synapses;
     while(synapse_node){
-        printf(" > > > > row %"PRIu32", col %"PRIu32", value %"PRId8"\n", synapse_node->row, synapse_node->col, synapse_node->value);
+        printf(" > > > > row %d, col %d, value %d\n", synapse_node->row, synapse_node->col, synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
-            printf(" > > > > > w %lf, latency %"PRIu8", lr %"PRIu8"\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
+            printf(" > > > > > w %lf, latency %d, lr %d\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
         }
         printf("\n");
 
@@ -720,8 +754,8 @@ void store_individual_in_file(FILE *f, individual *ind){
     // store motifs
     new_motif_t *motif_node = ind->motifs_new;
     while(motif_node){
-        fprintf(f, "%"SCNu8" ", motif_node->motif_type);
-        fprintf(f, "%"SCNu32" ", motif_node->initial_global_index);
+        fprintf(f, "%d", motif_node->motif_type);
+        fprintf(f, "%d", motif_node->initial_global_index);
         fprintf(f, "\n");
         motif_node = motif_node->next_motif;
     }
@@ -732,7 +766,7 @@ void store_individual_in_file(FILE *f, individual *ind){
     while(neuron_node){
         fprintf(f, "%lf ", neuron_node->threshold);
         fprintf(f, "%lf ", neuron_node->v_rest);
-        fprintf(f, "%"SCNu8" ", neuron_node->refract_time);
+        fprintf(f, "%d", neuron_node->refract_time);
         fprintf(f, "%f ", neuron_node->r);
         fprintf(f, "%d ", neuron_node->behaviour);
         fprintf(f , "\n");
@@ -770,13 +804,13 @@ void store_individual_in_file(FILE *f, individual *ind){
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
     while(synapse_node){
-        fprintf(f, "%"SCNu32" ", synapse_node->row);
-        fprintf(f, "%"SCNu32" ", synapse_node->col);
-        fprintf(f, "%"SCNd8" ", synapse_node->value);
+        fprintf(f, "%d", synapse_node->row);
+        fprintf(f, "%d", synapse_node->col);
+        fprintf(f, "%d", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->latency[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->learning_rule[i]);
+            fprintf(f, "%d", synapse_node->latency[i]);
+            fprintf(f, "%d", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -788,19 +822,52 @@ void store_individual_in_file(FILE *f, individual *ind){
     synapse_node = ind->input_synapses;
 
     while(synapse_node){
-        fprintf(f, "%"SCNu32" ", synapse_node->row);
-        fprintf(f, "%"SCNu32" ", synapse_node->col);
-        fprintf(f, "%"SCNd8" ", synapse_node->value);
+        fprintf(f, "%d", synapse_node->row);
+        fprintf(f, "%d", synapse_node->col);
+        fprintf(f, "%d", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->latency[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->learning_rule[i]);
+            fprintf(f, "%d", synapse_node->latency[i]);
+            fprintf(f, "%d", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
     }
 
     fprintf(f, "\n");
+
+#ifdef DEBUG1
+    motif_node = ind->motifs_new;
+    int counter = 0;
+    while(motif_node){
+        counter ++;
+        motif_node = motif_node->next_motif;
+    }
+
+    printf(" > > n_motifs = %d, counter = %d\n", ind->n_motifs, counter);
+    fflush(stdout);
+
+    neuron_node = ind->neurons;
+    counter = 0;
+    while(neuron_node){
+        counter ++;
+        neuron_node = neuron_node->next_neuron;
+    }
+
+    printf(" > > n_neurons = %d, counter = %d\n", ind->n_neurons, counter);
+    fflush(stdout);
+
+
+    synapse_node = ind->connectivity_matrix;
+    counter = 0;
+    while(synapse_node){
+        counter += abs(synapse_node->value);
+        synapse_node = synapse_node->next_element;
+    }
+
+    printf(" > > n_synapses = %d, counter = %d\n", ind->n_synapses - ind->n_input_synapses, counter);
+    fflush(stdout);
+#endif
 
     fflush(f);
 }
@@ -831,8 +898,8 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     ind->motifs_new = (new_motif_t *)calloc(1, sizeof(new_motif_t));
     new_motif_t *motif_node = ind->motifs_new;
 
-    fscanf(f, "%"SCNu8, &(motif_node->motif_type));
-    fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+    fscanf(f, "%d", &(motif_node->motif_type));
+    fscanf(f, "%d", &(motif_node->initial_global_index));
     motif_node->in_lz = 0;
     motif_node->lz_index = -1;
     motif_node->lz = NULL;
@@ -843,8 +910,8 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
         motif_node->next_motif = (new_motif_t *)calloc(1, sizeof(new_motif_t));
         motif_node = motif_node->next_motif;
 
-        fscanf(f, "%"SCNu8, &(motif_node->motif_type));
-        fscanf(f, "%"SCNu32, &(motif_node->initial_global_index));
+        fscanf(f, "%d", &(motif_node->motif_type));
+        fscanf(f, "%d", &(motif_node->initial_global_index));
         fscanf(f, "%d", &(motif_node->lz_index));
         motif_node->in_lz = 0;
         motif_node->lz = NULL;
@@ -857,7 +924,7 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     motif_node = ind->motifs_new;
     printf(" > > Printing motifs:\n");
     for(i = 0; i<ind->n_motifs; i++){
-        printf(" > > > Motif type %"PRIu8", first neuron index %"PRIu32"\n", motif_node->motif_type, motif_node->initial_global_index);
+        printf(" > > > Motif type %d, first neuron index %d\n", motif_node->motif_type, motif_node->initial_global_index);
         motif_node = motif_node->next_motif;
     }
     fflush(stdout);
@@ -869,7 +936,7 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
 
     fscanf(f, "%lf", &(neuron_node->threshold));
     fscanf(f, "%lf", &(neuron_node->v_rest));
-    fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+    fscanf(f, "%d", &(neuron_node->refract_time));
     fscanf(f, "%f", &(neuron_node->r));
     fscanf(f, "%d", &(neuron_node->behaviour));
     neuron_node->next_neuron = NULL;
@@ -880,7 +947,7 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
 
         fscanf(f, "%lf", &(neuron_node->threshold));
         fscanf(f, "%lf", &(neuron_node->v_rest));
-        fscanf(f, "%"SCNu8, &(neuron_node->refract_time));
+        fscanf(f, "%d", &(neuron_node->refract_time));
         fscanf(f, "%f", &(neuron_node->r));
         fscanf(f, "%d", &(neuron_node->behaviour));
         
@@ -892,7 +959,7 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     neuron_node = ind->neurons;
     printf(" > > Printing neurons:\n");
     for(i = 0; i<ind->n_neurons; i++){
-        printf(" > > > V.t %lf, v.r %lf, r.t %"PRIu8", R %f, behav %d\n", neuron_node->threshold, neuron_node->v_rest, neuron_node->refract_time, neuron_node->r, neuron_node->behaviour);
+        printf(" > > > V.t %lf, v.r %lf, r.t %d, R %f, behav %d\n", neuron_node->threshold, neuron_node->v_rest, neuron_node->refract_time, neuron_node->r, neuron_node->behaviour);
         neuron_node = neuron_node->next_neuron;
     }
     fflush(stdout);
@@ -980,19 +1047,19 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     ind->connectivity_matrix = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
-    fscanf(f, "%"SCNu32, &(synapse_node->row));
-    fscanf(f, "%"SCNu32, &(synapse_node->col));
-    fscanf(f, "%"SCNd8, &(synapse_node->value));
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%d", &(synapse_node->value));
 
     synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+    synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
     i = 0;
     while(i < abs(synapse_node->value)){
         fscanf(f, "%lf", &(synapse_node->weight[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
 
         i++;
     }
@@ -1003,19 +1070,19 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
 
-        fscanf(f, "%"SCNu32, &(synapse_node->row));
-        fscanf(f, "%"SCNu32, &(synapse_node->col));
-        fscanf(f, "%"SCNd8, &(synapse_node->value));
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
         
         synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+        synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
         for(j = 0; j<abs(synapse_node->value); j++){
 
             fscanf(f, "%lf", &(synapse_node->weight[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
 
             i++;
         }
@@ -1026,9 +1093,9 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     // print synapses
     synapse_node = ind->connectivity_matrix;
     while(synapse_node){
-        printf(" > > > > row %"PRIu32", col %"PRIu32", value %"PRId8"\n", synapse_node->row, synapse_node->col, synapse_node->value);
+        printf(" > > > > row %d, col %d, value %d\n", synapse_node->row, synapse_node->col, synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
-            printf(" > > > > > w %lf, latency %"PRIu8", lr %"PRIu8"\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
+            printf(" > > > > > w %lf, latency %d, lr %d\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
         }
         printf("\n");
 
@@ -1042,20 +1109,20 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     ind->input_synapses = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
     synapse_node = ind->input_synapses;
 
-    fscanf(f, "%"SCNu32, &(synapse_node->row));
-    fscanf(f, "%"SCNu32, &(synapse_node->col));
-    fscanf(f, "%"SCNd8, &(synapse_node->value));
+    fscanf(f, "%d", &(synapse_node->row));
+    fscanf(f, "%d", &(synapse_node->col));
+    fscanf(f, "%d", &(synapse_node->value));
     
     synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-    synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-    synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+    synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+    synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
 
     i = 0;
     while(i < abs(synapse_node->value)){
 
         fscanf(f, "%lf", &(synapse_node->weight[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->latency[i]));
-        fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[i]));
+        fscanf(f, "%d", &(synapse_node->latency[i]));
+        fscanf(f, "%d", &(synapse_node->learning_rule[i]));
         i++;
     }
     synapse_node->next_element = NULL;
@@ -1064,19 +1131,19 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
         synapse_node->next_element = (sparse_matrix_node_t *)calloc(1, sizeof(sparse_matrix_node_t));
         synapse_node = synapse_node->next_element;
         
-        fscanf(f, "%"SCNu32, &(synapse_node->row));
-        fscanf(f, "%"SCNu32, &(synapse_node->col));
-        fscanf(f, "%"SCNd8, &(synapse_node->value));
+        fscanf(f, "%d", &(synapse_node->row));
+        fscanf(f, "%d", &(synapse_node->col));
+        fscanf(f, "%d", &(synapse_node->value));
         
         synapse_node->weight = (double *)malloc(abs(synapse_node->value) * sizeof(double));
-        synapse_node->latency = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
-        synapse_node->learning_rule = (uint8_t *)malloc(abs(synapse_node->value) * sizeof(uint8_t));
+        synapse_node->latency = (int *)malloc(abs(synapse_node->value) * sizeof(int));
+        synapse_node->learning_rule = (int *)malloc(abs(synapse_node->value) * sizeof(int));
         
         for(j = 0; j<abs(synapse_node->value); j++){
         
             fscanf(f, "%lf", &(synapse_node->weight[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->latency[j]));
-            fscanf(f, "%"SCNu8, &(synapse_node->learning_rule[j]));
+            fscanf(f, "%d", &(synapse_node->latency[j]));
+            fscanf(f, "%d", &(synapse_node->learning_rule[j]));
             i++;
         }
         synapse_node->next_element = NULL;
@@ -1086,9 +1153,9 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     // print input syanapses
     synapse_node = ind->input_synapses;
     while(synapse_node){
-        printf(" > > > > row %"PRIu32", col %"PRIu32", value %"PRId8"\n", synapse_node->row, synapse_node->col, synapse_node->value);
+        printf(" > > > > row %d, col %d, value %d\n", synapse_node->row, synapse_node->col, synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
-            printf(" > > > > > w %lf, latency %"PRIu8", lr %"PRIu8"\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
+            printf(" > > > > > w %lf, latency %d, lr %d\n", synapse_node->weight[i], synapse_node->latency[i], synapse_node->learning_rule[i]);
         }
         printf("\n");
 
@@ -1175,8 +1242,8 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
     // store motifs
     new_motif_t *motif_node = ind->motifs_new;
     while(motif_node){
-        fprintf(f, "%"SCNu8" ", motif_node->motif_type);
-        fprintf(f, "%"SCNu32" ", motif_node->initial_global_index);
+        fprintf(f, "%d ", motif_node->motif_type);
+        fprintf(f, "%d ", motif_node->initial_global_index);
         fprintf(f, "%d ", motif_node->lz_index);
         fprintf(f, "\n");
         motif_node = motif_node->next_motif;
@@ -1188,7 +1255,7 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
     while(neuron_node){
         fprintf(f, "%lf ", neuron_node->threshold);
         fprintf(f, "%lf ", neuron_node->v_rest);
-        fprintf(f, "%"SCNu8" ", neuron_node->refract_time);
+        fprintf(f, "%d ", neuron_node->refract_time);
         fprintf(f, "%f ", neuron_node->r);
         fprintf(f, "%d ", neuron_node->behaviour);
         fprintf(f , "\n");
@@ -1226,13 +1293,13 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
     while(synapse_node){
-        fprintf(f, "%"SCNu32" ", synapse_node->row);
-        fprintf(f, "%"SCNu32" ", synapse_node->col);
-        fprintf(f, "%"SCNd8" ", synapse_node->value);
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->latency[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->learning_rule[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -1244,13 +1311,13 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
     synapse_node = ind->input_synapses;
 
     while(synapse_node){
-        fprintf(f, "%"SCNu32" ", synapse_node->row);
-        fprintf(f, "%"SCNu32" ", synapse_node->col);
-        fprintf(f, "%"SCNd8" ", synapse_node->value);
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->latency[i]);
-            fprintf(f, "%"SCNu8" ", synapse_node->learning_rule[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -1283,7 +1350,6 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
  * Helpers
  */
 void get_complete_matrix_from_dynamic_list(int *complete_matrix, sparse_matrix_node_t *matrix_node, int n_neurons){
-    int i,j;
 
     while(matrix_node != NULL){
         //printf(" matrix_node->row = %d, col = %d\n", matrix_node->row, matrix_node->col);

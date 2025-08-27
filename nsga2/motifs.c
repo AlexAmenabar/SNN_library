@@ -240,7 +240,7 @@ void initialize_motif(motif_t *motif){
 // General function to initialize motifs
 void initialize_motifs(){
     // allocate memory for motifs list
-    int i, j, l;
+    int i;
     
     n_motifs = 7; // existing motifs
     motifs_data = (motif_t *)malloc(n_motifs * sizeof(motif_t));

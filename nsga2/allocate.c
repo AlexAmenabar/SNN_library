@@ -70,7 +70,7 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     new_motif_t *old_motif_node, *motif_node;
     neuron_node_t *old_neuron_node, *neuron_node;
     sparse_matrix_node_t *old_matrix_node, *matrix_node;
-    learning_zone_t *old_learning_zone, *learning_zone;
+    learning_zone_t *lz, *tmp_lz;
     int_node_t *int_node, *tmp_node;
 
     // deallocate memory of dynamic lists
@@ -88,17 +88,6 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
         }
     }
     ind->motifs_new = NULL;
-
-    /*#ifdef DEBUG3
-    printf(" > > > > Deallocating learning zones...\n");
-    fflush(stdout);
-    #endif
-    learning_zone = ind->learning_zones;
-    while(learning_zone != NULL){
-        old_learning_zone = learning_zone;
-        learning_zone = learning_zone->next_zone;
-        free(old_learning_zone);
-    }*/
 
     #ifdef DEBUG3
     printf(" > > > > Deallocating neurons...\n");
@@ -192,7 +181,6 @@ void deallocate_memory_ind (NSGA2Type *nsga2Params, individual *ind)
     
     // deallocate learning rules
     if(ind->learning_zones){
-        learning_zone_t *lz, *tmp_lz;
         lz = ind->learning_zones;
 
         while(lz){
@@ -309,7 +297,7 @@ void deallocate_sparse_matrix_node(sparse_matrix_node_t *sparse_matrix_node){
 
 void allocate_objective_functions_context(NSGA2Type *nsga2Params, individual *ind, int n_ctx){
     
-    int i, j, n_samples, n_neurons, n_classes, n_repetitions, n_obj;
+    int i, n_samples, n_neurons, n_classes, n_repetitions, n_obj;
     obj_functions_t *ctx;
 
 
@@ -362,13 +350,12 @@ void allocate_objective_functions_context(NSGA2Type *nsga2Params, individual *in
 
 void deallocate_objective_functions_context(NSGA2Type *nsga2Params, individual * ind, int n_ctx){
 
-    int i, j, n_samples, n_neurons, n_classes, n_repetitions, n_obj;
+    int i, n_samples, n_classes, n_repetitions, n_obj;
     obj_functions_t *ctx;
 
     // load info from struct
     n_samples = nsga2Params->n_samples;
     n_repetitions = nsga2Params->n_repetitions;
-    n_neurons = ind->snn->n_neurons;
     n_classes = nsga2Params->n_classes; // TODO: Generalize this, now is only valid for this dataset
     n_obj = nsga2Params->nobj;
 

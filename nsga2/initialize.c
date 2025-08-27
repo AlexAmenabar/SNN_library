@@ -73,6 +73,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
 
 
     // check initialization
+#ifdef DEBUG1
     new_motif_t *motif_node = ind->motifs_new;
     int counter = 0;
     while(motif_node){
@@ -103,7 +104,7 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
 
     printf(" > > n_synapses = %d, counter = %d\n", ind->n_synapses - ind->n_input_synapses, counter);
     fflush(stdout);
-
+#endif
     
 
     return;
@@ -809,7 +810,6 @@ void build_sparse_matrix(NSGA2Type *nsga2Params, individual *ind, int_array_t *s
     synapse_node = first_synapse_node;
 
     // loop over motifs to construct motif columns iteratively
-    motif_node = ind->motifs_new;
     for(i = 0; i<ind->n_motifs; i++){
         // store actual motif information
         SMBI.actual_motif_index = i;
@@ -819,9 +819,6 @@ void build_sparse_matrix(NSGA2Type *nsga2Params, individual *ind, int_array_t *s
         
         // construct sparse matrix
         synapse_node = build_motif_sparse_matrix_columns(nsga2Params, ind, synapse_node, &(selected_input_motifs[i]), &SMBI);
-
-        // move to the next motif
-        motif_node->next_motif;
     }
 
     // connect the individual to the matrix first node
@@ -888,7 +885,6 @@ sparse_matrix_node_t* build_neuron_sparse_matrix_column(NSGA2Type *nsga2Params, 
 /* Function to add the "cell" of a neuron (motif neuron connection) in the sparse matrix of synapses */
 sparse_matrix_node_t* add_neuron_to_motif_connections(NSGA2Type *nsga2Params, individual *ind, sparse_matrix_node_t *synapse_node, sparse_matrix_build_info_t *SMBI){
     
-    int i, j;
     int actual_motif_index, input_motif_index, previous_input_motif_index, next_input_motif_index;
 
     actual_motif_index = SMBI->actual_motif_index;
@@ -951,10 +947,9 @@ sparse_matrix_node_t* build_connection(NSGA2Type *nsga2Params, individual *ind, 
     
     int i, row, col, value;
     int actual_motif_type, input_motif_type, actual_motif_first_neuron_index, actual_neuron_local_index, input_motif_first_neuron_index, n_connections;
-    motif_t *actual_motif_info, *input_motif_info;
+    motif_t *input_motif_info;
 
     // get input motif information
-    actual_motif_info = SMBI->actual_motif_info;
     input_motif_info = SMBI->input_motif_info;
 
     actual_motif_type = SMBI->actual_motif_type;
@@ -1052,9 +1047,9 @@ void initialize_sparse_matrix_node_only(NSGA2Type *nsga2Params, individual *ind,
     matrix_node->row = row;
     matrix_node->col = col;
 
-    matrix_node->latency = (int8_t *)calloc(abs(value), sizeof(int8_t));
+    matrix_node->latency = (int *)calloc(abs(value), sizeof(int));
     matrix_node->weight = (double *)calloc(abs(value), sizeof(double));
-    matrix_node->learning_rule = (int8_t *)calloc(abs(value), sizeof(int8_t));
+    matrix_node->learning_rule = (int *)calloc(abs(value), sizeof(int));
 
     // initialize the values in the list
     for(i = 0; i<abs(value); i++){
@@ -1252,8 +1247,6 @@ void initialize_learning_zones_individual(NSGA2Type *nsga2Params, individual *in
 /// @param motif 
 /// @return new index of the learning zone
 void add_motif_to_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone_t *lz, int lz_index, new_motif_t *motif){
-
-    int helper_index;
 
     // add the motif to the learning zone if it is not already part of that learning zone
     if(motif->lz_index != lz_index){

@@ -52,7 +52,7 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
         #endif
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
 
-        if(i == 0){
+        /*if(i == 0){
             pop->ind[i].obj[0] = -0.312141;
             pop->ind[i].obj[1] = 538409.230000;
         }
@@ -83,7 +83,7 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
         if(i == 7){
             pop->ind[i].obj[0] = -0.289747;
             pop->ind[i].obj[1] = 623687.176667;
-        }
+        }*/
     
     }
 
@@ -120,12 +120,12 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
 void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out, selected_samples_info_t *selected_samples_info)
 {
 
-    int i, j;
+    int j;
     
 #ifdef PHASE2
     test_SNN_phase2(nsga2Params, ind, selected_samples_info);
 #else
-    //test_SNN(nsga2Params, ind, selected_samples_info);
+    test_SNN(nsga2Params, ind, selected_samples_info);
 #endif
 
     if (nsga2Params->ncon==0)
@@ -151,15 +151,13 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 /* Problem for SNNs */
 void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *selected_samples_info){
     // simulate samples 
-    int i, j, l, n_samples, n_neurons, n_classes, time_steps, n_repetitions, rep, mode, n_obj, total;
-    int *sample_indexes, *labels, *n_selected_samples_per_class, **sample_indexes_per_class;
-    int temp_label, temp_mean, temp_global_index, temp_local_index, temp_global_index2, temp_local_index2;
+    int i, j, l, n_samples, n_neurons, n_classes, time_steps, n_repetitions, rep, n_obj;
+    int *sample_indexes, *labels;
     
     obj_functions_t *ctx = nsga2Params->obj_functions_info;
 
 
     // load info from struct
-    mode = nsga2Params->mode;
     n_samples = nsga2Params->n_samples;
     n_repetitions = nsga2Params->n_repetitions;
     n_neurons = ind->snn->n_neurons;
@@ -234,8 +232,6 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         // get information about the samples that will be computed in this repetition 
         sample_indexes = selected_samples_info[rep].sample_indexes; // store the indexes of the selected samples
         labels = selected_samples_info[rep].labels; // store the labels of the selected samples
-        n_selected_samples_per_class = selected_samples_info[rep].n_selected_samples_per_class; // store the number of samples selected per each class
-        sample_indexes_per_class = selected_samples_info[rep].sample_indexes_per_class; // store the indexes of the samples for each class*/
 
 
         // reinitialize results struct
@@ -679,8 +675,7 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
 
 // The way to deal with datasets should be revised and generalized
 void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individual *ind, simulation_results_t *results, int n_selected_samples, int *selected_sample_indexes, image_dataset_t *dataset, int train){
-    int time_step = 0, i, j, l; 
-    int n_process = nsga2Params->n_process;
+    int i, j, l; 
     struct timespec start, end, start_bin, end_bin; // to measure simulation complete time
     struct timespec start_neurons, end_neurons; // to measure neurons imulation time
     struct timespec start_synapses, end_synapses; // to measure synapses simulation time
@@ -739,7 +734,7 @@ void simulate_by_samples_enas(spiking_nn_t *snn, NSGA2Type *nsga2Params, individ
             synap = &(snn->synapses[snn->lif_neurons[j].input_synapse_indexes[0]]);
             
             for(l = 0; l<dataset->images[i].image[j][0]; l++){
-                synap->l_spike_times[synap->last_spike] = dataset->images[i].image[j][l];
+                synap->l_spike_times[synap->last_spike] = dataset->images[selected_sample_indexes[i]].image[j][l]; // This??
                 synap->last_spike +=1;
             }
         }

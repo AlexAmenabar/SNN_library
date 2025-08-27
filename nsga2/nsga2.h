@@ -87,9 +87,9 @@ typedef struct sparse_matrix_node_t
 {
     int row, col, value;
 
-    uint8_t *latency; //latency of the synaptic connection (is a list if value is bigger than 1)
+    int *latency; //latency of the synaptic connection (is a list if value is bigger than 1)
     double *weight;
-    uint8_t *learning_rule;
+    int *learning_rule;
 
     // next element of the sparse matrix
     struct sparse_matrix_node_t *next_element;
@@ -119,7 +119,7 @@ sparse_matrix_build_info_t;
 typedef struct neuron_node_t
 {
     double threshold;
-    uint8_t refract_time;
+    int refract_time;
     double v_rest;
     float r;
     int behaviour;
@@ -135,9 +135,9 @@ typedef struct learning_zone_t learning_zone_t;
 
 typedef struct new_motif_t
 {
-    uint motif_id; 
-    uint8_t motif_type;
-    uint32_t initial_global_index; // index of the first neuron in the neuron list
+    int motif_id; 
+    int motif_type;
+    int initial_global_index; // index of the first neuron in the neuron list
     
     neuron_node_t *first_neuron; // n neurons can be gotten from motifs general structures
     struct new_motif_t *next_motif; // pointer to the next motif of the list
