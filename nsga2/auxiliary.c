@@ -269,6 +269,8 @@ void copy_connectivity(individual *ind1, individual *ind2){
     ind2->connectivity_info.out_connections = (int_dynamic_list_t *)calloc(ind1->n_motifs * 10, sizeof(int_dynamic_list_t));
     ind2->connectivity_info.n_max_motifs = ind1->connectivity_info.n_max_motifs;
 
+    // copy connectivity percentage
+    ind2->connectivity_percentage = ind1->connectivity_percentage;
 
     // copy lists
     for(i = 0; i<ind2->n_motifs; i++){
@@ -731,6 +733,9 @@ void load_individual_from_file(FILE *f, individual *ind){
     fflush(stdout);
 #endif
 
+    // load connectivity level
+    fscanf(f, "%lf", &(ind->connectivity_percentage));
+
     // there are no learning zones
     ind->learning_zones = NULL;
 
@@ -754,8 +759,8 @@ void store_individual_in_file(FILE *f, individual *ind){
     // store motifs
     new_motif_t *motif_node = ind->motifs_new;
     while(motif_node){
-        fprintf(f, "%d", motif_node->motif_type);
-        fprintf(f, "%d", motif_node->initial_global_index);
+        fprintf(f, "%d ", motif_node->motif_type);
+        fprintf(f, "%d ", motif_node->initial_global_index);
         fprintf(f, "\n");
         motif_node = motif_node->next_motif;
     }
@@ -766,7 +771,7 @@ void store_individual_in_file(FILE *f, individual *ind){
     while(neuron_node){
         fprintf(f, "%lf ", neuron_node->threshold);
         fprintf(f, "%lf ", neuron_node->v_rest);
-        fprintf(f, "%d", neuron_node->refract_time);
+        fprintf(f, "%d ", neuron_node->refract_time);
         fprintf(f, "%f ", neuron_node->r);
         fprintf(f, "%d ", neuron_node->behaviour);
         fprintf(f , "\n");
@@ -804,13 +809,13 @@ void store_individual_in_file(FILE *f, individual *ind){
     sparse_matrix_node_t *synapse_node = ind->connectivity_matrix;
 
     while(synapse_node){
-        fprintf(f, "%d", synapse_node->row);
-        fprintf(f, "%d", synapse_node->col);
-        fprintf(f, "%d", synapse_node->value);
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%d", synapse_node->latency[i]);
-            fprintf(f, "%d", synapse_node->learning_rule[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -822,13 +827,13 @@ void store_individual_in_file(FILE *f, individual *ind){
     synapse_node = ind->input_synapses;
 
     while(synapse_node){
-        fprintf(f, "%d", synapse_node->row);
-        fprintf(f, "%d", synapse_node->col);
-        fprintf(f, "%d", synapse_node->value);
+        fprintf(f, "%d ", synapse_node->row);
+        fprintf(f, "%d ", synapse_node->col);
+        fprintf(f, "%d ", synapse_node->value);
         for(i = 0; i<abs(synapse_node->value); i++){
             fprintf(f, "%lf ", synapse_node->weight[i]);
-            fprintf(f, "%d", synapse_node->latency[i]);
-            fprintf(f, "%d", synapse_node->learning_rule[i]);
+            fprintf(f, "%d ", synapse_node->latency[i]);
+            fprintf(f, "%d ", synapse_node->learning_rule[i]);
         }
         fprintf(f, "\n");
         synapse_node = synapse_node->next_element;
@@ -868,6 +873,9 @@ void store_individual_in_file(FILE *f, individual *ind){
     printf(" > > n_synapses = %d, counter = %d\n", ind->n_synapses - ind->n_input_synapses, counter);
     fflush(stdout);
 #endif
+
+    // store connectivity level
+    fprintf(f, "%lf\n", ind->connectivity_percentage);
 
     fflush(f);
 }
@@ -1165,6 +1173,8 @@ void load_individual_from_file_learning_zone_included(FILE *f, individual *ind){
     fflush(stdout);
 #endif
 
+    // load connectivity level
+    fscanf(f, "%lf", &(ind->connectivity_percentage));
 
     // load learning zones - load the first one
     learning_zone_t *lz, *p_lz;
@@ -1324,6 +1334,9 @@ void store_individual_in_file_learning_zone_included(FILE *f, individual *ind){
     }
 
     fprintf(f, "\n");
+
+    // store connectivity level
+    fprintf(f, "%lf\n", ind->connectivity_percentage);
 
     // store learning zones
     learning_zone_t *lz;

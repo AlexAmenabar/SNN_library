@@ -142,6 +142,9 @@ void mutation_ind (NSGA2Type *nsga2Params,  individual *ind)
 
 #endif
 
+    // compute new connectivity percentage for the individual
+    compute_network_connectivity_level(nsga2Params, ind);
+
     fflush(stdout);
 
     return;

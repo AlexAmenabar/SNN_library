@@ -22,13 +22,13 @@ int test1(){
     // allocate memory for some variables
     ind = (individual *)calloc(1, sizeof(individual));
     
-    FILE *network_file = fopen("./test_network.txt", "r");
+    FILE *network_file = fopen("./helpers/networks/individual0.txt", "r");
     load_individual_from_file(network_file, ind);
     printf("Loaded\n");
     fflush(stdout);
 
     // store individual and compare files
-    FILE *result_network_file = fopen("./test_load_network.txt", "w");
+    FILE *result_network_file = fopen("./helpers/networks/test_load_network.txt", "w");
     store_individual_in_file(result_network_file, ind);
 
     return 1;

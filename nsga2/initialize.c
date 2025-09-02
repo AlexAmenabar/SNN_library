@@ -63,6 +63,8 @@ void initialize_ind (NSGA2Type *nsga2Params, individual *ind)
     // initialize input synaptic connections (not included in the sparse matrix)
     initialize_input_synapses(nsga2Params, ind);
 
+    // compute connectivity level
+    compute_network_connectivity_level(nsga2Params, ind);
 
     // in phase 1 learning zones are not used, so initialize only in second phase
     ind->learning_zones = NULL;
@@ -148,8 +150,12 @@ void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int n_m
     printf(" Input synapses initialzied\n");
     fflush(stdout);
 
+    compute_network_connectivity_level(nsga2Params, ind);
+    printf(" Connectivity level computed\n");
+    fflush(stdout);
 
     // check initialization
+    #ifdef DEBUG1
     new_motif_t *motif_node = ind->motifs_new;
     int counter = 0;
     while(motif_node){
@@ -180,6 +186,7 @@ void initialize_ind_not_random (NSGA2Type *nsga2Params, individual *ind, int n_m
 
     printf(" > > n_synapses = %d, counter = %d\n", ind->n_synapses - ind->n_input_synapses, counter);
     fflush(stdout);
+    #endif
 
     return;
 }
@@ -1474,4 +1481,19 @@ void cp_learning_rules_in_synapses(NSGA2Type *nsga2Params, individual *ind, new_
             }
         }
     }
+}
+
+void compute_network_connectivity_level(NSGA2Type *nsga2Params, individual *ind){
+
+    // compute individual connectivity level // This should be moved to another place
+    int i;
+    double tmp = 0, final_tmp = 0;
+
+    // compute connectivity percentage for individual
+    for(i = 0; i<ind->n_motifs; i++){
+        tmp = (double)(ind->connectivity_info.out_connections[i].n_nodes) / (double)(ind->n_motifs);
+        final_tmp += tmp;
+    }
+    final_tmp = final_tmp / (double)(ind->n_motifs);
+    ind->connectivity_percentage = final_tmp;
 }

@@ -96,20 +96,6 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 {
 
     int j;
-    
-
-    // compute individual connectivity level // This should be moved to another place
-    double tmp = 0, final_tmp = 0;
-
-    // compute connectivity percentage for individual
-    for(j = 0; j<ind->n_motifs; j++){
-        tmp = ind->connectivity_info.out_connections[j].n_nodes / ind->n_motifs;
-        tmp = tmp / ind->n_motifs;
-        final_tmp += tmp;
-    }
-    final_tmp = final_tmp / ind->n_motifs;
-    ind->connectivity_percentage = final_tmp;
-
 
 #ifdef PHASE2
     test_SNN_phase2(nsga2Params, ind, selected_samples_info);
@@ -326,7 +312,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         fflush(stdout);
         #endif
 
-        if(ctx->accuracy > best_acc || rndreal(0, 1) > 0.95){
+        if(ctx->accuracy > best_acc || rndreal(0, 1) > 0.9){
             // write information in classification file 
             for(i = 0; i<n_obj; i++){
                 fprintf(fclass, "%lf ", ctx->obj_values[rep * n_obj + i]);

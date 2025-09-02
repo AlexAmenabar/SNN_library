@@ -555,6 +555,8 @@ void extend_learning_zone(NSGA2Type *nsga2Params, individual *ind, learning_zone
 int_array_t* clear_learning_zones(NSGA2Type *nsga2Params, individual *ind);
 void update_learning_zones_indexes(NSGA2Type *nsga2Params, individual *ind, int_array_t *r_lz);
 void cp_learning_rules_in_synapses(NSGA2Type *nsga2Params, individual *ind, new_motif_t **motifs_array);
+void compute_network_connectivity_level(NSGA2Type *nsga2Params, individual *ind);
+
 
 void insert (list *node, int x);
 list* del (list *node);
