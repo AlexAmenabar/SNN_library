@@ -109,3 +109,42 @@ void insertion_sort(int *arr, int n)
        arr[j+1] = key; 
    } 
 } 
+
+void insertion_sort_double(double *arr, int n) 
+{ 
+   int i, key, j; 
+   for (i = 1; i < n; i++) 
+   { 
+       key = arr[i]; 
+       j = i-1;
+       while (j >= 0 && arr[j] > key) 
+       { 
+           arr[j+1] = arr[j]; 
+           j = j-1; 
+       } 
+       arr[j+1] = key; 
+   } 
+} 
+
+void insertion_sort_double_and_indexes(double *arr, int *arr_indexes, int n) 
+{ 
+   int i, j; 
+   double key;
+   int key_index;
+
+   for (i = 1; i < n; i++) 
+   { 
+       key = arr[i]; 
+       key_index = arr_indexes[i];
+
+       j = i-1;
+       while (j >= 0 && arr[j] > key) 
+       { 
+           arr[j+1] = arr[j]; 
+           arr_indexes[j+1] = arr_indexes[j];
+           j = j-1; 
+       } 
+       arr[j+1] = key; 
+       arr_indexes[j+1] = key_index;
+   } 
+} 

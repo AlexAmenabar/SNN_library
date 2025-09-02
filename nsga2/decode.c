@@ -148,6 +148,10 @@ void decode_ind (NSGA2Type *nsga2Params, individual *ind)
     fflush(stdout);
     #endif
     connect_neurons_by_synapses_from_genotype(snn, ind, nsga2Params);
+    #ifdef DEBUG1
+    printf(" > > > Done!!!");
+    fflush(stdout);
+    #endif
 
     // free memory
     free(neurons_input_synapses);

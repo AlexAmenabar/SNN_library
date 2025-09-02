@@ -3,7 +3,9 @@
 # include "nsga2.h"
 # include "rand.h"
 
-# define N_MOTIF_TYPES 7
+#ifndef RADIUS_TYPE
+# define RADIUS_TYPE 0
+#endif
 
 FILE *fpt1;
 FILE *fpt2;
@@ -20,13 +22,12 @@ motif_t *motifs_data; // list of motifs
 int n_motifs; // number of motifs that can be used
 
 FILE **findividuals; // files to store the individuals
-FILE **findividuals_input;
-FILE **fobj; // file to store the objective function values during the simulation
-FILE *fclass; // file to store the classification obtained for the samples
-FILE *facc;
+FILE **findividuals_input; // files to load individuals from
+FILE **fobj; // files to store the objective function values during the simulation
+FILE *facc; // file to store accuracy values (although it is not used as objective function)
+FILE *fclass; // file to store some data of individuals: number of motifs, neuron, distance matrix for each repetition, confusion matrix...
 int currentGeneration;
 int n_processes;
-
 
 
 // dataset // TODO: This is only temporal
@@ -520,10 +521,10 @@ NSGA2Type ReadParameters(int argc, char **argv){
                 strcat(nsga2Params.f_obj_dirs[i], "/n_spikes_per_region.txt\0");
                 break;
             case 7:
-                strcat(nsga2Params.f_obj_dirs[i], "/imp_my_metric.txt");
+                strcat(nsga2Params.f_obj_dirs[i], "/my_metric_pclass.txt");
                 break;
             case 8:
-                strcat(nsga2Params.f_obj_dirs[i], "imp_n_spikes_per_neuron.txt");
+                strcat(nsga2Params.f_obj_dirs[i], "/my_metric_rest.txt");
         }
     }
 
@@ -533,10 +534,11 @@ NSGA2Type ReadParameters(int argc, char **argv){
     strcat(nsga2Params.f_class_dir, "/classification.txt\0");
 
     strcpy(nsga2Params.f_acc_dir, nsga2Params.results_dir);
-    strcat(nsga2Params.f_acc_dir, "/accuracy.txt\0");
+    strcat(nsga2Params.f_acc_dir, "/accuracy_helper.txt\0");
 
 
-    /* Open the files to store the results */
+
+    /* Open files for storing the results */
 
     // files for storing objective functions values during the simulation
     fobj = (FILE **)calloc(nsga2Params.nobj, sizeof(FILE *));
@@ -624,6 +626,8 @@ NSGA2Type ReadParameters(int argc, char **argv){
     printf(" > Bins: %d\n", nsga2Params.bins);
     printf(" > Simulation time steps: %d\n", nsga2Params.simulation_time_steps);
     printf(" > Distance type: %d\n", nsga2Params.distance_type);
+    nsga2Params.obj_functions_info->class_distance_type = RADIUS_TYPE;
+    printf(" > Inter class distance metric: %d\n", nsga2Params.obj_functions_info->class_distance_type);
 
     printf(" > Mode: %d\n", nsga2Params.mode);
     printf(" > N repetitions: %d\n", nsga2Params.n_repetitions);
@@ -724,6 +728,17 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     // == MY CHANGES START HERE == //
     //  =========================  //
 
+    // write control in files
+    fprintf(fclass, "%d ", N_MOTIF_TYPES);
+    fprintf(fclass, "%d ", nsga2Params->nobj);
+    fprintf(fclass, "%d ", nsga2Params->n_samples);
+    fprintf(fclass, "%d ", nsga2Params->n_classes);
+    fprintf(fclass, "%d ", nsga2Params->ngen);
+    fprintf(fclass, "%d ", nsga2Params->popsize);
+    fprintf(fclass, "%d\n", nsga2Params->n_repetitions);
+    fflush(fclass);
+
+
     /* Initialize structures with existing motifs information: number of neurons, internal connectivity... */
     initialize_motifs();
 
@@ -785,7 +800,9 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     fflush(stdout);
 #endif
 
+    #ifndef OPTIMIZED
     decode_pop(nsga2Params, parent_pop); // in my case generate the spiking neural network
+    #endif
 
 #ifdef DEBUG1
     printf(" > Population decoded!\n\n");
@@ -862,7 +879,9 @@ void InitNSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
     fflush(stdout);
 #endif
 
+    #ifndef OPTIMIZED
     deallocate_memory_pop_snn_only(nsga2Params, parent_pop, nsga2Params->popsize);
+    #endif
 
 #ifdef DEBUG1
     printf(" > SNN structure deallocated!\n");
@@ -1002,8 +1021,14 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         fflush(stdout);
     #endif
 
+
+
+        #ifndef OPTIMIZED
         decode_pop(nsga2Params,  child_pop);
-        
+        #endif
+
+
+
     #ifdef DEBUG1
         printf(" > Child population decoded!\n\n");        
 
@@ -1021,7 +1046,13 @@ int NSGA2(NSGA2Type *nsga2Params, void *inp, void *out)
         fflush(stdout);
     #endif
 
+
+
+        #ifndef OPTIMIZED
         deallocate_memory_pop_snn_only(nsga2Params, child_pop, nsga2Params->popsize);
+        #endif
+
+
 
     #ifdef DEBUG1
         printf(" > Merging parent population and child population...\n");

@@ -27,6 +27,7 @@
 # define eul  2.71828182845905
 # define pi 3.14159265358979
 # define GNUPLOT_COMMAND "gnuplot -persist"
+# define N_MOTIF_TYPES 7
 
 
 typedef struct
@@ -211,6 +212,7 @@ typedef struct
     new_motif_t *motifs_new;
 
     struct ind_connectivity_info_t connectivity_info;
+    double connectivity_percentage;
 }
 individual;
 
@@ -346,8 +348,10 @@ typedef struct
 {
     int index; // index in tthe sample list, not in the global dataset list
     double mean_distance;
-    int farthest_point_index;
-    double farthest_point_distance;
+    int farthest_point_index, median_point_index, perc90_point_index;
+    double farthest_point_distance, median_point_distance, perc90_point_distance;
+
+    double d; // used class distance
 } centroid_info_t;
 
 // Define the function pointer type
@@ -390,6 +394,9 @@ struct obj_functions_t {
     // accuracy
     double **acc_per_class_per_repetition, *acc_per_repetition, *acc_per_class, accuracy;
     int **confusion_matrix;
+
+    // info
+    int class_distance_type; // 0: farthest point; 1: mean distance; 2: median distance; 3: 90 percent distance
 };
 
 // Global 
@@ -609,10 +616,14 @@ double accuracy(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
 double count_spikes_per_neuron(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
 double count_spikes_per_motif(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
 double count_spikes_per_region(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
-void compute_distance_matrix(double *distance_matrix, int n_samples, int **spike_amount_per_neurons_per_sample, int n_neurons);
-void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double my_metric_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+double my_metric_rest(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+void reinitialize_distance_matrix(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+void compute_distance_matrix(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
 void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results);
-
+void compute_distance_matrix_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx);
+void compute_manhattan_distance_for_spike_arrays_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results);
+void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results);
 
 void assign_rank_and_crowding_distance (NSGA2Type *nsga2Params, population *new_pop);
 
@@ -625,6 +636,8 @@ void q_sort_front_obj(population *pop, int objcount, int obj_array[], int left, 
 void quicksort_dist(population *pop, int *dist, int front_size);
 void q_sort_dist(population *pop, int *dist, int left, int right);
 void insertion_sort(int *arr, int n); 
+void insertion_sort_double(double *arr, int n);
+void insertion_sort_double_and_indexes(double *arr, int *arr_indexes, int n);
 
 void selection (NSGA2Type *nsga2Params, population *old_pop, population *new_pop);
 individual* tournament (NSGA2Type *nsga2Params, individual *ind1, individual *ind2);

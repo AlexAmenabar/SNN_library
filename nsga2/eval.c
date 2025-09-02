@@ -17,6 +17,7 @@
 # include "distance_comp.h"
 
 
+double best_acc;
 
 
 /* Routine to evaluate objective function values and constraints for a population */
@@ -46,45 +47,20 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     {
         //printf(" > Evaluating individual %d...\n", i);
         //fflush(stdout);
+
+
+        #ifdef OPTIMIZED
+        decode_ind(nsga2Params, &(pop->ind[i]));
+        #endif
         #ifdef DEBUG1
         printf(" > > Evaluating individual %d\n", i);
         fflush(stdout);
         #endif
         evaluate_ind (nsga2Params, &(pop->ind[i]), inp, out, selected_samples_info);
 
-        /*if(i == 0){
-            pop->ind[i].obj[0] = -0.312141;
-            pop->ind[i].obj[1] = 538409.230000;
-        }
-        if(i == 1){
-            pop->ind[i].obj[0] = -0.365116;
-            pop->ind[i].obj[1] = 956824.430000;
-        }
-        if(i == 2){
-            pop->ind[i].obj[0] = -0.239497;
-            pop->ind[i].obj[1] = 785712.103333;
-        }
-        if(i == 3){
-            pop->ind[i].obj[0] = -0.312278;
-            pop->ind[i].obj[1] = 467788.166667;
-        }
-        if(i == 4){
-            pop->ind[i].obj[0] = -0.296015;
-            pop->ind[i].obj[1] = 1086749.186667;
-        }
-        if(i == 5){
-            pop->ind[i].obj[0] = -0.310856;
-            pop->ind[i].obj[1] = 572991.876667;
-        }
-        if(i == 6){
-            pop->ind[i].obj[0] = -0.320663;
-            pop->ind[i].obj[1] = 750292.816667;
-        }
-        if(i == 7){
-            pop->ind[i].obj[0] = -0.289747;
-            pop->ind[i].obj[1] = 623687.176667;
-        }*/
-    
+        #ifdef OPTIMIZED
+        deallocate_memory_snn_only(nsga2Params, &(pop->ind[i]));
+        #endif
     }
 
     // free memory of selected samples
@@ -100,7 +76,7 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
     free(selected_samples_info);
 
 
-    // write the results in the results file
+    // write objective function values in files
     for(i = 0; i<nsga2Params->nobj; i++){
         for(j = 0; j<nsga2Params->popsize; j++){
             fprintf(fobj[i], "%lf ", pop->ind[j].obj[i]); // all obj function values of an individual in the same row
@@ -111,7 +87,6 @@ void evaluate_pop (NSGA2Type *nsga2Params, population *pop, void *inp, void *out
 
     fprintf(facc, "\n");
     fflush(facc);
-    fflush(fclass);
 
     return;
 }
@@ -122,6 +97,20 @@ void evaluate_ind (NSGA2Type *nsga2Params, individual *ind, void *inp, void *out
 
     int j;
     
+
+    // compute individual connectivity level // This should be moved to another place
+    double tmp = 0, final_tmp = 0;
+
+    // compute connectivity percentage for individual
+    for(j = 0; j<ind->n_motifs; j++){
+        tmp = ind->connectivity_info.out_connections[j].n_nodes / ind->n_motifs;
+        tmp = tmp / ind->n_motifs;
+        final_tmp += tmp;
+    }
+    final_tmp = final_tmp / ind->n_motifs;
+    ind->connectivity_percentage = final_tmp;
+
+
 #ifdef PHASE2
     test_SNN_phase2(nsga2Params, ind, selected_samples_info);
 #else
@@ -156,6 +145,8 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     
     obj_functions_t *ctx = nsga2Params->obj_functions_info;
 
+    struct timespec start, end; // struct to store execution times
+    double et_sm, et_dist, et_of;
 
     // load info from struct
     n_samples = nsga2Params->n_samples;
@@ -227,6 +218,11 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     
     for(rep = 0; rep<n_repetitions; rep++){
 
+        #ifdef DEBUG1
+        printf(" > > > > In repetition %d\n", rep);
+        fflush(stdout);
+        #endif
+
         ctx->rep = rep;
 
         // get information about the samples that will be computed in this repetition 
@@ -249,8 +245,10 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 #endif
 
         // simulate the network // TODO: generalize dataset management
+        clock_gettime(CLOCK_MONOTONIC, &start);
         simulate_by_samples_enas(ind->snn, nsga2Params, ind, &results, n_samples, sample_indexes, &image_dataset, 0);
-
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        et_sm = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 
         // =========================== //
         // Compute objective functions //
@@ -264,16 +262,46 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
 
 
         // compute the distance matrix if it is required for computing some of the objective functions
+        clock_gettime(CLOCK_MONOTONIC, &start);
         if(nsga2Params->obj_functions_info->distance_matrix_req == 1){
-            
-            if(nsga2Params->distance_type == 0)
-                compute_distance_matrix(ctx->distance_matrix, n_samples, ctx->spike_amount_per_neurons_per_sample, n_neurons);
-            else
+                
+            #ifdef DEBUG1
+            printf(" > > > > Computing distances...\n");
+            fflush(stdout);
+            #endif
+
+            if(nsga2Params->distance_type == 0){
+
+                #ifdef OPTIMIZED
+                compute_distance_matrix_per_class(nsga2Params, ind, ctx);
+                #else
+                compute_distance_matrix(nsga2Params, ind, ctx);
+                #endif
+            }
+            else{
+
+                reinitialize_distance_matrix(nsga2Params, ind, ctx);
+                #ifdef OPTIMIZED
+                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &results);
+                #else
                 compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results);
+                #endif
+            }
 
-            compute_distance_info(nsga2Params, ind, ctx);
+            #ifdef DEBUG1
+            printf(" > > > > Computing distance info...\n");
+            fflush(stdout);
+            #endif
+
+            compute_distance_info(nsga2Params, ind, ctx, &results);
+
+            #ifdef DEBUG1
+            printf(" > > > > Distance info computed!\n");
+            fflush(stdout);
+            #endif
         }
-
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        et_dist = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 
         // compute objective functions
         for(i = 0; i<n_obj; i++){
@@ -281,32 +309,118 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
         }
 
         // compute accuracy
+        clock_gettime(CLOCK_MONOTONIC, &start);
         accuracy(nsga2Params, ind, ctx);
+        clock_gettime(CLOCK_MONOTONIC, &end);
+        et_of = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec) / 1e9;
 
 
-        // store the distance matrix for visualization purposes
-        if(rep == 0){
-            // print objective function values and accuracy to better understand the plot
-            fprintf(fclass, "%lf\n", ctx->accuracy); // print accuracy
+
+        /* WRITE GENERAL IFNORMATION OF RESULTS */
+        // since a lot of data will be stored, to avoid generating huge files only some values are stored:
+        // if the accuracy is better than the best achieved so long, or with probability of 0.05, a value is stored
+
+
+        #ifdef DEBUG1
+        printf(" > > > > Storing info in file...\n");
+        fflush(stdout);
+        #endif
+
+        if(ctx->accuracy > best_acc || rndreal(0, 1) > 0.95){
+            // write information in classification file 
             for(i = 0; i<n_obj; i++){
-                fprintf(fclass, "%lf\n", ctx->obj_values[rep * n_obj + i]); 
+                fprintf(fclass, "%lf ", ctx->obj_values[rep * n_obj + i]);
+            }
+            fprintf(fclass, "%lf ", ctx->acc_per_repetition[rep]);
+            for(i = 0; i<n_classes; i++){
+                fprintf(fclass, "%lf ", ctx->acc_per_class_per_repetition[i][rep]);
             }
 
-            // print the labels
-            for(i = 0; i<n_samples; i++){
-                fprintf(fclass, "%d ", labels[i]);
+
+            // store network information
+            fprintf(fclass, "\n\n%d ", ind->n_motifs);
+            
+            // motif types
+            new_motif_t *motif_node = ind->motifs_new;
+            int *n_motif_types = (int *)calloc(N_MOTIF_TYPES, sizeof(int));
+            for(i = 0; i<ind->n_motifs; i++){
+                n_motif_types[motif_node->motif_type] ++;
+                motif_node = motif_node->next_motif;
+            }
+            for(i = 0; i<N_MOTIF_TYPES; i++){
+                fprintf(fclass, "%d ", n_motif_types[i]);
+            }
+            free(n_motif_types);
+
+            fprintf(fclass, "%d ", ind->n_synapses);
+            fprintf(fclass, "%lf\n\n", ind->connectivity_percentage);
+
+            // execution times
+            fprintf(fclass, "%lf ", et_sm);
+            fprintf(fclass, "%lf ", et_dist);
+            fprintf(fclass, "%lf\n\n", et_of);
+
+
+            // centroid indexes
+            for(i = 0; i<n_classes; i++){
+                fprintf(fclass, "%d ", ctx->centroid_info[i].index);
+                fprintf(fclass, "%lf ", ctx->centroid_info[i].mean_distance);
+                fprintf(fclass, "%d ", ctx->centroid_info[i].farthest_point_index);
+                fprintf(fclass, "%lf\n", ctx->centroid_info[i].farthest_point_distance);
+                fprintf(fclass, "%d ", ctx->centroid_info[i].median_point_index);
+                fprintf(fclass, "%lf\n", ctx->centroid_info[i].median_point_distance);
+                fprintf(fclass, "%d ", ctx->centroid_info[i].perc90_point_index);
+                fprintf(fclass, "%lf\n", ctx->centroid_info[i].perc90_point_distance);
             }
             fprintf(fclass, "\n");
 
-            // print the distance matrix
+            // print labels
+            for(i = 0; i<n_samples; i++){
+                fprintf(fclass, "%d ", ctx->selected_samples_info[rep].labels[i]);
+            }
+            fprintf(fclass, "\n");
+
+            // print distance matrix
             for(i = 0; i<n_samples; i++){
                 for(j = 0; j<n_samples; j++){
                     fprintf(fclass, "%lf ", ctx->distance_matrix[i * n_samples + j]);
                 }
                 fprintf(fclass, "\n");
             }
-            fprintf(fclass, "\n");
+            
+
+            // distance matrix for class centroids
+            double *centroid_distance_matrix = (double *)calloc(n_classes * n_classes, sizeof(double));
+            for(i = 0; i<n_classes; i++){
+                for(j = 0; j<n_classes; j++){
+                    centroid_distance_matrix[i * n_classes + j] = ctx->distance_matrix[ctx->centroid_info[i].index * n_samples + ctx->centroid_info[j].index]; 
+                    centroid_distance_matrix[j * n_classes + i] = centroid_distance_matrix[i * n_classes + j];
+                }
+            }
+            for(i = 0; i<n_classes; i++){
+                for(j = 0; j<n_classes; j++){
+                    fprintf(fclass, "%lf ", centroid_distance_matrix[i * n_classes + j]);
+                }
+                fprintf(fclass, "\n");
+            }
+            free(centroid_distance_matrix);
+
+            // confusion matrix
+            for(i = 0; i<n_classes; i++){
+                for(j = 0; j<n_classes; j++){
+                    fprintf(fclass, "%d ", ctx->confusion_matrix[rep][i * n_classes + j]);
+                }
+                fprintf(fclass, "\n");
+            }
+            fprintf(fclass, "\n\n");
+
+            fflush(fclass);
         }
+
+        #ifdef DEBUG1
+        printf(" > > > > Info succesfully stored in file!\n");
+        fflush(stdout);
+        #endif
     }
 
 
@@ -347,17 +461,7 @@ void test_SNN(NSGA2Type *nsga2Params, individual *ind, selected_samples_info_t *
     }
     fprintf(facc, "\n");
 
-    // print confusion matrixes for each repetition
-    for(i = 0; i<n_repetitions; i++){
-        for(j = 0; j<n_classes; j++){
-            for(l=0; l<n_classes; l++){
-                fprintf(facc, "%d ", ctx->confusion_matrix[i][j*n_classes+l]);
-            }
-            fprintf(facc, "\n");
-        }
-        fprintf(facc, "\n");
-    }
-
+    
     // ======================== //
     // free all the memory used //
     // ======================== //
@@ -495,12 +599,24 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
         // compute the distance matrix if it is required for computing some of the objective functions
         if(nsga2Params->obj_functions_info->distance_matrix_req == 1){
             
-            if(nsga2Params->distance_type == 0)
-                compute_distance_matrix(ctx->distance_matrix, n_samples, ctx->spike_amount_per_neurons_per_sample, n_neurons);
-            else
-                compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results[0]);
+            if(nsga2Params->distance_type == 0){
 
-            compute_distance_info(nsga2Params, ind, ctx);
+                #ifdef OPTIMIZED
+                compute_distance_matrix_per_class(nsga2Params, ind, ctx);
+                #else
+                //compute_distance_matrix(ctx->distance_matrix, n_samples, ctx->spike_amount_per_neurons_per_sample, n_neurons);   
+                #endif
+            }
+            else{
+
+                #ifdef OPITIMIZED
+                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &results[0]);
+                #else
+                //compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results[0]);
+                #endif
+            }
+
+            compute_distance_info(nsga2Params, ind, ctx, &results[0]);
         }
 
         // compute objective functions
@@ -549,11 +665,11 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
         if(nsga2Params->obj_functions_info->distance_matrix_req == 1){
             
             if(nsga2Params->distance_type == 0)
-                compute_distance_matrix(ctx->distance_matrix, n_samples, ctx->spike_amount_per_neurons_per_sample, n_neurons);
+                compute_distance_matrix(nsga2Params, ind, ctx);
             else
                 compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results[2]);
 
-            compute_distance_info(nsga2Params, ind, ctx);
+            compute_distance_info(nsga2Params, ind, ctx, &results[2]);
         }
 
 
@@ -944,6 +1060,14 @@ void select_objective_functions(NSGA2Type *nsga2Params, obj_functions_t *ctx){
             case 6:
                 ctx->f_obj[i] = count_spikes_per_region;
                 break;
+            case 7:
+                ctx->f_obj[i] = my_metric_per_class;
+                ctx->distance_matrix_req = 1;
+                break;
+            case 8:
+                ctx->f_obj[i] = my_metric_rest;
+                ctx->distance_matrix_req = 1;
+                break;
             default:
                 break;
         }
@@ -960,13 +1084,17 @@ double my_metric(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
     
     int i, j;
     double obj_value = 0;
+    double D, di, dj;
 
     // Compute my metric objective function
     for(i=0; i<nsga2Params->n_classes-1; i++){
         for(j=i+1; j<nsga2Params->n_classes; j++){
-            obj_value += 
-                (ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j] / 
-                (maximum(ctx->centroid_info[i].farthest_point_distance, ctx->centroid_info[j].farthest_point_distance) + ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j]));
+
+            D = ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j];
+            di = ctx->centroid_info[i].d;
+            dj = ctx->centroid_info[j].d;
+
+            obj_value += (D / (maximum(di, dj) + D));
         }
     }
 
@@ -982,13 +1110,18 @@ double in_class_distance(NSGA2Type *nsga2Params, individual *ind, obj_functions_
 
     int i, j;
     double obj_value = 0;
+    double di, dj;
 
     // Compute my metric objective function
-    for(i=0; i<nsga2Params->n_classes-1; i++)
-        for(j=i+1; j<nsga2Params->n_classes; j++)
-            obj_value += 
-                maximum(ctx->centroid_info[i].farthest_point_distance, ctx->centroid_info[j].farthest_point_distance) + ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j];
+    for(i=0; i<nsga2Params->n_classes-1; i++){
+        for(j=i+1; j<nsga2Params->n_classes; j++){
+            
+            di = ctx->centroid_info[i].d;
+            dj = ctx->centroid_info[j].d;
 
+            obj_value += maximum(di, dj);
+        }
+    }
     obj_value = obj_value / ctx->n_inter_class_distances;        
     
     return obj_value;
@@ -1001,12 +1134,16 @@ double between_classes_distance(NSGA2Type *nsga2Params, individual *ind, obj_fun
 
     int i, j;
     double obj_value = 0;
+    double D;
 
     // Compute my metric objective function
-    for(i=0; i<nsga2Params->n_classes-1; i++)
-        for(j=i+1; j<nsga2Params->n_classes; j++)
-            obj_value += ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j];
-
+    for(i=0; i<nsga2Params->n_classes-1; i++){
+        for(j=i+1; j<nsga2Params->n_classes; j++){
+            
+            D = ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j];
+            obj_value += D;
+        }
+    }
     obj_value /= ctx->n_inter_class_distances;        
     
     return obj_value; 
@@ -1134,11 +1271,94 @@ double count_spikes_per_region(NSGA2Type *nsga2Params, individual *ind, obj_func
 }
 
 
+double my_metric_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
+
+    
+    int i, j;
+    double obj_value = 0;
+
+    // Compute my metric objective function
+    for(i=0; i<nsga2Params->n_classes-1; i++){
+        for(j=i+1; j<nsga2Params->n_classes; j++){
+            obj_value += 
+                (ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j] / 
+                (ctx->centroid_info[i].farthest_point_distance + ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j]));
+        
+            obj_value += 
+                (ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j] / 
+                (ctx->centroid_info[j].farthest_point_distance + ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j]));
+        
+        }
+    }
+
+    obj_value = obj_value / (nsga2Params->n_classes * nsga2Params->n_classes - nsga2Params->n_classes);        
+
+    return obj_value;
+}
+
+double my_metric_rest(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
+
+    
+    int i, j;
+    double obj_value = 0, tmp_obj_value = 0;
+    double D, di, dj;
+
+    // Compute my metric objective function
+    for(i=0; i<nsga2Params->n_classes-1; i++){
+        for(j=i+1; j<nsga2Params->n_classes; j++){
+            
+            // get Di,j, di and dj
+            D = ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j];
+
+            di = ctx->centroid_info[i].d;
+            dj = ctx->centroid_info[j].d;
+
+            // compute rest
+            tmp_obj_value = D - di - dj;
+            if(tmp_obj_value < -1) 
+                tmp_obj_value = -1;
+            
+
+            tmp_obj_value = tmp_obj_value / D;
+
+            // add to objective function value
+            obj_value += tmp_obj_value;
+        }
+    }
+
+    obj_value = obj_value / (nsga2Params->n_classes * nsga2Params->n_classes / 2 - nsga2Params->n_classes / 2);        
+
+    return obj_value;
+}
+
+
 /* Helper functions for objective functions */
 
 // Compute distance matrix // TODO: MOVE THIS TO DISTANCE FILE // TODO2: distance function should be a function pointer?
-void compute_distance_matrix(double *distance_matrix, int n_samples, int **spike_amount_per_neurons_per_sample, int n_neurons){
+
+void reinitialize_distance_matrix(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
     int i, j;
+
+    #pragma omp parallel for num_threads(n_processes) private(i,j)
+    for(i = 0; i<nsga2Params->n_samples; i++){
+        for(j = 0; j<nsga2Params->n_samples; j++){
+            ctx->distance_matrix[i * nsga2Params->n_samples + j] = 0;
+        }
+    }
+}
+
+void compute_distance_matrix(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
+    
+    int i, j, n_classes, n_samples, n_neurons;
+    int **spike_amount_per_neurons_per_sample;
+    double *distance_matrix;
+
+    distance_matrix = ctx->distance_matrix;
+    spike_amount_per_neurons_per_sample = ctx->spike_amount_per_neurons_per_sample; // I could use results struct directly
+
+    n_classes = nsga2Params->n_classes;
+    n_samples = nsga2Params->n_samples;
+    n_neurons = ind->n_neurons;
 
     // compute the distance matrix for this repetition // Paralelize????
     #pragma omp parallel for num_threads(n_processes) schedule(guided, 10) private(i, j)
@@ -1151,14 +1371,107 @@ void compute_distance_matrix(double *distance_matrix, int n_samples, int **spike
     }
 }
 
+void compute_distance_matrix_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
 
-void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx){
+    int i,j,l;
+    int index1, index2, n_classes, n_samples, n_neurons;
+    int **spike_amount_per_neurons_per_sample;
+    double *distance_matrix;
+    selected_samples_info_t *selected_samples_info;
+
+    distance_matrix = ctx->distance_matrix;
+    spike_amount_per_neurons_per_sample = ctx->spike_amount_per_neurons_per_sample; // I could use results struct directly
+    selected_samples_info = &(ctx->selected_samples_info[ctx->rep]);
+
+    n_classes = nsga2Params->n_classes;
+    n_samples = nsga2Params->n_samples;
+    n_neurons = ind->n_neurons;
+
+
+    // loop over all classes
+    for(i = 0; i<n_classes; i++){
+        // compute distances for elements in class 0
+        #pragma omp parallel for num_threads(n_processes) schedule(dynamic) private (j, l, index1, index2)
+        for(j = 0; j<selected_samples_info->n_selected_samples_per_class[i] - 1; j++){
+
+            for(l = j+1; l<selected_samples_info->n_selected_samples_per_class[i]; l++){
+                
+                index1 = selected_samples_info->sample_indexes_per_class[i][j];
+                index2 = selected_samples_info->sample_indexes_per_class[i][l];
+
+                distance_matrix[index1 * n_samples + index2] = 
+                    compute_manhattan_distance(spike_amount_per_neurons_per_sample[index1], spike_amount_per_neurons_per_sample[index2], n_neurons);//nsga2Params->bins);
+                distance_matrix[index2 * n_samples + index1] = distance_matrix[index1 * n_samples + index2];
+            }   
+        }
+    }
+}
+
+void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results){
+    
+    int i, j, s, n_samples, n_neurons;
+    double *distance_matrix;
+    n_neurons = ind->n_neurons;
+    n_samples = nsga2Params->n_samples;
+    distance_matrix = ctx->distance_matrix;
+
+
+    // compute the distance matrix for this repetition // Paralelize????
+    #pragma omp parallel for num_threads(n_processes) schedule(guided, 10) private(i, j, s)
+    for(i = 0; i<n_samples - 1; i++){
+        for(j = i + 1; j<n_samples; j++){
+            for(s = 0; s < n_neurons; s++){
+                distance_matrix[i * n_samples + j] += 
+                    compute_manhattan_distance_for_chars(simulation_results->results_per_sample[i].generated_spikes[s], simulation_results->results_per_sample[j].generated_spikes[s], nsga2Params->simulation_time_steps);
+            }
+
+            distance_matrix[j * n_samples + i] = distance_matrix[i * n_samples + j];
+        }
+    }
+}
+
+void compute_manhattan_distance_for_spike_arrays_per_class(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results){
+    
+    int i, j, l, s, index1, index2, n_samples, n_neurons, n_classes;
+    double *distance_matrix;
+    n_neurons = ind->n_neurons;
+    n_samples = nsga2Params->n_samples;
+    n_classes = nsga2Params->n_classes;
+    distance_matrix = ctx->distance_matrix;
+
+    selected_samples_info_t *selected_samples_info = &(ctx->selected_samples_info[ctx->rep]);
+
+    
+    // loop over all classes
+    for(i = 0; i<n_classes; i++){
+
+        // compute distances for elements in class 0
+        #pragma omp parallel for num_threads(n_processes) schedule(dynamic) private (j, l, s, index1, index2)
+        for(j = 0; j<selected_samples_info->n_selected_samples_per_class[i] - 1; j++){
+
+            for(l = j+1; l<selected_samples_info->n_selected_samples_per_class[i]; l++){
+                
+                index1 = selected_samples_info->sample_indexes_per_class[i][j];
+                index2 = selected_samples_info->sample_indexes_per_class[i][l];
+                
+                for(s = 0; s < n_neurons; s++)      
+                    distance_matrix[index1 * n_samples + index2] += 
+                        compute_manhattan_distance_for_chars(simulation_results->results_per_sample[index1].generated_spikes[s], simulation_results->results_per_sample[index2].generated_spikes[s], nsga2Params->simulation_time_steps);//nsga2Params->bins);
+                distance_matrix[index2 * n_samples + index1] = distance_matrix[index1 * n_samples + index2];
+            }   
+        }
+    }
+}
+
+
+void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results){
         
     int i, j, l;
 
-    int n_samples, n_neurons, n_classes, n_repetitions, n_obj;
+    int n_samples, n_neurons, n_classes, n_repetitions, n_obj, centroid_index;
     int *sample_indexes, *labels, *n_selected_samples_per_class, **sample_indexes_per_class;
     double *distance_matrix;
+    int **spike_amount_per_neurons_per_sample;
 
 
     // load info from struct
@@ -1169,6 +1482,7 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
     n_obj = nsga2Params->nobj;
 
     distance_matrix = ctx->distance_matrix;
+    spike_amount_per_neurons_per_sample = ctx->spike_amount_per_neurons_per_sample;
 
     // get information about the samples that will be computed in this repetition 
     sample_indexes = ctx->selected_samples_info[ctx->rep].sample_indexes; // store the indexes of the selected samples
@@ -1188,6 +1502,12 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
     for(i = 0; i<nsga2Params->n_classes; i++){
         ctx->centroid_info[i].mean_distance = 9999999999999;
         ctx->centroid_info[i].farthest_point_distance = 0;
+
+        ctx->centroid_info[i].median_point_index = 0;
+        ctx->centroid_info[i].median_point_distance = 0;
+
+        ctx->centroid_info[i].perc90_point_index = 0;
+        ctx->centroid_info[i].perc90_point_distance = 0;
     }
 
 
@@ -1223,7 +1543,7 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
             }
 
             // compute the mean for the actual element
-            ctx->mean_distance_per_sample[ctx->temp_local_index] = ctx->mean_distance_per_sample[ctx->temp_local_index] / n_selected_samples_per_class[i];
+            ctx->mean_distance_per_sample[ctx->temp_local_index] = ctx->mean_distance_per_sample[ctx->temp_local_index] / (n_selected_samples_per_class[i]-1); // -1 since distance with the sample itself is not taken into account
 
             // store the information if the mean distance is smaller than the mean found so far (is the centroid)
             if(ctx->mean_distance_per_sample[ctx->temp_local_index] < ctx->centroid_info[i].mean_distance){
@@ -1235,6 +1555,94 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
             }   
         }
     }
+
+
+    // get the median and the perc90 points indexes and distance for each class
+    double *tmp_class_distances;
+    int *tmp_class_indexes, median_index, perc_index;
+
+    // loop over all classes to compute the median distance etc from the centroid of each class
+    for(i = 0; i<nsga2Params->n_classes; i++){
+
+        tmp_class_distances = (double *)malloc(n_selected_samples_per_class[i] * sizeof(double));
+        tmp_class_indexes = (int *)malloc(n_selected_samples_per_class[i] * sizeof(int));
+
+        for(j = 0; j<n_selected_samples_per_class[i]; j++){
+
+            //store distance
+            tmp_class_distances[j] = distance_matrix[ctx->centroid_info[i].index * n_samples + sample_indexes_per_class[i][j]];
+            tmp_class_indexes[j] = sample_indexes_per_class[i][j];
+        }
+        // sort array
+        insertion_sort_double_and_indexes(tmp_class_distances, tmp_class_indexes, n_selected_samples_per_class[i]);
+
+        // store median and perc90 // TODO: The entire list? 
+        median_index = (int)(n_selected_samples_per_class[i] * 0.5);
+        perc_index = (int)(n_selected_samples_per_class[i] * 0.9);
+        
+        ctx->centroid_info[i].median_point_index = tmp_class_indexes[median_index];
+        ctx->centroid_info[i].median_point_distance = tmp_class_distances[median_index];//distance_matrix[ctx->centroid_info[i].index * n_samples + ctx->centroid_info[i].median_point_index];
+        ctx->centroid_info[i].perc90_point_index = tmp_class_indexes[perc_index];
+        ctx->centroid_info[i].perc90_point_distance = tmp_class_distances[perc_index];//distance_matrix[ctx->centroid_info[i].index * n_samples + ctx->centroid_info[i].perc90_point_index];
+
+
+        // free allocated arrays
+        free(tmp_class_distances);
+        free(tmp_class_indexes);
+
+
+        // select the distance that will be used
+        switch(ctx->class_distance_type){
+            case 0:
+                ctx->centroid_info[i].d = ctx->centroid_info[i].farthest_point_distance;
+                break;
+            case 1:
+                ctx->centroid_info[i].d = ctx->centroid_info[i].mean_distance;
+                break;
+            case 2:
+                ctx->centroid_info[i].d = ctx->centroid_info[i].median_point_distance;
+                break;
+            case 3:
+                ctx->centroid_info[i].d = ctx->centroid_info[i].perc90_point_distance;
+                break;
+            default:
+                ctx->centroid_info[i].d = ctx->centroid_info[i].farthest_point_distance;
+                break;
+        }
+    }
+
+
+
+    // compute the distance from all samples to all centroids
+#ifdef OPTIMIZED
+    #pragma omp parallel for num_threads(n_processes) schedule(dynamic, 2) private(i, j, l, centroid_index)
+    for(i = 0; i<n_samples; i++){
+        // loop over all classes to compute the distances to the centroids
+        for(j = 0; j<n_classes; j++){
+
+            // get the centroid of class j
+            centroid_index = ctx->centroid_info[j].index;
+
+            if(nsga2Params->distance_type == 0){
+                ctx->distance_matrix[i * n_samples + centroid_index] = compute_manhattan_distance(spike_amount_per_neurons_per_sample[i], spike_amount_per_neurons_per_sample[centroid_index], n_neurons);
+                ctx->distance_matrix[centroid_index * n_samples + i] = ctx->distance_matrix[i * n_samples + centroid_index];
+            }
+            else{
+                if(ctx->distance_matrix[i * n_samples + centroid_index] == 0  || ctx->distance_matrix[centroid_index * n_samples + i] == 0){
+
+                    ctx->distance_matrix[i * n_samples + centroid_index] = 0;
+                    ctx->distance_matrix[centroid_index * n_samples + i] = 0;
+
+                    for(l = 0; l < n_neurons; l++)
+                        ctx->distance_matrix[i * n_samples + centroid_index] += compute_manhattan_distance_for_chars(simulation_results->results_per_sample[i].generated_spikes[l], simulation_results->results_per_sample[centroid_index].generated_spikes[l], nsga2Params->simulation_time_steps);
+                    
+                    ctx->distance_matrix[centroid_index * n_samples + i] = ctx->distance_matrix[i * n_samples + centroid_index];
+                }
+            }
+        }
+    }
+#endif
+
 
     // compute the distances between the centroids of each class // TODO: I am using a full matrix, but this should be simplified to only the upper triangle
     ctx->n_inter_class_distances = 0;
@@ -1252,29 +1660,6 @@ void compute_distance_info(NSGA2Type *nsga2Params, individual *ind, obj_function
                 ctx->inter_class_distance_matrix[i * nsga2Params->n_classes + j] = distance_matrix[ctx->temp_local_index2 * n_samples + ctx->temp_local_index];
 
             ctx->n_inter_class_distances ++;
-        }
-    }
-}
-
-
-void compute_manhattan_distance_for_spike_arrays(NSGA2Type *nsga2Params, individual *ind, obj_functions_t *ctx, simulation_results_t *simulation_results){
-    
-    int i, j, s, n_samples, n_neurons;
-    double *distance_matrix;
-    n_neurons = ind->n_neurons;
-    n_samples = nsga2Params->n_samples;
-    distance_matrix = ctx->distance_matrix;
-
-    // compute the distance matrix for this repetition // Paralelize????
-    #pragma omp parallel for num_threads(n_processes) schedule(guided, 10) private(i, j, s)
-    for(i = 0; i<n_samples - 1; i++){
-        for(j = i + 1; j<n_samples; j++){
-            for(s = 0; s < n_neurons; s++){
-                distance_matrix[i * n_samples + j] += 
-                    compute_manhattan_distance_for_chars(simulation_results->results_per_sample[i].generated_spikes[s], simulation_results->results_per_sample[j].generated_spikes[s], nsga2Params->simulation_time_steps);
-            }
-
-            distance_matrix[j * n_samples + i] = distance_matrix[i * n_samples + j];
         }
     }
 }
