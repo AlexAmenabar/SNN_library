@@ -642,13 +642,13 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
 
                 reinitialize_distance_matrix(nsga2Params, ind, ctx);
                 #ifdef OPTIMIZED
-                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &results);
+                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &(results[0]));
                 #else
-                compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results);
+                compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &(results[0]));
                 #endif
             }
 
-            compute_distance_info(nsga2Params, ind, ctx, &results[0]);
+            compute_distance_info(nsga2Params, ind, ctx, &(results[0]));
         }
 
         // compute objective functions
@@ -707,9 +707,9 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
 
                 reinitialize_distance_matrix(nsga2Params, ind, ctx);
                 #ifdef OPTIMIZED
-                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &results);
+                compute_manhattan_distance_for_spike_arrays_per_class(nsga2Params, ind, ctx, &(results[2]));
                 #else
-                compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &results);
+                compute_manhattan_distance_for_spike_arrays(nsga2Params, ind, ctx, &(results[2]));
                 #endif
             }
             
