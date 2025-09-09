@@ -292,7 +292,27 @@ new_motif_t* initialize_and_allocate_motif(new_motif_t *motif_node, int motif_id
 void initialize_motif_node(new_motif_t *motif, int motif_id, individual *ind){
     // initialize motif data
     motif->motif_id = motif_id;
+
     motif->motif_type = rnd(0, n_motifs-1);
+
+    // check ifdefs
+    #ifdef MT0
+    motif->motif_type = 0;
+    #elif MT1
+    motif->motif_type = 1;
+    #elif MT2
+    motif->motif_type = 2;
+    #elif MT3
+    motif->motif_type = 3;
+    #elif MT4
+    motif->motif_type = 4;
+    #elif MT5
+    motif->motif_type = 5;
+    #elif MT6
+    motif->motif_type = 6;
+    #endif
+
+
     motif->initial_global_index = ind->n_neurons;
     motif->next_motif = NULL; // next element is not initialized yet
     motif->in_lz = 0; // motif not added yet to learning zone
