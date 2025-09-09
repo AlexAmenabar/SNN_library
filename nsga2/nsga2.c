@@ -373,7 +373,12 @@ NSGA2Type ReadParameters(int argc, char **argv){
     scanf("%d",&nsga2Params.neuron_type);
 
 #ifdef PHASE2
+    scanf("%d", &nsga2Params.weights_included);    
+    scanf("%lf",&nsga2Params.max_weight);
+    scanf("%lf",&nsga2Params.min_weight);
 
+    scanf("%d",&nsga2Params.max_learning_rule);
+    scanf("%d",&nsga2Params.min_learning_rule);
 
 #else
     scanf("%d",&nsga2Params.max_motifs);

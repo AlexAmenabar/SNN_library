@@ -608,7 +608,9 @@ void test_SNN_phase2(NSGA2Type *nsga2Params, individual *ind, selected_samples_i
         // Simulate network //
         // ================ //
 
-
+        // initialize weights if they are not included in the network
+        if(nsga2Params->weights_included == 0)
+            initialize_synapse_weights(nsga2Params, ind);
 
 
         // =========================== //
